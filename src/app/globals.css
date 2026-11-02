@@ -1,44 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
 :root {
-  --color-bg: #FFFDF8;
-  --color-canvas: #FFFDF8;
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #F8F6F0;
-  --color-border: #E6E1D6;
-  --color-ink: #1B1B2F;
-  --color-secondary: #5A5A70;
-  --color-subtle: #8C8CA0;
+  --color-bg: #080A10;
+  --color-canvas: #0B0E17;
+  --color-surface: #0D101A;
+  --color-surface-elevated: #121624;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-ink: #F4F3F8;
+  --color-secondary: #8E9AB5;
+  --color-subtle: #5E687E;
   
-  --color-red: #D7263D;
-  --color-yellow: #FFC93C;
-  --color-blue: #2D6CDF;
-  --color-green: #2E9E6B;
-}
-
-.dark {
-  --color-bg: #14141F;
-  --color-canvas: #14141F;
-  --color-surface: #1F1F2E;
-  --color-surface-elevated: #262638;
-  --color-border: #2E2E42;
-  --color-ink: #F4F2EA;
-  --color-secondary: #A8A8BA;
-  --color-subtle: #6E6E85;
-  
-  --color-red: #FF5A6B;
-  --color-yellow: #FFD25E;
-  --color-blue: #6C9BFF;
-  --color-green: #4CC992;
+  --color-red: #F26676;
+  --color-yellow: #F7C95C;
+  --color-blue: #5B8DEF;
+  --color-green: #4ED69E;
+  --color-green-dark: #4ED69E;
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-ink);
+  background-color: #080A10;
+  color: #F4F3F8;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   margin: 0;
