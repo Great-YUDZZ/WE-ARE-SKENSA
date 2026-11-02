@@ -37,3 +37,10 @@ next-env.d.ts
 # python cache
 __pycache__/
 *.pyc
+
+# internal planning files
+PLANNING.md
+planning.md
+planing.md
+*planing*.md
+*planning*.md
