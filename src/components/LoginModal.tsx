@@ -38,14 +38,12 @@ export default function LoginModal({
     "Rekayasa Perangkat Lunak",
   ]);
 
-  // Sync mode with initialMode whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
     }
   }, [isOpen, initialMode]);
 
-  // Close on ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -86,103 +84,103 @@ export default function LoginModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-[#1B1B2F]/70 backdrop-blur-[2px]"
+            className="fixed inset-0 bg-[#141413]/60"
           />
 
-          {/* Modal Dialog Card */}
+          {/* Tactile Modal Card */}
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="relative w-full max-w-lg bg-[#FFFDF8] dark:bg-[#1F1F2E] border-2 border-[#E6E1D6] dark:border-[#2E2E42] rounded-t-2xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl z-10 max-h-[92vh] overflow-y-auto text-[#1B1B2F] dark:text-[#F4F2EA]"
+            transition={{ type: "spring", damping: 24, stiffness: 320 }}
+            className="relative w-full max-w-lg bg-[#FAF7F2] border-2 border-[#141413] rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_#141413] z-10 max-h-[92vh] overflow-y-auto text-[#141413]"
           >
             {/* Header row */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#E6E1D6] dark:border-[#2E2E42]">
-              <span className="text-[11px] font-mono font-bold text-[#D7263D] dark:text-[#FF5A6B] tracking-wider uppercase">
+            <div className="flex items-center justify-between pb-3 border-b-2 border-[#141413]">
+              <span className="px-2.5 py-1 rounded-lg bg-[#B8F348] border-2 border-[#141413] text-[11px] font-mono font-bold text-[#141413] uppercase">
                 {mode === "login"
-                  ? "GERBANG MASUK EKSPLORASI"
-                  : "PENDAFTARAN AKUN BARU"}
+                  ? "AKSES KERTAMARGA BALI"
+                  : "DAFTAR TIKET EKSPLORASI"}
               </span>
               <button
                 onClick={onClose}
                 type="button"
-                className="text-xs font-mono font-bold text-[#5A5A70] dark:text-[#A8A8BA] hover:text-[#1B1B2F] dark:hover:text-[#F4F2EA] px-2 py-1 rounded transition-colors cursor-pointer"
+                className="text-xs font-mono font-bold bg-white border-2 border-[#141413] text-[#141413] hover:bg-[#FF5E4D] hover:text-white px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
               >
-                [Tutup X]
+                Tutup [X]
               </button>
             </div>
 
             {/* Title & Sub */}
             <div className="mt-4 space-y-1.5">
-              <h2 className="font-sans font-bold text-2xl text-[#1B1B2F] dark:text-[#F4F2EA] tracking-tight">
+              <h2 className="font-display font-black text-2xl sm:text-3xl text-[#141413] tracking-tight">
                 {mode === "login"
-                  ? "Akses Platform KertaMarga"
-                  : "Buat Akun KertaMarga"}
+                  ? "Masuk ke Studio Minatmu"
+                  : "Simpan Profil & Vibe Jurusanmu"}
               </h2>
-              <p className="text-xs sm:text-sm text-[#5A5A70] dark:text-[#A8A8BA] leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#52514E] font-medium leading-relaxed">
                 {mode === "login"
-                  ? "Masuk untuk mengakses riwayat rekomendasi, konsultasi dengan Guru BK, atau pantau perkembangan minat."
-                  : "Daftar untuk menyimpan preferensi peminatan, konsultasi karir terarah, dan rekomendasi AI resmi."}
+                  ? "Buka kembali hasil simulasi jurusanmu, cek perbandingan kampus Bali, atau diskusi bareng Guru BK."
+                  : "Buat akun gratis dalam 30 detik atau langsung coba pakai Mode Tamu Anonim di bawah."}
               </p>
             </div>
 
             {/* Mode Switcher Tabs (Login vs Buat Akun) */}
-            <div className="mt-5 p-1 bg-[#F5F2EA] dark:bg-[#14141F] rounded-xl flex gap-1 border border-[#E6E1D6] dark:border-[#2E2E42]">
+            <div className="mt-5 p-1 bg-[#F0ECE1] rounded-xl flex gap-1.5 border-2 border-[#141413]">
               <button
                 type="button"
                 onClick={() => setMode("login")}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                className={`flex-1 py-2 text-xs font-display font-extrabold rounded-lg transition-all cursor-pointer ${
                   mode === "login"
-                    ? "bg-[#FFFDF8] dark:bg-[#1F1F2E] text-[#1B1B2F] dark:text-[#F4F2EA] shadow-xs border border-[#E6E1D6] dark:border-[#2E2E42]"
-                    : "text-[#5A5A70] dark:text-[#A8A8BA] hover:text-[#1B1B2F] dark:hover:text-white"
+                    ? "bg-[#141413] text-[#B8F348]"
+                    : "text-[#52514E] hover:text-[#141413]"
                 }`}
               >
-                Login
+                Masuk Akun
               </button>
               <button
                 type="button"
                 onClick={() => setMode("register")}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                className={`flex-1 py-2 text-xs font-display font-extrabold rounded-lg transition-all cursor-pointer ${
                   mode === "register"
-                    ? "bg-[#FFFDF8] dark:bg-[#1F1F2E] text-[#1B1B2F] dark:text-[#F4F2EA] shadow-xs border border-[#E6E1D6] dark:border-[#2E2E42]"
-                    : "text-[#5A5A70] dark:text-[#A8A8BA] hover:text-[#1B1B2F] dark:hover:text-white"
+                    ? "bg-[#141413] text-[#B8F348]"
+                    : "text-[#52514E] hover:text-[#141413]"
                 }`}
               >
-                Buat Akun
+                Buat Akun Baru
               </button>
             </div>
 
             {/* Role Tabs */}
-            <div className="mt-4 p-1 bg-[#F5F2EA] dark:bg-[#14141F] rounded-lg flex gap-1 border border-[#E6E1D6] dark:border-[#2E2E42]">
+            <div className="mt-3 p-1 bg-white rounded-xl flex gap-1.5 border-2 border-[#141413]">
               <button
                 type="button"
                 onClick={() => setRole("siswa")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 text-xs font-display font-bold rounded-lg transition-all cursor-pointer ${
                   role === "siswa"
-                    ? "bg-[#FFFDF8] dark:bg-[#1F1F2E] text-[#1B1B2F] dark:text-[#F4F2EA] shadow-xs border border-[#E6E1D6] dark:border-[#2E2E42]"
-                    : "text-[#5A5A70] dark:text-[#A8A8BA]"
+                    ? "bg-[#FFBE2E] text-[#141413] border border-[#141413]"
+                    : "text-[#52514E]"
                 }`}
               >
-                Siswa SMP / SMA / SMK
+                Pelajar SMP / SMA / SMK
               </button>
               <button
                 type="button"
                 onClick={() => setRole("guru")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 text-xs font-display font-bold rounded-lg transition-all cursor-pointer ${
                   role === "guru"
-                    ? "bg-[#FFFDF8] dark:bg-[#1F1F2E] text-[#1B1B2F] dark:text-[#F4F2EA] shadow-xs border border-[#E6E1D6] dark:border-[#2E2E42]"
-                    : "text-[#5A5A70] dark:text-[#A8A8BA]"
+                    ? "bg-[#FFBE2E] text-[#141413] border border-[#141413]"
+                    : "text-[#52514E]"
                 }`}
               >
-                Guru BK / Pembimbing
+                Guru BK / Orang Tua
               </button>
             </div>
 
             {/* Chip Minat Awal */}
             <div className="mt-4">
-              <label className="block text-xs font-bold text-[#1B1B2F] dark:text-[#F4F2EA] mb-2">
-                Pilih Fokus Minat Awal (Opsional):
+              <label className="block text-xs font-mono font-bold text-[#141413] uppercase mb-2">
+                PILIH STIKER MINAT AWALMU:
               </label>
               <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
                 {INTEREST_CHIPS.map((chip) => {
@@ -192,10 +190,10 @@ export default function LoginModal({
                       key={chip}
                       type="button"
                       onClick={() => toggleInterest(chip)}
-                      className={`text-xs px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer border ${
+                      className={`text-xs px-2.5 py-1 rounded-lg font-display font-bold transition-all cursor-pointer border-2 border-[#141413] ${
                         isSelected
-                          ? "bg-[#FFC93C] dark:bg-[#FFD25E] text-[#1B1B2F] border-[#E6B020] font-bold shadow-xs"
-                          : "bg-[#F5F2EA] dark:bg-[#14141F] text-[#5A5A70] dark:text-[#A8A8BA] border-[#E6E1D6] dark:border-[#2E2E42] hover:border-[#FFC93C]"
+                          ? "bg-[#B8F348] text-[#141413] shadow-[2px_2px_0px_#141413]"
+                          : "bg-white text-[#52514E] hover:bg-[#F0ECE1]"
                       }`}
                     >
                       {chip}
@@ -209,24 +207,24 @@ export default function LoginModal({
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               {mode === "register" && (
                 <div>
-                  <label className="block text-xs font-bold text-[#1B1B2F] dark:text-[#F4F2EA] mb-1">
-                    Nama Lengkap
+                  <label className="block text-xs font-bold text-[#141413] mb-1">
+                    Nama Panggilan / Lengkap
                   </label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Contoh: I Putu Gede Raditya"
-                    className="w-full h-10 px-3 rounded-lg bg-[#F5F2EA] dark:bg-[#14141F] border border-[#E6E1D6] dark:border-[#2E2E42] text-[#1B1B2F] dark:text-[#F4F2EA] text-xs sm:text-sm placeholder:text-[#5A5A70]/50 focus:border-[#D7263D] transition-colors"
+                    placeholder="Contoh: Putu Raditya"
+                    className="w-full h-10 px-3 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-medium placeholder:text-[#52514E]/60"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-bold text-[#1B1B2F] dark:text-[#F4F2EA] mb-1">
+                <label className="block text-xs font-bold text-[#141413] mb-1">
                   {role === "siswa"
-                    ? "NISN / ID Siswa / Email Sekolah"
+                    ? "NISN / Email Sekolah"
                     : "NIP / Email Pembimbing"}
                 </label>
                 <input
@@ -236,15 +234,15 @@ export default function LoginModal({
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder={
                     role === "siswa"
-                      ? "Contoh: 0071234567 atau siswa@sekolah.sch.id"
+                      ? "Contoh: 0071234567 atau kamu@smk.sch.id"
                       : "guru@sekolah.sch.id"
                   }
-                  className="w-full h-10 px-3 rounded-lg bg-[#F5F2EA] dark:bg-[#14141F] border border-[#E6E1D6] dark:border-[#2E2E42] text-[#1B1B2F] dark:text-[#F4F2EA] text-xs sm:text-sm placeholder:text-[#5A5A70]/50 focus:border-[#D7263D] transition-colors"
+                  className="w-full h-10 px-3 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-medium placeholder:text-[#52514E]/60"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1B1B2F] dark:text-[#F4F2EA] mb-1">
+                <label className="block text-xs font-bold text-[#141413] mb-1">
                   Kata Sandi
                 </label>
                 <input
@@ -252,38 +250,31 @@ export default function LoginModal({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full h-10 px-3 rounded-lg bg-[#F5F2EA] dark:bg-[#14141F] border border-[#E6E1D6] dark:border-[#2E2E42] text-[#1B1B2F] dark:text-[#F4F2EA] text-xs sm:text-sm placeholder:text-[#5A5A70]/50 focus:border-[#D7263D] transition-colors"
+                  placeholder="Minimal 6 karakter"
+                  className="w-full h-10 px-3 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-medium placeholder:text-[#52514E]/60"
                 />
               </div>
 
-              {/* Submit Button */}
-              {mode === "login" ? (
-                <button
-                  type="submit"
-                  className="w-full h-11 mt-2 bg-[#D7263D] hover:bg-[#B91C30] text-white font-sans font-bold text-xs sm:text-sm rounded-lg shadow-sm active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>Login & Masuk</span>
-                  <span className="font-mono text-sm">&rarr;</span>
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  className="w-full h-11 mt-2 bg-[#FFC93C] hover:bg-[#F5BF2E] text-[#1B1B2F] font-sans font-bold text-xs sm:text-sm rounded-lg shadow-sm border border-[#E6B020]/40 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>Buat Akun & Mulai</span>
-                  <span className="font-mono text-sm">&rarr;</span>
-                </button>
-              )}
+              <button
+                type="submit"
+                className="neo-btn w-full h-11 mt-2 bg-[#FF5E4D] hover:bg-[#ff4936] text-white font-display font-extrabold text-xs sm:text-sm rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>
+                  {mode === "login"
+                    ? "Masuk & Lihat Rekomendasi"
+                    : "Simpan Akun & Mulai Tes"}
+                </span>
+                <span className="font-mono text-sm">&rarr;</span>
+              </button>
             </form>
 
             {/* Divider */}
             <div className="relative my-4 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#E6E1D6] dark:border-[#2E2E42]" />
+                <div className="w-full border-t-2 border-[#141413]/20" />
               </div>
-              <span className="relative bg-[#FFFDF8] dark:bg-[#1F1F2E] px-3 text-[10px] font-mono text-[#5A5A70] dark:text-[#A8A8BA] uppercase tracking-wider">
-                atau coba tanpa mendaftar
+              <span className="relative bg-[#FAF7F2] px-3 text-[10px] font-mono font-bold text-[#52514E] uppercase">
+                atau langsung gas tanpa login
               </span>
             </div>
 
@@ -291,14 +282,13 @@ export default function LoginModal({
             <button
               onClick={() => onProceedToTest(true, selectedInterests)}
               type="button"
-              className="w-full h-11 bg-[#F5F2EA] dark:bg-[#14141F] hover:bg-[#EAE5D8] dark:hover:bg-[#252538] border border-[#E6E1D6] dark:border-[#2E2E42] text-[#1B1B2F] dark:text-[#F4F2EA] font-sans font-bold text-xs rounded-lg transition-all active:scale-99 cursor-pointer flex items-center justify-center"
+              className="neo-btn w-full h-11 bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] font-display font-extrabold text-xs sm:text-sm rounded-xl cursor-pointer flex items-center justify-center"
             >
-              Lanjut Mode Tamu Anonim (Tes Langsung)
+              Coba Mode Tamu Anonim (Langsung Tes) &rarr;
             </button>
 
-            {/* Micro Privacy Assurance */}
-            <p className="mt-3 text-[11px] font-mono text-[#1F7A52] dark:text-[#4CC992] font-semibold text-center leading-normal">
-              Privasi Terjamin: Dalam Mode Tamu, tidak ada data identitas yang dikirim ke server.
+            <p className="mt-3 text-[11px] font-mono font-bold text-[#0F6E4E] text-center">
+              Aman & Privat: Mode Tamu tidak menyimpan data pribadimu di server.
             </p>
           </motion.div>
         </div>

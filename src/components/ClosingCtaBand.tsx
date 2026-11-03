@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 interface ClosingCtaBandProps {
-  onOpenTest: () => void;
+  onOpenTest?: () => void;
   onOpenLogin: () => void;
 }
 
@@ -12,46 +13,56 @@ export default function ClosingCtaBand({
   onOpenLogin,
 }: ClosingCtaBandProps) {
   return (
-    <section className="w-full py-24 sm:py-32 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08] relative overflow-hidden bg-[#080A10]">
-      {/* Background Nocturne Aurora Glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-[#5B8DEF]/10 via-[#D2D8F0]/15 to-[#5B8DEF]/10 blur-3xl opacity-70" />
-      </div>
+    <section className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 border-t-2 border-[#141413] bg-[#F0ECE1]">
+      <div className="max-w-6xl mx-auto">
+        <div className="neo-card-lg rounded-3xl bg-[#B8F348] p-8 sm:p-12 lg:p-14 text-[#141413] relative overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Copy */}
+            <div className="lg:col-span-8 space-y-4 text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-white border-2 border-[#141413] shadow-[2px_2px_0px_#141413] text-xs font-mono font-bold text-[#141413] uppercase">
+                SIAP TENTUKAN LANGKAHMU?
+              </div>
 
-      <div className="max-w-4xl mx-auto text-center relative z-10 space-y-6">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-xs font-mono tracking-widest text-[#A3ADC4] uppercase">
-          ✦ MULAI EKSPLORASI SEKARANG
-        </div>
+              <h2 className="font-display font-black text-3xl sm:text-5xl text-[#141413] tracking-tight leading-[1.08]">
+                Jangan Pilih Jurusan Cuma Karena{" "}
+                <span className="inline-block px-3 py-0.5 rounded-xl bg-[#FFBE2E] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1">
+                  Ikut-Ikutan Teman.
+                </span>
+              </h2>
 
-        <h2 className="font-display font-medium text-3xl sm:text-5xl text-[#F4F3F8] tracking-tight leading-[1.15]">
-          Arah masa depanmu dimulai dari{" "}
-          <span className="italic font-normal text-[#D2D8F0]">
-            keputusan yang tepat.
-          </span>
-        </h2>
+              <p className="text-sm sm:text-base text-[#141413]/85 font-semibold max-w-2xl leading-relaxed">
+                Coba kuesioner interaktif 5 menit kami gratis. Bisa langsung tes pakai Mode Tamu Anonim tanpa daftar, atau simpan hasilnya buat bahan ngobrol santai bareng orang tua dan Guru BK.
+              </p>
+            </div>
 
-        <p className="text-sm sm:text-base text-[#8E9AB5] max-w-xl mx-auto leading-relaxed">
-          Ikuti kuesioner terarah 5 menit tanpa biaya registrasi. Temukan pilihan program studi dan kampus rujukan di Bali secara objektif.
-        </p>
+            {/* Right Tactile Keycap Buttons */}
+            <div className="lg:col-span-4 flex flex-col gap-3.5">
+              <Link
+                href="/eksplorasi"
+                className="group w-full inline-flex items-center justify-between gap-4 pl-5 pr-2.5 py-2.5 rounded-2xl bg-[#141413] hover:bg-[#272725] text-white border-2 border-[#141413] shadow-[0_6px_0_#FF5E4D] hover:translate-y-[2px] hover:shadow-[0_4px_0_#FF5E4D] active:translate-y-[6px] active:shadow-none transition-all duration-150 cursor-pointer"
+              >
+                <div className="text-left">
+                  <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#B8F348]">
+                    MODE TAMU / AKUN
+                  </span>
+                  <span className="block font-display font-black text-base leading-tight text-white">
+                    Mulai Tes Sekarang
+                  </span>
+                </div>
+                <span className="w-10 h-10 rounded-xl bg-[#B8F348] text-[#141413] border-2 border-[#141413] flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform font-mono font-bold">
+                  &rarr;
+                </span>
+              </Link>
 
-        {/* Buttons (Nocturne style) */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
-            onClick={onOpenTest}
-            type="button"
-            className="w-full sm:w-auto h-12 sm:h-13 px-8 rounded-full bg-[#F4F3F8] hover:bg-white text-[#080A10] font-sans font-semibold text-sm sm:text-base transition-all duration-200 active:scale-98 shadow-glowPill flex items-center justify-center gap-2"
-          >
-            <span>Mulai Tes Gratis</span>
-            <span className="font-mono text-base">&rarr;</span>
-          </button>
-
-          <button
-            onClick={onOpenLogin}
-            type="button"
-            className="w-full sm:w-auto h-12 sm:h-13 px-7 rounded-full bg-white/[0.06] hover:bg-white/[0.1] border border-white/15 text-[#F4F3F8] font-sans font-medium text-sm sm:text-base transition-all duration-200 active:scale-98 flex items-center justify-center"
-          >
-            Masuk Akun Pembimbing
-          </button>
+              <button
+                onClick={onOpenLogin}
+                type="button"
+                className="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] shadow-[0_5px_0_#141413] hover:translate-y-[2px] hover:shadow-[0_3px_0_#141413] active:translate-y-[5px] active:shadow-none font-display font-extrabold text-xs sm:text-sm flex items-center justify-center transition-all duration-150 cursor-pointer"
+              >
+                Masuk Akun Siswa / Guru BK
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -6,6 +6,7 @@ export interface MajorField {
   group: FieldGroup;
   categoryName: string;
   description: string;
+  vibeTagline: string;
   institutions: {
     name: string;
     level: string;
@@ -14,10 +15,27 @@ export interface MajorField {
   }[];
 }
 
+export interface VibeCardItem {
+  id: string;
+  cardNumber: string;
+  vibeTitle: string;
+  studentQuote: string;
+  activityTags: string[];
+  matchedFieldId: string;
+  matchedMajor: string;
+  matchedCampus: string;
+  matchedLocation: string;
+  matchPercentage: number;
+  group: FieldGroup;
+  accentBg: string;
+  accentText: string;
+}
+
 export const GROUP_CONFIG: Record<
   FieldGroup,
   {
     label: string;
+    shortLabel: string;
     colorHex: string;
     colorDarkText?: string;
     bgClass: string;
@@ -28,43 +46,125 @@ export const GROUP_CONFIG: Record<
   }
 > = {
   teknologi: {
-    label: "Teknologi dan Rancang",
-    colorHex: "#2D6CDF",
-    bgClass: "bg-[#2D6CDF]",
-    borderClass: "border-[#2D6CDF]",
-    textClass: "text-[#2D6CDF]",
-    badgeBg: "bg-[#2D6CDF]/10 dark:bg-[#6C9BFF]/20",
-    badgeText: "text-[#2D6CDF] dark:text-[#6C9BFF]",
+    label: "Teknologi & Rancang Visual",
+    shortLabel: "Teknologi & Visual",
+    colorHex: "#3B66FF",
+    bgClass: "bg-[#3B66FF]",
+    borderClass: "border-[#3B66FF]",
+    textClass: "text-[#3B66FF]",
+    badgeBg: "bg-[#3B66FF]",
+    badgeText: "text-white",
   },
   manusia: {
-    label: "Manusia dan Budaya",
-    colorHex: "#D7263D",
-    bgClass: "bg-[#D7263D]",
-    borderClass: "border-[#D7263D]",
-    textClass: "text-[#D7263D]",
-    badgeBg: "bg-[#D7263D]/10 dark:bg-[#FF5A6B]/20",
-    badgeText: "text-[#D7263D] dark:text-[#FF5A6B]",
+    label: "Manusia, Seni & Budaya",
+    shortLabel: "Manusia & Budaya",
+    colorHex: "#FF5E4D",
+    bgClass: "bg-[#FF5E4D]",
+    borderClass: "border-[#FF5E4D]",
+    textClass: "text-[#FF5E4D]",
+    badgeBg: "bg-[#FF5E4D]",
+    badgeText: "text-white",
   },
   alam: {
-    label: "Alam dan Pangan",
-    colorHex: "#2E9E6B",
-    colorDarkText: "#1F7A52",
-    bgClass: "bg-[#2E9E6B]",
-    borderClass: "border-[#2E9E6B]",
-    textClass: "text-[#1F7A52] dark:text-[#4CC992]",
-    badgeBg: "bg-[#2E9E6B]/15 dark:bg-[#4CC992]/20",
-    badgeText: "text-[#1F7A52] dark:text-[#4CC992]",
+    label: "Alam, Agrikultur & Laut",
+    shortLabel: "Alam & Eco",
+    colorHex: "#1AD598",
+    colorDarkText: "#0F6E4E",
+    bgClass: "bg-[#1AD598]",
+    borderClass: "border-[#1AD598]",
+    textClass: "text-[#0F6E4E]",
+    badgeBg: "bg-[#1AD598]",
+    badgeText: "text-[#141413]",
   },
   usaha: {
-    label: "Usaha dan Layanan",
-    colorHex: "#FFC93C",
-    bgClass: "bg-[#FFC93C]",
-    borderClass: "border-[#FFC93C]",
-    textClass: "text-[#1B1B2F] dark:text-[#FFD25E]",
-    badgeBg: "bg-[#FFC93C]/20 dark:bg-[#FFD25E]/20",
-    badgeText: "text-[#1B1B2F] dark:text-[#FFD25E]",
+    label: "Bisnis Kreatif & Hospitality",
+    shortLabel: "Bisnis & Wisata",
+    colorHex: "#FFBE2E",
+    bgClass: "bg-[#FFBE2E]",
+    borderClass: "border-[#FFBE2E]",
+    textClass: "text-[#141413]",
+    badgeBg: "bg-[#FFBE2E]",
+    badgeText: "text-[#141413]",
   },
 };
+
+export const VIBE_CARDS: VibeCardItem[] = [
+  {
+    id: "vibe-tech",
+    cardNumber: "VIBE #01",
+    vibeTitle: "Ngulik Kode, Bikin Game & Eksperimen AI",
+    studentQuote: "Aku paling betah kalau udah ngoprek web, bikin bot otomatis, atau beresin masalah teknis pakai logika.",
+    activityTags: ["Fullstack Web", "Game Dev", "AI Terapan"],
+    matchedFieldId: "informatika",
+    matchedMajor: "D4 Rekayasa Perangkat Lunak / S1 Informatika",
+    matchedCampus: "Politeknik Negeri Bali (PNB) & SMKN 1 Denpasar",
+    matchedLocation: "Jimbaran & Denpasar Utara",
+    matchPercentage: 96,
+    group: "teknologi",
+    accentBg: "#3B66FF",
+    accentText: "#FFFFFF",
+  },
+  {
+    id: "vibe-creative",
+    cardNumber: "VIBE #02",
+    vibeTitle: "Bikin Konten Visual, UI/UX & Ilustrasi Digital",
+    studentQuote: "Suka banget ngedit video estetik, bikin poster acara sekolah, atau ngerancang tampilan aplikasi yang keren.",
+    activityTags: ["UI/UX Design", "Motion Graphic", "Branding Lokal"],
+    matchedFieldId: "dkv",
+    matchedMajor: "S1 Desain Komunikasi Visual & Multimedia",
+    matchedCampus: "ISI Denpasar & INSTIKI",
+    matchedLocation: "Denpasar Timur & Pusat",
+    matchPercentage: 94,
+    group: "teknologi",
+    accentBg: "#B8F348",
+    accentText: "#141413",
+  },
+  {
+    id: "vibe-biz",
+    cardNumber: "VIBE #03",
+    vibeTitle: "Bangun Brand Lokal, Cafe & Hospitality Bali",
+    studentQuote: "Pengen punya bisnis sendiri di Bali, jago negosiasi, suka ketemu orang baru, dan ngatur strategi sosmed.",
+    activityTags: ["Digital Marketing", "Hospitality", "Brand Builder"],
+    matchedFieldId: "pariwisata",
+    matchedMajor: "D4 Manajemen Bisnis & Perhotelan Internasional",
+    matchedCampus: "Poltekpar Bali Nusa Dua & Undiknas",
+    matchedLocation: "Nusa Dua & Denpasar Selatan",
+    matchPercentage: 93,
+    group: "usaha",
+    accentBg: "#FFBE2E",
+    accentText: "#141413",
+  },
+  {
+    id: "vibe-culture",
+    cardNumber: "VIBE #04",
+    vibeTitle: "Peduli Sesama, Kesehatan & Seni Budaya Bali",
+    studentQuote: "Senang bantu teman curhat, tertarik dunia medis/psikologi, atau aktif ngayah menari dan nabuh gamelan.",
+    activityTags: ["Medical Care", "Psikologi & BK", "Seni Pertunjukan"],
+    matchedFieldId: "kesehatan",
+    matchedMajor: "S1 Keperawatan / Seni Pertunjukan / Konseling",
+    matchedCampus: "Universitas Udayana & Poltekkes Denpasar",
+    matchedLocation: "Denpasar & Singaraja",
+    matchPercentage: 92,
+    group: "manusia",
+    accentBg: "#FF5E4D",
+    accentText: "#FFFFFF",
+  },
+  {
+    id: "vibe-nature",
+    cardNumber: "VIBE #05",
+    vibeTitle: "Eksplorasi Alam, Eco-Tech Subak & Kelautan",
+    studentQuote: "Lebih suka kegiatan lapangan di alam terbuka, peduli isu lingkungan Bali, kopi organik, dan ekosistem laut.",
+    activityTags: ["Smart Subak", "Marine Dive", "Eco-Inovasi"],
+    matchedFieldId: "pertanian",
+    matchedMajor: "S1 Ilmu Kelautan & Agroteknologi Organik",
+    matchedCampus: "Unud Jimbaran & PNB Kampus Tabanan",
+    matchedLocation: "Jimbaran & Tabanan",
+    matchPercentage: 91,
+    group: "alam",
+    accentBg: "#1AD598",
+    accentText: "#141413",
+  },
+];
 
 export const FIELDS: MajorField[] = [
   // 1. Biru: Teknologi dan rancang
@@ -72,8 +172,9 @@ export const FIELDS: MajorField[] = [
     id: "informatika",
     name: "Informatika & Rekayasa Perangkat Lunak",
     group: "teknologi",
-    categoryName: "Teknologi dan Rancang",
-    description: "Mempelajari pengembangan aplikasi web, mobile, sistem informasi database, dan kecerdasan buatan terapan untuk efisiensi UMKM serta layanan publik di Bali.",
+    categoryName: "Teknologi & Rancang Visual",
+    vibeTagline: "Cocok buat yang hobi ngulik coding, bikin aplikasi, dan sistem pintar.",
+    description: "Mempelajari pembuatan aplikasi web, mobile, sistem database, dan kecerdasan buatan terapan untuk efisiensi bisnis lokal maupun startup di Bali.",
     institutions: [
       { name: "Politeknik Negeri Bali (PNB)", level: "D4 Vokasi", location: "Bukit Jimbaran, Badung", accreditation: "Baik Sekali" },
       { name: "Universitas Udayana (Unud)", level: "S1 Akademik", location: "Jimbaran, Badung", accreditation: "Unggul" },
@@ -84,7 +185,8 @@ export const FIELDS: MajorField[] = [
     id: "dkv",
     name: "Desain Komunikasi Visual & Multimedia",
     group: "teknologi",
-    categoryName: "Teknologi dan Rancang",
+    categoryName: "Teknologi & Rancang Visual",
+    vibeTagline: "Pas banget buat kreator visual, desainer UI/UX, dan animator muda.",
     description: "Fokus pada kreasi grafis visual, branding produk lokal, ilustrasi digital, UI/UX desain antarmuka, dan animasi konten kreatif berbasis seni Bali.",
     institutions: [
       { name: "ISI Denpasar", level: "S1 Seni & Desain", location: "Denpasar Timur", accreditation: "Unggul" },
@@ -96,8 +198,9 @@ export const FIELDS: MajorField[] = [
     id: "arsitektur",
     name: "Arsitektur & Desain Ruang Berkelanjutan",
     group: "teknologi",
-    categoryName: "Teknologi dan Rancang",
-    description: "Menggabungkan prinsip arsitektur tradisional Bali (Asta Kosala Kosali) dengan rekayasa bangunan ramah lingkungan dan teknologi CAD modern.",
+    categoryName: "Teknologi & Rancang Visual",
+    vibeTagline: "Buat kamu yang suka merancang ruang estetik, villa tropis, dan bangunan ramah lingkungan.",
+    description: "Menggabungkan prinsip arsitektur tradisional Bali (Asta Kosala Kosali) dengan rekayasa bangunan ramah lingkungan dan teknologi pemodelan 3D modern.",
     institutions: [
       { name: "Universitas Udayana (Unud)", level: "S1 Arsitektur", location: "Jimbaran, Badung", accreditation: "Unggul" },
       { name: "Universitas Warmadewa", level: "S1 Arsitektur", location: "Denpasar", accreditation: "Unggul" },
@@ -110,8 +213,9 @@ export const FIELDS: MajorField[] = [
     id: "kesehatan",
     name: "Kesehatan Komunitas & Keperawatan",
     group: "manusia",
-    categoryName: "Manusia dan Budaya",
-    description: "Mempersiapkan tenaga medis dan perawat terampil untuk mendukung layanan puskesmas, rumah sakit rujukan, dan fasilitas wisata medis (medical tourism) di Bali.",
+    categoryName: "Manusia, Seni & Budaya",
+    vibeTagline: "Jalur tepat buat yang berempati tinggi dan tertarik dunia medis serta wisata kesehatan.",
+    description: "Mempersiapkan tenaga medis dan perawat terampil untuk mendukung layanan rumah sakit rujukan serta fasilitas wisata medis bertaraf internasional di Bali.",
     institutions: [
       { name: "Poltekkes Kemenkes Denpasar", level: "D3 / D4 Kesehatan", location: "Denpasar Selatan", accreditation: "Unggul" },
       { name: "Universitas Udayana", level: "S1 Keperawatan & Kedokteran", location: "Denpasar Barat", accreditation: "Unggul" },
@@ -122,8 +226,9 @@ export const FIELDS: MajorField[] = [
     id: "pendidikan",
     name: "Pendidikan & Bimbingan Konseling",
     group: "manusia",
-    categoryName: "Manusia dan Budaya",
-    description: "Menghasilkan pendidik generasi masa depan dan konselor sekolah yang menguasai psikologi perkembangan anak, pedagogi digital, dan nilai budi pekerti lokal.",
+    categoryName: "Manusia, Seni & Budaya",
+    vibeTagline: "Cocok buat pendengar yang baik, suka berbagi ilmu, dan tertarik psikologi remaja.",
+    description: "Menghasilkan pendidik generasi masa depan dan konselor sekolah yang menguasai psikologi perkembangan anak, teknologi belajar, dan komunikasi empatik.",
     institutions: [
       { name: "Universitas Pendidikan Ganesha (Undiksha)", level: "S1 Kependidikan", location: "Singaraja, Buleleng", accreditation: "Unggul" },
       { name: "Universitas PGRI Mahadewa Indonesia", level: "S1 Bimbingan Konseling", location: "Denpasar", accreditation: "Baik Sekali" },
@@ -133,8 +238,9 @@ export const FIELDS: MajorField[] = [
     id: "budaya",
     name: "Seni Karawitan, Tari & Budaya Bali",
     group: "manusia",
-    categoryName: "Manusia dan Budaya",
-    description: "Pusat pelestarian dan pengembangan seni pertunjukan, tabuh gamelan, sastra lontar, dan tata kelola upacara adat Bali yang diakui dunia.",
+    categoryName: "Manusia, Seni & Budaya",
+    vibeTagline: "Ruang berekspresi buat seniman muda yang ingin membawa tradisi Bali ke panggung dunia.",
+    description: "Pusat pelestarian dan inovasi seni pertunjukan, komposisi gamelan kontemporer, koreografi tari, dan kurasi festival budaya Bali berskala internasional.",
     institutions: [
       { name: "Institut Seni Indonesia (ISI) Denpasar", level: "S1 Seni Pertunjukan", location: "Denpasar Timur", accreditation: "Unggul" },
       { name: "SMKN 3 Sukawati (KOKAR)", level: "SMK Seni Musik & Tari", location: "Batubulan, Gianyar", accreditation: "A (Unggul)" },
@@ -146,8 +252,9 @@ export const FIELDS: MajorField[] = [
     id: "pertanian",
     name: "Pertanian Organik & Agroteknologi Subak",
     group: "alam",
-    categoryName: "Alam dan Pangan",
-    description: "Inovasi budidaya tanaman pangan dan hortikultura bebas pestisida kimia yang memperkuat kearifan sistem irigasi Subak Bali dan rantai pasok hotel/restoran.",
+    categoryName: "Alam, Agrikultur & Laut",
+    vibeTagline: "Buat inovator hijau yang ingin memadukan teknologi pertanian modern dengan Subak Bali.",
+    description: "Inovasi budidaya tanaman pangan, kopi, dan hortikultura organik yang memperkuat ekosistem Subak Bali serta menyuplai kebutuhan hotel dan restoran premium.",
     institutions: [
       { name: "Universitas Udayana", level: "S1 Agroteknologi & Agribisnis", location: "Jimbaran / Denpasar", accreditation: "Unggul" },
       { name: "Politeknik Negeri Bali (Kampus Tabanan)", level: "D4 Pengelolaan Tanaman", location: "Tabanan", accreditation: "Baik Sekali" },
@@ -158,8 +265,9 @@ export const FIELDS: MajorField[] = [
     id: "lingkungan",
     name: "Ilmu Kelautan & Pengelolaan Lingkungan",
     group: "alam",
-    categoryName: "Alam dan Pangan",
-    description: "Konservasi ekosistem terumbu karang pesisir Bali, manajemen pengolahan sampah sirkular, dan mitigasi perubahan iklim di pulau tropis.",
+    categoryName: "Alam, Agrikultur & Laut",
+    vibeTagline: "Pas buat pencinta laut, penyelam, dan penggerak solusi daur ulang lingkungan Bali.",
+    description: "Konservasi ekosistem terumbu karang pesisir Bali, manajemen pengolahan limbah sirkular, dan teknologi energi bersih untuk masa depan pulau tropis.",
     institutions: [
       { name: "Universitas Udayana", level: "S1 Ilmu Kelautan & Manajemen Sumberdaya", location: "Jimbaran, Badung", accreditation: "Unggul" },
       { name: "Universitas Warmadewa", level: "S1 Manajemen Lingkungan", location: "Denpasar", accreditation: "Baik Sekali" },
@@ -172,8 +280,9 @@ export const FIELDS: MajorField[] = [
     id: "bisnis",
     name: "Bisnis Digital & Manajemen E-Commerce",
     group: "usaha",
-    categoryName: "Usaha dan Layanan",
-    description: "Mempelajari strategi pemasaran digital, manajemen keuangan toko online, logistik terpadu, dan kewirausahaan mandiri untuk produk kerajinan serta kopi Bali.",
+    categoryName: "Bisnis Kreatif & Hospitality",
+    vibeTagline: "Buat calon founder muda yang suka jualan kreatif, bangun brand, dan kelola bisnis digital.",
+    description: "Mempelajari strategi pemasaran kreatif, manajemen finansial startup, e-commerce global, dan pengembangan bisnis lokal Bali agar menembus pasar ekspor.",
     institutions: [
       { name: "Politeknik Negeri Bali (PNB)", level: "D4 Manajemen Bisnis Internasional", location: "Jimbaran, Badung", accreditation: "Unggul" },
       { name: "Universitas Pendidikan Nasional (Undiknas)", level: "S1 Manajemen Bisnis", location: "Denpasar Selatan", accreditation: "Unggul" },
@@ -184,8 +293,9 @@ export const FIELDS: MajorField[] = [
     id: "pariwisata",
     name: "Manajemen Perhotelan & Ekowisata Berkelanjutan",
     group: "usaha",
-    categoryName: "Usaha dan Layanan",
-    description: "Tata kelola akomodasi wisata berstandar internasional, kurasi pengalaman desa wisata lokal, dan pelayanan keramahan (hospitality) khas Bali berprinsip Tri Hita Karana.",
+    categoryName: "Bisnis Kreatif & Hospitality",
+    vibeTagline: "Karier global di resort bintang lima, event organizer internasional, dan desa wisata kreatif.",
+    description: "Tata kelola resort dan perhotelan berstandar global, manajemen acara internasional, serta kurasi pengalaman wisata berkelanjutan khas Bali.",
     institutions: [
       { name: "Politeknik Pariwisata Bali (Poltekpar)", level: "D3 / D4 Perhotelan", location: "Nusa Dua, Badung", accreditation: "Unggul" },
       { name: "Politeknik Negeri Bali (PNB)", level: "D4 Pengelolaan Perhotelan", location: "Jimbaran, Badung", accreditation: "Unggul" },

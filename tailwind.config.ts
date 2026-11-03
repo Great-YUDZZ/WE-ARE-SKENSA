@@ -10,47 +10,41 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Nocturne Dark Luxury Palette (matching reference photo)
-        nocturne: {
-          bg: "#080A10",
-          canvas: "#0B0E17",
-          surface: "#0D101A",
-          surfaceElevated: "#121624",
-          border: "rgba(255, 255, 255, 0.08)",
-          borderHover: "rgba(255, 255, 255, 0.18)",
-          text: "#F4F3F8",
-          muted: "#8E9AB5",
-          subtle: "#5E687E",
-          accent: "#D2D8F0",
+        neo: {
+          canvas: "#FAF7F2",
+          surface: "#FFFFFF",
+          oat: "#F0ECE1",
+          ink: "#141413",
+          muted: "#52514E",
+          lime: "#B8F348",
+          coral: "#FF5E4D",
+          cobalt: "#3B66FF",
+          amber: "#FFBE2E",
+          mint: "#1AD598",
         },
-        // Semantic Token Rules adapted for Nocturne
         kmRed: {
-          light: "#D7263D",
+          light: "#FF5E4D",
           dark: "#FF5A6B",
         },
         kmYellow: {
-          light: "#FFC93C",
+          light: "#FFBE2E",
           dark: "#FFD25E",
         },
         kmBlue: {
-          light: "#2D6CDF",
+          light: "#3B66FF",
           dark: "#6C9BFF",
         },
         kmGreen: {
-          light: "#2E9E6B",
-          darkText: "#1F7A52",
+          light: "#1AD598",
+          darkText: "#0F6E4E",
           dark: "#4CC992",
         },
         kmNeutral: {
-          latar: "#FFFDF8",
+          latar: "#FAF7F2",
           surface: "#FFFFFF",
-          tinta: "#1B1B2F",
-          sekunder: "#5A5A70",
-          garis: "#E6E1D6",
-          darkLatar: "#14141F",
-          darkPermukaan: "#1F1F2E",
-          darkTeks: "#F4F2EA",
-          darkSekunder: "#A8A8BA",
+          tinta: "#141413",
+          sekunder: "#52514E",
+          garis: "#141413",
         },
       },
       fontFamily: {
@@ -60,9 +54,9 @@ const config: Config = {
         mono: ["JetBrains Mono", "Menlo", "monospace"],
       },
       boxShadow: {
-        crisp: "0 1px 3px rgba(0, 0, 0, 0.4)",
-        glowPill: "0 4px 24px rgba(244, 243, 248, 0.15)",
-        nocturneCard: "0 10px 40px -10px rgba(0, 0, 0, 0.6)",
+        neoSm: "3px 3px 0px #141413",
+        neoMd: "4px 4px 0px #141413",
+        neoLg: "6px 6px 0px #141413",
       },
     },
   },

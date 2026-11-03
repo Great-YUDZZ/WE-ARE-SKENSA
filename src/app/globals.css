@@ -1,29 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-bg: #080A10;
-  --color-canvas: #0B0E17;
-  --color-surface: #0D101A;
-  --color-surface-elevated: #121624;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-ink: #F4F3F8;
-  --color-secondary: #8E9AB5;
-  --color-subtle: #5E687E;
-  
-  --color-red: #F26676;
-  --color-yellow: #F7C95C;
-  --color-blue: #5B8DEF;
-  --color-green: #4ED69E;
-  --color-green-dark: #4ED69E;
+  --bg-canvas: #FAF7F2;
+  --bg-surface: #FFFFFF;
+  --bg-oat: #F0ECE1;
+  --ink-primary: #141413;
+  --ink-secondary: #52514E;
+  --pop-lime: #B8F348;
+  --pop-coral: #FF5E4D;
+  --pop-cobalt: #3B66FF;
+  --pop-amber: #FFBE2E;
+  --pop-mint: #1AD598;
 }
 
 body {
-  background-color: #080A10;
-  color: #F4F3F8;
+  background-color: #FAF7F2;
+  color: #141413;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   margin: 0;
@@ -33,17 +29,91 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Atmospheric Cosmic Glow (Nocturne Aurora) */
-.nocturne-ambient {
-  background: 
-    radial-gradient(ellipse 65% 35% at 35% 20%, rgba(135, 160, 220, 0.12) 0%, transparent 65%),
-    radial-gradient(ellipse 55% 45% at 75% 30%, rgba(100, 125, 185, 0.09) 0%, transparent 60%),
-    radial-gradient(circle 800px at 50% -100px, rgba(160, 180, 235, 0.15), transparent 70%),
-    #080A10;
+/* Tactile Neo-Pop Dot Grid Canvas */
+.neopop-canvas {
+  background-color: #FAF7F2;
+  background-image: radial-gradient(#141413 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 0 0;
 }
 
-/* Antislop tactile focus states */
+.neopop-canvas-subtle {
+  background-color: #FAF7F2;
+  background-image: radial-gradient(rgba(20, 20, 19, 0.14) 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
+}
+
+/* Tactile Physical Card & Sticker Utilities */
+.neo-card {
+  background-color: #FFFFFF;
+  border: 2px solid #141413;
+  box-shadow: 4px 4px 0px #141413;
+}
+
+.neo-card-lg {
+  background-color: #FFFFFF;
+  border: 2.5px solid #141413;
+  box-shadow: 6px 6px 0px #141413;
+}
+
+.neo-card-sm {
+  background-color: #FFFFFF;
+  border: 2px solid #141413;
+  box-shadow: 3px 3px 0px #141413;
+}
+
+.neo-btn {
+  border: 2px solid #141413;
+  box-shadow: 4px 4px 0px #141413;
+  transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 120ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 120ms ease;
+}
+
+.neo-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px #141413;
+}
+
+.neo-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px #141413;
+}
+
+.neo-badge {
+  border: 2px solid #141413;
+  box-shadow: 2px 2px 0px #141413;
+}
+
+/* Custom Hardware Equalizer Range Slider */
+input[type="range"].neo-fader {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid #141413;
+  background: #F0ECE1;
+  cursor: pointer;
+}
+
+input[type="range"].neo-fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #141413;
+  border: 2px solid #FFFFFF;
+  box-shadow: 2px 2px 0px rgba(20, 20, 19, 0.4);
+  cursor: grab;
+  transition: transform 0.1s ease;
+}
+
+input[type="range"].neo-fader::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.08);
+}
+
+/* Tactile focus states */
 button:focus-visible, a:focus-visible, input:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline: 2px solid #3B66FF;
   outline-offset: 2px;
 }
