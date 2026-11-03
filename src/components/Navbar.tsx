@@ -59,10 +59,10 @@ export default function Navbar({
               Katalog Kampus
             </Link>
             <Link
-              href="/#simulator"
+              href="/#peta-kampus"
               className="px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors"
             >
-              Equalizer
+              Radar Peta Bali
             </Link>
             <Link
               href="/ai-navigator"
@@ -142,11 +142,11 @@ export default function Navbar({
               Katalog Kampus &amp; SMK
             </Link>
             <Link
-              href="/#simulator"
+              href="/#peta-kampus"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
             >
-              Equalizer Minat
+              Radar Peta Bali
             </Link>
             <Link
               href="/ai-navigator"

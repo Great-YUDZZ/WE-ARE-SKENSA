@@ -630,8 +630,8 @@ export default function AiNavigatorPage() {
             <Link href="/katalog" className="hover:text-[#141413] underline">
               Katalog Kampus & SMK
             </Link>
-            <Link href="/#simulator" className="hover:text-[#141413] underline">
-              Simulasi Bobot
+            <Link href="/#peta-kampus" className="hover:text-[#141413] underline">
+              Radar Peta Bali
             </Link>
           </div>
         </div>

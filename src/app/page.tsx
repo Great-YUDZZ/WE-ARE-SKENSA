@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import BaliInteractiveMap from "@/components/BaliInteractiveMap";
-import HowItWorksSection from "@/components/HowItWorksSection";
-import PrioritySimulatorSection from "@/components/PrioritySimulatorSection";
 import ClosingCtaBand from "@/components/ClosingCtaBand";
 import LoginModal from "@/components/LoginModal";
 
@@ -194,13 +192,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SECTION 2: ASYMMETRIC BENTO STUDIO (4 Steps) */}
-        <HowItWorksSection />
-
-        {/* SECTION 3: TACTILE STUDIO EQUALIZER (Priority Simulator + 4 Boundary States) */}
-        <PrioritySimulatorSection onOpenTest={handleOpenTest} />
-
-        {/* SECTION 4: GOOGLE MAPS BALI CONSOLE FRAME */}
+        {/* SECTION 2: GOOGLE MAPS BALI CONSOLE FRAME */}
         <section
           id="peta-kampus"
           className="py-16 sm:py-24 border-t-2 border-[#141413] bg-white scroll-mt-20"
