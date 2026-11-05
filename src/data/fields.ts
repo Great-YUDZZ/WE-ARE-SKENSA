@@ -182,6 +182,18 @@ export const FIELDS: MajorField[] = [
     ],
   },
   {
+    id: "tkj",
+    name: "Teknik Jaringan Komputer, Telekomunikasi & Cloud (TKJ / TJKT)",
+    group: "teknologi",
+    categoryName: "Teknologi dan Rancang",
+    description: "Mempelajari arsitektur jaringan komputer (Cisco CCNA & MikroTik MTCNA), infrastruktur fiber optik, administrasi server Linux/Cloud, dan keamanan siber untuk konektivitas perhotelan serta instansi di Bali.",
+    institutions: [
+      { name: "SMKN 1 Denpasar (SKENSA)", level: "SMK TJKT", location: "Denpasar Utara", accreditation: "A (Unggul)" },
+      { name: "Politeknik Negeri Bali (PNB)", level: "D3 / D4 Teknik Komputer & Jaringan", location: "Bukit Jimbaran, Badung", accreditation: "Baik Sekali" },
+      { name: "Universitas Pendidikan Ganesha (Undiksha)", level: "S1 Pendidikan Teknik Informatika", location: "Singaraja, Buleleng", accreditation: "Unggul" },
+    ],
+  },
+  {
     id: "dkv",
     name: "Desain Komunikasi Visual & Multimedia",
     group: "teknologi",
