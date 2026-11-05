@@ -78,17 +78,20 @@ export default function PrioritySimulatorSection({ onOpenTest }: PrioritySimulat
     .sort((a, b) => b.compositeScore - a.compositeScore);
 
   return (
-    <section id="simulator" className="py-20 sm:py-28 border-t border-white/[0.06] bg-[#080A10] text-[#F4F3F8] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section
+      id="simulator"
+      className="w-full min-h-screen flex flex-col justify-center py-24 sm:py-32 border-t border-white/[0.06] bg-[#080A10] text-[#F4F3F8] transition-colors scroll-mt-16"
+    >
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="max-w-3xl mb-14 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-medium tracking-widest uppercase bg-white/[0.05] text-[#A3ADC4] border border-white/10 mb-4">
+        <div className="max-w-3xl mb-14 sm:mb-18">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-medium tracking-widest uppercase bg-white/[0.05] text-[#A3ADC4] border border-white/10 mb-5">
             ✦ SIMULASI PRIORITAS KEPUTUSAN
           </div>
-          <h2 className="font-display font-medium text-3xl sm:text-4xl text-[#F4F3F8] tracking-tight">
+          <h2 className="font-display font-medium text-3xl sm:text-5xl text-[#F4F3F8] tracking-tight leading-tight">
             Seimbangkan Faktor Minat, Jarak, dan Biaya
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-[#8E9AB5] leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg text-[#8E9AB5] leading-relaxed">
             Setiap keluarga memiliki pertimbangan yang berbeda. Geser slider prioritas di bawah untuk melihat bagaimana algoritma KertaMarga menyeimbangkan ketiga faktor secara transparan.
           </p>
         </div>
@@ -96,12 +99,12 @@ export default function PrioritySimulatorSection({ onOpenTest }: PrioritySimulat
         {/* 2-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Sliders */}
-          <div className="lg:col-span-5 p-6 rounded-2xl bg-[#0D101A] border border-white/[0.08] space-y-6">
-            <div className="border-b border-white/[0.08] pb-3">
-              <h3 className="font-display font-medium text-lg text-[#F4F3F8]">
+          <div className="lg:col-span-5 p-7 sm:p-8 rounded-2xl bg-[#0D101A] border border-white/[0.08] space-y-6">
+            <div className="border-b border-white/[0.08] pb-4">
+              <h3 className="font-display font-medium text-xl text-[#F4F3F8]">
                 Parameter Bobot Siswa
               </h3>
-              <p className="text-xs text-[#8E9AB5]">
+              <p className="text-xs sm:text-sm text-[#8E9AB5] mt-1">
                 Geser nilai sesuai preferensi kesiapan Anda.
               </p>
             </div>

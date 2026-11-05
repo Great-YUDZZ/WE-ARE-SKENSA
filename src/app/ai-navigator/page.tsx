@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
 
 interface RecommendationResult {
+  fieldId: string;
   title: string;
   campusOrSchool: string;
   badgeType: "Teknologi" | "Manusia" | "Alam" | "Usaha";
@@ -25,10 +27,10 @@ const PRESET_PROMPTS = [
 ];
 
 export default function AiNavigatorPage() {
+  const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [query, setQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [selectedTarget, setSelectedTarget] = useState<"smk" | "kuliah">("kuliah");
   const [isLoading, setIsLoading] = useState(false);
   const [activeResult, setActiveResult] = useState<RecommendationResult[] | null>(null);
@@ -43,6 +45,16 @@ export default function AiNavigatorPage() {
     setIsLoginModalOpen(true);
   };
 
+  const handleProceedToTest = (_isAnonymous: boolean, selectedInterests?: string[]) => {
+    setIsLoginModalOpen(false);
+    const params = new URLSearchParams();
+    if (selectedInterests && selectedInterests.length > 0) {
+      params.set("interests", selectedInterests.join(","));
+    }
+    const qs = params.toString();
+    router.push(qs ? `/tes-keminatan?${qs}` : "/tes-keminatan");
+  };
+
   const handleAnalyze = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
@@ -55,90 +67,171 @@ export default function AiNavigatorPage() {
       const qLower = query.toLowerCase();
       let results: RecommendationResult[] = [];
 
-      if (qLower.includes("coding") || qLower.includes("it") || qLower.includes("desain") || qLower.includes("ui") || qLower.includes("software") || qLower.includes("rpl")) {
+      if (
+        qLower.includes("coding") ||
+        qLower.includes("it") ||
+        qLower.includes("desain") ||
+        qLower.includes("ui") ||
+        qLower.includes("software") ||
+        qLower.includes("rpl")
+      ) {
         results = [
           {
+            fieldId: "informatika",
             title: "Teknik Informatika & Rekayasa Perangkat Lunak",
             campusOrSchool: "Politeknik Negeri Bali (PNB) - Jimbaran",
             badgeType: "Teknologi",
             matchScore: 96,
             accreditation: "Unggul (BAN-PT)",
-            reason: "Kurikulum vokasi berbasis praktik industri 70% dengan laboratorium cloud & software house terpadu. Sangat selaras dengan minat teknis terapan.",
-            careerOutlooks: ["Frontend / Full-stack Developer", "UI/UX Product Designer", "Mobile App Engineer"],
-            skillsToImprove: ["JavaScript / TypeScript", "Figma Design System", "Dasar Algoritma & Database"],
-            localBaliAdvantage: "Peluang karir remote internasional di Bali Digital Nomad Hub (Canggu/Sanur) dan digitalisasi UMKM Bali.",
+            reason:
+              "Kurikulum vokasi berbasis praktik industri 70% dengan laboratorium cloud & software house terpadu. Sangat selaras dengan minat teknis terapan.",
+            careerOutlooks: [
+              "Frontend / Full-stack Developer",
+              "UI/UX Product Designer",
+              "Mobile App Engineer",
+            ],
+            skillsToImprove: [
+              "JavaScript / TypeScript",
+              "Figma Design System",
+              "Dasar Algoritma & Database",
+            ],
+            localBaliAdvantage:
+              "Peluang karir remote internasional di Bali Digital Nomad Hub (Canggu/Sanur) dan digitalisasi UMKM Bali.",
           },
           {
+            fieldId: "informatika",
             title: "Informatika / Ilmu Komputer",
             campusOrSchool: "Universitas Udayana (Unud) - Jimbaran",
             badgeType: "Teknologi",
             matchScore: 91,
             accreditation: "Unggul (BAN-PT)",
-            reason: "Fondasi teoritis dan riset AI yang kuat, jaringan alumni akademik terluas di Bali, serta fasilitas inkubator bisnis teknologi kampus.",
+            reason:
+              "Fondasi teoritis dan riset AI yang kuat, jaringan alumni akademik terluas di Bali, serta fasilitas inkubator bisnis teknologi kampus.",
             careerOutlooks: ["AI Specialist", "Software Architect", "Data Analyst"],
-            skillsToImprove: ["Struktur Data", "Matematika Diskrit", "Machine Learning Fundamentals"],
-            localBaliAdvantage: "Riset sistem cerdas pelestarian aksara Bali dan monitoring lingkungan pulau cerdas.",
+            skillsToImprove: [
+              "Struktur Data",
+              "Matematika Diskrit",
+              "Machine Learning Fundamentals",
+            ],
+            localBaliAdvantage:
+              "Riset sistem cerdas pelestarian aksara Bali dan monitoring lingkungan pulau cerdas.",
           },
           {
+            fieldId: "informatika",
             title: "Rekayasa Perangkat Lunak & Game",
             campusOrSchool: "SMK Negeri 1 Denpasar (SKENSA)",
             badgeType: "Teknologi",
             matchScore: 89,
             accreditation: "A (BAN-SM / SMK Pusat Keunggulan)",
-            reason: "Fasilitas lab komputer terlengkap, Teaching Factory aktif dengan mitra industri DUDI terkemuka, dan sertifikasi BNSP berstandar nasional.",
-            careerOutlooks: ["Junior Web Programmer", "Game Asset Creator", "Quality Assurance Tester"],
+            reason:
+              "Fasilitas lab komputer terlengkap, Teaching Factory aktif dengan mitra industri DUDI terkemuka, dan sertifikasi BNSP berstandar nasional.",
+            careerOutlooks: [
+              "Junior Web Programmer",
+              "Game Asset Creator",
+              "Quality Assurance Tester",
+            ],
             skillsToImprove: ["HTML/CSS/JS", "Git Version Control", "Logika Pemrograman Dasar"],
-            localBaliAdvantage: "Kerjasama penempatan magang di puluhan perusahaan teknologi dan agensi kreatif di Denpasar.",
+            localBaliAdvantage:
+              "Kerjasama penempatan magang di puluhan perusahaan teknologi dan agensi kreatif di Denpasar.",
           },
         ];
-      } else if (qLower.includes("pariwisata") || qLower.includes("hotel") || qLower.includes("wisata") || qLower.includes("kuliner")) {
+      } else if (
+        qLower.includes("pariwisata") ||
+        qLower.includes("hotel") ||
+        qLower.includes("wisata") ||
+        qLower.includes("kuliner")
+      ) {
         results = [
           {
+            fieldId: "pariwisata",
             title: "Manajemen Perhotelan & Ekowisata Berkelanjutan",
             campusOrSchool: "Politeknik Pariwisata Bali (Poltekpar) - Nusa Dua",
             badgeType: "Usaha",
             matchScore: 95,
             accreditation: "Unggul (BAN-PT / TedQual Internasional)",
-            reason: "Institusi pendidikan pariwisata berstandar global di bawah Kemenparekraf dengan jejaring jaringan hotel bintang lima se-dunia.",
-            careerOutlooks: ["Hospitality Operations Manager", "Sustainable Tourism Consultant", "Event & MICE Planner"],
-            skillsToImprove: ["Komunikasi Bahasa Asing", "Customer Experience Management", "Etika Pelayanan Budaya"],
-            localBaliAdvantage: "Ekosistem pariwisata budaya Bali yang memimpin industri MICE dan resort dunia.",
+            reason:
+              "Institusi pendidikan pariwisata berstandar global di bawah Kemenparekraf dengan jejaring jaringan hotel bintang lima se-dunia.",
+            careerOutlooks: [
+              "Hospitality Operations Manager",
+              "Sustainable Tourism Consultant",
+              "Event & MICE Planner",
+            ],
+            skillsToImprove: [
+              "Komunikasi Bahasa Asing",
+              "Customer Experience Management",
+              "Etika Pelayanan Budaya",
+            ],
+            localBaliAdvantage:
+              "Ekosistem pariwisata budaya Bali yang memimpin industri MICE dan resort dunia.",
           },
           {
+            fieldId: "bisnis",
             title: "Bisnis Digital & Manajemen E-Commerce",
             campusOrSchool: "Undiknas Denpasar",
             badgeType: "Usaha",
             matchScore: 88,
             accreditation: "Unggul (BAN-PT)",
-            reason: "Kombinasi bisnis modern dan teknologi digital untuk menggerakkan sektor pariwisata pintar serta ekosistem startup lokal.",
-            careerOutlooks: ["Digital Marketing Strategist", "E-Commerce Manager", "Business Development Executive"],
-            skillsToImprove: ["Analitik Data Pemasaran", "SEO & Copywriting", "Manajemen Kampanye Digital"],
-            localBaliAdvantage: "Pusat inkubasi bisnis kreatif anak muda Bali dengan pendanaan investor mitra.",
+            reason:
+              "Kombinasi bisnis modern dan teknologi digital untuk menggerakkan sektor pariwisata pintar serta ekosistem startup lokal.",
+            careerOutlooks: [
+              "Digital Marketing Strategist",
+              "E-Commerce Manager",
+              "Business Development Executive",
+            ],
+            skillsToImprove: [
+              "Analitik Data Pemasaran",
+              "SEO & Copywriting",
+              "Manajemen Kampanye Digital",
+            ],
+            localBaliAdvantage:
+              "Pusat inkubasi bisnis kreatif anak muda Bali dengan pendanaan investor mitra.",
           },
         ];
       } else {
         results = [
           {
+            fieldId: "dkv",
             title: "Desain Komunikasi Visual & Media Digital",
             campusOrSchool: "Institut Seni Indonesia (ISI) Denpasar",
             badgeType: "Manusia",
             matchScore: 93,
             accreditation: "Unggul (BAN-PT)",
-            reason: "Penggabungan estetika seni budaya Bali adiluhung dengan teknologi visual kontemporer (animasi, branding, dan digital art).",
-            careerOutlooks: ["Creative Director", "Digital Illustrator & Animator", "Brand Identity Specialist"],
-            skillsToImprove: ["Prinsip Tipografi & Komposisi", "Software Vektor & Ilustrasi", "Apresiasi Seni Tradisi"],
-            localBaliAdvantage: "Kekayaan ornamen, filosofi warna, dan seni visual Bali yang memiliki daya pikat global.",
+            reason:
+              "Penggabungan estetika seni budaya Bali adiluhung dengan teknologi visual kontemporer (animasi, branding, dan digital art).",
+            careerOutlooks: [
+              "Creative Director",
+              "Digital Illustrator & Animator",
+              "Brand Identity Specialist",
+            ],
+            skillsToImprove: [
+              "Prinsip Tipografi & Komposisi",
+              "Software Vektor & Ilustrasi",
+              "Apresiasi Seni Tradisi",
+            ],
+            localBaliAdvantage:
+              "Kekayaan ornamen, filosofi warna, dan seni visual Bali yang memiliki daya pikat global.",
           },
           {
+            fieldId: "pertanian",
             title: "Pertanian Organik & Agroteknologi Subak",
             campusOrSchool: "Fakultas Pertanian Universitas Udayana - Denpasar",
             badgeType: "Alam",
             matchScore: 90,
             accreditation: "Unggul (BAN-PT)",
-            reason: "Riset kedaulatan pangan pulau Bali yang memadukan sistem irigasi warisan dunia Subak dengan teknologi sensor IoT presisi tinggi.",
-            careerOutlooks: ["Smart Farming Consultant", "Manajer Agribisnis Organik", "Peneliti Konservasi Sumber Daya"],
-            skillsToImprove: ["Dasar Agroklimatologi", "Manajemen Irigasi Presisi", "Analisis Rantai Pasok Pangan"],
-            localBaliAdvantage: "Menjaga kelestarian sawah dan budaya Subak Bali melalui inovasi pertanian modern bernilai tinggi.",
+            reason:
+              "Riset kedaulatan pangan pulau Bali yang memadukan sistem irigasi warisan dunia Subak dengan teknologi sensor IoT presisi tinggi.",
+            careerOutlooks: [
+              "Smart Farming Consultant",
+              "Manajer Agribisnis Organik",
+              "Peneliti Konservasi Sumber Daya",
+            ],
+            skillsToImprove: [
+              "Dasar Agroklimatologi",
+              "Manajemen Irigasi Presisi",
+              "Analisis Rantai Pasok Pangan",
+            ],
+            localBaliAdvantage:
+              "Menjaga kelestarian sawah dan budaya Subak Bali melalui inovasi pertanian modern bernilai tinggi.",
           },
         ];
       }
@@ -154,39 +247,48 @@ export default function AiNavigatorPage() {
       <Navbar
         onOpenLogin={handleOpenLogin}
         onOpenRegister={handleOpenRegister}
-        onOpenTest={handleOpenRegister}
+        onOpenTest={() => router.push("/tes-keminatan")}
       />
 
-      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center">
         {/* Breadcrumb & Navigation */}
-        <div className="flex items-center gap-2 text-xs font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mb-6">
-          <Link href="/" className="hover:text-kmNeutral-tinta dark:hover:text-white transition-colors">
-            Beranda
+        <div className="flex items-center justify-between gap-2 text-xs sm:text-sm font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mb-8">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="hover:text-kmNeutral-tinta dark:hover:text-white transition-colors">
+              Beranda
+            </Link>
+            <span>/</span>
+            <span className="text-[#1F7A52] dark:text-[#4CC992] font-bold">
+              AI Navigator Khusus
+            </span>
+          </div>
+
+          <Link
+            href="/tes-keminatan"
+            className="px-4 py-2 rounded-lg bg-[#FFC93C] hover:bg-[#F5BF2E] text-[#1B1B2F] font-sans font-bold text-xs sm:text-sm transition-colors"
+          >
+            Isi Survey Tes Keminatan Siswa &rarr;
           </Link>
-          <span>/</span>
-          <span className="text-[#1F7A52] dark:text-[#4CC992] font-bold">
-            AI Navigator Khusus
-          </span>
         </div>
 
         {/* Header Hero Section */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/30 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-[#2E9E6B] animate-pulse" />
-            <span>KERTAMARGA AI NAVIGATOR • BALI DIGIFEST 2026</span>
+        <div className="text-center max-w-4xl mx-auto space-y-5">
+          <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full text-xs sm:text-sm font-mono font-bold bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/30 shadow-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#2E9E6B] animate-pulse" />
+            <span>KERTAMARGA AI NAVIGATOR &bull; BALI DIGIFEST 2026</span>
           </div>
 
-          <h1 className="font-serif font-bold text-3xl sm:text-5xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks tracking-tight leading-tight">
+          <h1 className="font-serif font-bold text-4xl sm:text-6xl lg:text-7xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks tracking-tight leading-tight">
             Konsultasi Penjurusan & Karier AI
           </h1>
 
-          <p className="text-sm sm:text-base text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder max-w-3xl mx-auto leading-relaxed">
             Ajukan pertanyaan tentang minat, bakat, kebingungan memilih kampus/SMK di Bali, atau bandingkan prospek karier masa depan dengan analisis objektif data resmi PDDIKTI dan BAN-PT.
           </p>
         </div>
 
         {/* Interactive Query Box */}
-        <div className="mt-10 bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-5 sm:p-7 shadow-sm">
+        <div className="mt-10 bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-9 shadow-sm">
           {/* Target Filters */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
             <div className="flex items-center gap-2 text-xs font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
@@ -252,7 +354,7 @@ export default function AiNavigatorPage() {
                     }}
                     className="text-xs px-3 py-1.5 rounded-lg bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar hover:bg-[#FFC93C]/20 border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#FFC93C] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder hover:text-kmNeutral-tinta dark:hover:text-white text-left transition-colors cursor-pointer"
                   >
-                    "{promptText}"
+                    &ldquo;{promptText}&rdquo;
                   </button>
                 ))}
               </div>
@@ -335,7 +437,9 @@ export default function AiNavigatorPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${badgeColor}`}>
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${badgeColor}`}
+                        >
                           {res.badgeType}
                         </span>
                         <span className="text-xs font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
@@ -344,7 +448,9 @@ export default function AiNavigatorPage() {
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-mono text-kmNeutral-sekunder">Kecocokan AI:</span>
+                        <span className="text-xs font-mono text-kmNeutral-sekunder">
+                          Kecocokan AI:
+                        </span>
                         <span className="font-mono font-bold text-sm text-[#1F7A52] dark:text-[#4CC992]">
                           {res.matchScore}%
                         </span>
@@ -407,6 +513,19 @@ export default function AiNavigatorPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Link to Survey / Mentor Result Page */}
+                    <div className="pt-3 border-t border-kmNeutral-garis dark:border-[#2E2E42] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <span className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                        Ingin menguji kesiapan nilai dan bimbingan sertifikasi pada prodi ini?
+                      </span>
+                      <Link
+                        href={`/tes-keminatan?field=${res.fieldId}`}
+                        className="h-9 px-4 rounded-lg bg-[#2D6CDF] hover:bg-[#2256B8] text-white font-sans font-bold text-xs transition-colors flex items-center justify-center shrink-0"
+                      >
+                        Ikuti Survey Kesiapan Prodi Ini &rarr;
+                      </Link>
+                    </div>
                   </div>
                 );
               })}
@@ -424,7 +543,7 @@ export default function AiNavigatorPage() {
               Belum Ada Analisis yang Berjalan
             </h3>
             <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-1 max-w-md mx-auto">
-              Pilih salah satu contoh topik cepat di atas atau ketik langsung pertanyaan peminatan jurusan Anda, lalu tekan tombol "Analisis Rekomendasi AI".
+              Pilih salah satu contoh topik cepat di atas atau ketik langsung pertanyaan peminatan jurusan Anda, lalu tekan tombol &ldquo;Analisis Rekomendasi AI&rdquo;.
             </p>
           </div>
         )}
@@ -466,7 +585,7 @@ export default function AiNavigatorPage() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
-        onProceedToTest={() => setIsLoginModalOpen(false)}
+        onProceedToTest={handleProceedToTest}
         initialMode={authMode}
       />
     </div>

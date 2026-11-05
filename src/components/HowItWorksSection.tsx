@@ -48,50 +48,53 @@ const STEPS: StepItem[] = [
 
 export default function HowItWorksSection() {
   return (
-    <section id="cara-kerja" className="py-20 sm:py-28 border-t border-white/[0.06] bg-[#0B0E17] text-[#F4F3F8] transition-colors relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section
+      id="cara-kerja"
+      className="w-full min-h-screen flex flex-col justify-center py-24 sm:py-32 border-t border-white/[0.06] bg-[#0B0E17] text-[#F4F3F8] transition-colors relative scroll-mt-16"
+    >
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="max-w-3xl mb-14 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-medium tracking-widest uppercase bg-white/[0.05] text-[#A3ADC4] border border-white/10 mb-4">
+        <div className="max-w-3xl mb-14 sm:mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-mono font-medium tracking-widest uppercase bg-white/[0.05] text-[#A3ADC4] border border-white/10 mb-5">
             ✦ ALUR NAVIGASI TERSTRUKTUR
           </div>
-          <h2 className="font-display font-medium text-3xl sm:text-4xl text-[#F4F3F8] tracking-tight">
+          <h2 className="font-display font-medium text-3xl sm:text-5xl text-[#F4F3F8] tracking-tight leading-tight">
             Empat Langkah Menemukan Arah yang Tepat
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-[#8E9AB5] leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg text-[#8E9AB5] leading-relaxed">
             KertaMarga dirancang agar setiap keputusan masa depan berlandaskan data objektif, bukan sekadar ikut tren sesaat atau dugaan tanpa bukti.
           </p>
         </div>
 
         {/* 4 Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
           {STEPS.map((step) => (
             <div
               key={step.number}
-              className="p-6 rounded-2xl bg-[#0D101A] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between"
+              className="p-7 sm:p-8 rounded-2xl bg-[#0D101A] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between min-h-[290px]"
             >
               <div>
                 {/* Step Marker Badge */}
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-6">
                   <span
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold text-sm ${step.badgeBg} ${step.badgeText}`}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-mono font-bold text-base ${step.badgeBg} ${step.badgeText}`}
                   >
                     {step.number}
                   </span>
-                  <span className="text-[11px] font-mono text-[#5E687E] uppercase">
+                  <span className="text-xs font-mono text-[#5E687E] uppercase">
                     Tahap {step.number}
                   </span>
                 </div>
 
-                <h3 className="font-display font-medium text-lg text-[#F4F3F8] mb-2 leading-snug">
+                <h3 className="font-display font-medium text-xl text-[#F4F3F8] mb-3 leading-snug">
                   {step.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-[#8E9AB5] leading-relaxed mb-4">
+                <p className="text-sm sm:text-base text-[#8E9AB5] leading-relaxed mb-5">
                   {step.description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-white/[0.06] text-[11px] font-mono text-[#5E687E]">
+              <div className="pt-4 border-t border-white/[0.06] text-xs font-mono text-[#5E687E]">
                 {step.detail}
               </div>
             </div>

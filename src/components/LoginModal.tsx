@@ -12,6 +12,7 @@ interface LoginModalProps {
 
 const INTEREST_CHIPS = [
   "Rekayasa Perangkat Lunak",
+  "Teknik Jaringan (TKJ/CCNA/MTCNA)",
   "Desain Komunikasi Visual",
   "Arsitektur & Lanskap",
   "Keperawatan & Kesehatan",
