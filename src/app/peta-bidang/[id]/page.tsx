@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
-import { PROGRAM_FIELDS, ProgramField, InstitutionProgram, estimateDistanceKm } from "@/data/catalog";
+import { PROGRAM_FIELDS, ProgramField, InstitutionProgram, estimateDistanceKm, INSTITUTIONS_CATALOG } from "@/data/catalog";
 
 export default function PetaBidangDetailPage() {
   const params = useParams();
@@ -27,8 +27,6 @@ export default function PetaBidangDetailPage() {
 
   // Matched institutions
   const matchedInstitutions = React.useMemo(() => {
-    // Import institutional catalog from local definition or API
-    const { INSTITUTIONS_CATALOG } = require("@/data/catalog");
     return (INSTITUTIONS_CATALOG as InstitutionProgram[]).filter((inst) => {
       const progLower = inst.programName.toLowerCase();
       if (field.id === "informatika" && (progLower.includes("perangkat lunak") || progLower.includes("jaringan") || progLower.includes("komputer"))) return true;
