@@ -6,7 +6,7 @@ export interface MajorField {
   group: FieldGroup;
   categoryName: string;
   description: string;
-  vibeTagline: string;
+  vibeTagline?: string;
   institutions: {
     name: string;
     level: string;
@@ -186,6 +186,7 @@ export const FIELDS: MajorField[] = [
     name: "Teknik Jaringan Komputer, Telekomunikasi & Cloud (TKJ / TJKT)",
     group: "teknologi",
     categoryName: "Teknologi dan Rancang",
+    vibeTagline: "Fokus pada arsitektur jaringan komputer, cloud server, dan sertifikasi CCNA/MTCNA.",
     description: "Mempelajari arsitektur jaringan komputer (Cisco CCNA & MikroTik MTCNA), infrastruktur fiber optik, administrasi server Linux/Cloud, dan keamanan siber untuk konektivitas perhotelan serta instansi di Bali.",
     institutions: [
       { name: "SMKN 1 Denpasar (SKENSA)", level: "SMK TJKT", location: "Denpasar Utara", accreditation: "A (Unggul)" },

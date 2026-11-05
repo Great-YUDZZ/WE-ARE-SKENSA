@@ -65,6 +65,12 @@ export default function Navbar({
               Radar Peta Bali
             </Link>
             <Link
+              href="/hasil-analisis"
+              className="px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors"
+            >
+              Modul & Sertifikasi
+            </Link>
+            <Link
               href="/ai-navigator"
               className="ml-1 px-3 py-1.5 rounded-lg bg-[#3B66FF]/10 border border-[#3B66FF] text-[#3B66FF] hover:bg-[#3B66FF] hover:text-white transition-colors flex items-center gap-1.5 font-mono text-xs"
             >
@@ -147,6 +153,13 @@ export default function Navbar({
               className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
             >
               Radar Peta Bali
+            </Link>
+            <Link
+              href="/hasil-analisis"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
+            >
+              Modul &amp; Sertifikasi
             </Link>
             <Link
               href="/ai-navigator"

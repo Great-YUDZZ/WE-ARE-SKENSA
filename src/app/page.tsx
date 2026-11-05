@@ -166,6 +166,35 @@ export default function Home() {
                   </span>
                 </div>
               </a>
+
+              {/* Tertiary Keycap Button: Modul Masterclass & AI Mentor */}
+              <Link
+                href="/hasil-analisis"
+                className="group relative w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3.5 pl-2.5 pr-6 py-2.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] shadow-[0_6px_0_#141413] hover:translate-y-[2px] hover:shadow-[0_4px_0_#141413] active:translate-y-[6px] active:shadow-none transition-all duration-150 cursor-pointer"
+              >
+                <span className="w-11 h-11 rounded-xl bg-[#FFBE2E] text-[#141413] border-2 border-[#141413] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <svg
+                    className="w-5 h-5 stroke-[2.25]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+                    />
+                  </svg>
+                </span>
+                <div className="text-left">
+                  <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#52514E]">
+                    33 MODUL &amp; SERTIFIKASI
+                  </span>
+                  <span className="block font-display font-black text-base sm:text-lg leading-tight text-[#141413]">
+                    Bimbingan AI Siswa
+                  </span>
+                </div>
+              </Link>
             </div>
 
             {/* Micro-Trust Checklist */}

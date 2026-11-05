@@ -674,15 +674,25 @@ export default function EksplorasiPage() {
                           {rec.alternativeNotes}
                         </span>
 
-                        <Link
-                          href={`/peta-bidang/${rec.field.id}?kabupaten=${encodeURIComponent(selectedKabupaten)}`}
-                          className="group w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3 pl-5 pr-2 py-2 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_3px_0_#141413] active:translate-y-[4px] active:shadow-none transition-all cursor-pointer font-display font-extrabold text-xs sm:text-sm"
-                        >
-                          <span>Konfirmasi Pilihan &amp; Baca Peta Bidang</span>
-                          <span className="w-8 h-8 rounded-lg bg-[#B8F348] text-[#141413] border-2 border-[#141413] flex items-center justify-center font-mono font-bold group-hover:translate-x-0.5 transition-transform">
-                            &rarr;
-                          </span>
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                          <Link
+                            href={`/hasil-analisis?field=${rec.field.id}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] shadow-[0_3px_0_#141413] font-display font-bold text-xs"
+                          >
+                            <span>Bimbingan Nilai &amp; Modul</span>
+                            <span className="font-mono text-xs">&rarr;</span>
+                          </Link>
+
+                          <Link
+                            href={`/peta-bidang/${rec.field.id}?kabupaten=${encodeURIComponent(selectedKabupaten)}`}
+                            className="group w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3 pl-5 pr-2 py-2 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_3px_0_#141413] active:translate-y-[4px] active:shadow-none transition-all cursor-pointer font-display font-extrabold text-xs sm:text-sm"
+                          >
+                            <span>Konfirmasi Pilihan &amp; Baca Peta Bidang</span>
+                            <span className="w-8 h-8 rounded-lg bg-[#B8F348] text-[#141413] border-2 border-[#141413] flex items-center justify-center font-mono font-bold group-hover:translate-x-0.5 transition-transform">
+                              &rarr;
+                            </span>
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   ))}

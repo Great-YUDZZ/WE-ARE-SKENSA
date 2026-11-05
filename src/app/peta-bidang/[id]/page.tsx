@@ -144,6 +144,12 @@ export default function PetaBidangDetailPage() {
             >
               Uji Kecocokanmu Lewat Kuesioner &rarr;
             </Link>
+            <Link
+              href={`/hasil-analisis?field=${field.id}`}
+              className="px-4 py-2 rounded-xl border-2 border-[#141413] bg-[#FFBE2E] hover:bg-[#f2b329] font-mono font-bold text-xs text-[#141413] cursor-pointer"
+            >
+              Modul Masterclass &amp; Sertifikasi &rarr;
+            </Link>
           </div>
         </div>
 

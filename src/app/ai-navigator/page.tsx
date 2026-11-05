@@ -574,8 +574,15 @@ export default function AiNavigatorPage() {
                       </div>
                     </div>
 
-                    {/* Bottom CTA to Field Guide */}
-                    <div className="pt-2 flex justify-end">
+                    {/* Bottom CTA to Field Guide & Modul */}
+                    <div className="pt-2 flex flex-wrap justify-end gap-2">
+                      <Link
+                        href={`/hasil-analisis?field=${item.fieldId}`}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFBE2E] hover:bg-[#f2b329] text-[#141413] font-display font-bold text-xs border-2 border-[#141413] shadow-[2px_2px_0_#141413]"
+                      >
+                        <span>Modul &amp; Sertifikasi</span>
+                        <span className="font-mono">&rarr;</span>
+                      </Link>
                       <Link
                         href={`/peta-bidang/${item.fieldId}`}
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#141413] hover:bg-[#272725] text-white font-display font-black text-xs border-2 border-[#141413] shadow-[2px_2px_0_#FF5E4D] transition-transform active:translate-y-0.5"
