@@ -50,3 +50,4 @@ planing.md
 
 # editor local
 .vscode/
+.env*

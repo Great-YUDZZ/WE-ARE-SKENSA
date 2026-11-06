@@ -19,7 +19,7 @@ export interface MentorAgentResponse {
   recommendedItemTitle: string;
   keyTakeaways: string[];
   encouragementNote: string;
-  sourceMode: "gemini-structured" | "deterministic-verified";
+  sourceMode: "9router-structured" | "gemini-structured" | "deterministic-verified";
 }
 
 export async function POST(req: NextRequest) {
@@ -49,17 +49,73 @@ export async function POST(req: NextRequest) {
         (c) => !(body.passedCerts || []).includes(c.id)
       ) || curriculum.certificationDrills[0];
 
-    // Optional Gemini API integration if GEMINI_API_KEY is available
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey) {
-      try {
-        const systemInstruction = `Anda adalah Agen Pembimbing Akademik & Sertifikasi KertaMarga Bali.
+    const systemInstruction = `Anda adalah Agen Pembimbing Akademik & Sertifikasi KertaMarga Bali.
 Tugas Anda membimbing siswa SMP/SMA/SMK di Bali yang hasil tes keminatan atau nilai awalnya (${currentScore}%) masih di bawah standar jurusan "${curriculum.fieldName}" atau mata kuliah "${targetCourse.name}" (target minimal ${targetScore}%).
 Aturan ketat:
 1. Jangan gunakan simbol emoji atau tanda pisah panjang (em dash).
 2. Berikan langkah konkret berbasis materi modul: "${nextModule.title}" dan latihan sertifikasi "${curriculum.mainCertificationTitle}".
 3. Balas dalam format JSON sesuai skema.`;
 
+    const userPrompt = `Pertanyaan siswa: "${body.userMessage}". Skor saat ini: ${currentScore}%, Target: ${targetScore}%, Modul selesai: ${(body.completedModules || []).length}/${curriculum.learningModules.length}, Soal sertifikasi lulus: ${(body.passedCerts || []).length}/${curriculum.certificationDrills.length}.`;
+
+    // 1. Integrasi 9Router (OpenAI-compatible proxy) jika tersedia
+    const routerBase = process.env.ROUTER_API_BASE || process.env.NINEROUTER_API_BASE;
+    if (routerBase) {
+      try {
+        const routerKey = process.env.ROUTER_API_KEY || process.env.NINEROUTER_API_KEY || "";
+        const routerModel = process.env.ROUTER_MODEL || "ag/gemini-3.8-flash-high";
+        const endpoint = routerBase.replace(/\/+$/, "") + (routerBase.includes("/v1") ? "/chat/completions" : "/v1/chat/completions");
+
+        const routerRes = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(routerKey ? { Authorization: `Bearer ${routerKey}` } : {}),
+          },
+          body: JSON.stringify({
+            model: routerModel,
+            stream: false,
+            messages: [
+              { role: "system", content: systemInstruction },
+              { role: "user", content: `${userPrompt} Balas murni dalam format JSON.` },
+            ],
+            response_format: { type: "json_object" },
+          }),
+        });
+
+        if (routerRes.ok) {
+          const rData = await routerRes.json();
+          let rText = rData?.choices?.[0]?.message?.content;
+          if (rText) {
+            rText = rText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+            const parsed = JSON.parse(rText);
+            return NextResponse.json({
+              agentTitle: parsed.agentTitle || `Agen Pembimbing ${curriculum.fieldName}`,
+              diagnosisSummary:
+                parsed.diagnosisSummary ||
+                `Selisih kesiapan saat ini ${gap} poin menuju ambang batas mata kuliah ${targetCourse.name}.`,
+              replyMessage: parsed.replyMessage || parsed.message || "",
+              recommendedActionType: parsed.recommendedActionType || "materi",
+              recommendedItemTitle: parsed.recommendedItemTitle || nextModule.title,
+              keyTakeaways: Array.isArray(parsed.keyTakeaways)
+                ? parsed.keyTakeaways
+                : nextModule.keyConcepts.slice(0, 3),
+              encouragementNote:
+                parsed.encouragementNote ||
+                "Setiap modul dan latihan sertifikasi yang Anda tuntaskan akan meningkatkan kesiapan akademik secara terukur.",
+              sourceMode: "9router-structured",
+            } satisfies MentorAgentResponse);
+          }
+        }
+      } catch {
+        // Fallback otomatis ke Gemini langsung atau deterministik
+      }
+    }
+
+    // 2. Optional Gemini API integration if GEMINI_API_KEY is available
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
           {
@@ -72,7 +128,7 @@ Aturan ketat:
                   role: "user",
                   parts: [
                     {
-                      text: `Pertanyaan siswa: "${body.userMessage}". Skor saat ini: ${currentScore}%, Target: ${targetScore}%, Modul selesai: ${(body.completedModules || []).length}/${curriculum.learningModules.length}, Soal sertifikasi lulus: ${(body.passedCerts || []).length}/${curriculum.certificationDrills.length}.`,
+                      text: userPrompt,
                     },
                   ],
                 },
