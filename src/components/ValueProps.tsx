@@ -14,10 +14,10 @@ export default function ValueProps() {
     },
     {
       num: "02",
-      tag: "DATA RESMI TERPERIKSA",
+      tag: "DATA TERPERIKSA",
       tagColor: "text-emerald bg-emerald-light border-emerald/30",
       title: "Katalog Kampus & SMK Bali",
-      desc: "Rujukan prodi, akreditasi, dan biaya kuliah berbasis pangkalan data resmi BAN-PT, PDDIKTI, dan Kemendikdasmen tanpa data karangan AI.",
+      desc: "Rujukan prodi, akreditasi, dan biaya kuliah berbasis data resmi tanpa data karangan AI.",
       badge: "100% Fakta Terverifikasi",
     },
     {

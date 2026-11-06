@@ -12,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="dark scroll-smooth">
-      <body className="bg-[#080A10] text-[#F4F3F8] antialiased selection:bg-white/20 selection:text-white">
+    <html lang="id" className="scroll-smooth">
+      <body className="bg-[#FAF7F2] text-[#141413] antialiased selection:bg-[#B8F348] selection:text-[#141413]">
         {children}
       </body>
     </html>

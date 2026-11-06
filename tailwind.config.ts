@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "class",
+  darkMode: "media",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -45,6 +45,10 @@ const config: Config = {
           tinta: "#141413",
           sekunder: "#52514E",
           garis: "#141413",
+          darkLatar: "#14141F",
+          darkPermukaan: "#1F1F2E",
+          darkTeks: "#F4F2EA",
+          darkSekunder: "#A8A8BA",
         },
       },
       fontFamily: {

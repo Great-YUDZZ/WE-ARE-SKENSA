@@ -79,7 +79,7 @@ export default function JepunMascot() {
           <circle cx="69" cy="54" r="2.5" fill="#D7263D" opacity="0.35" />
         </svg>
       </div>
-      <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-1">
+      <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder mt-1">
         Coba tes interaktif di bawah ↓
       </span>
     </motion.div>

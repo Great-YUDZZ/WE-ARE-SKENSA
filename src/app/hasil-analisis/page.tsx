@@ -334,7 +334,7 @@ function HasilAnalisisContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-tinta dark:text-kmNeutral-darkTeks relative transition-colors selection:bg-[#FFC93C] selection:text-[#1B1B2F]">
+    <div className="min-h-screen flex flex-col justify-between bg-kmNeutral-latar text-kmNeutral-tinta relative transition-colors selection:bg-[#FFC93C] selection:text-[#1B1B2F]">
       <Navbar
         onOpenLogin={handleOpenLogin}
         onOpenRegister={handleOpenRegister}
@@ -344,42 +344,42 @@ function HasilAnalisisContent() {
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 w-full min-h-[calc(100vh-4rem)]">
         {/* Top Navigation Row */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
-            <Link href="/" className="hover:text-kmNeutral-tinta dark:hover:text-white transition-colors">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-kmNeutral-sekunder">
+            <Link href="/" className="hover:text-kmNeutral-tinta transition-colors">
               Beranda
             </Link>
             <span>/</span>
             <Link
               href={`/tes-keminatan?field=${targetFieldId}`}
-              className="hover:text-kmNeutral-tinta dark:hover:text-white transition-colors"
+              className="hover:text-kmNeutral-tinta transition-colors"
             >
               Survey Tes Keminatan
             </Link>
             <span>/</span>
-            <span className="text-[#1F7A52] dark:text-[#4CC992] font-bold">
+            <span className="text-[#1F7A52] font-bold">
               Hasil Analisis, Kurikulum Berkepanjangan & Sertifikasi
             </span>
           </div>
 
           <Link
             href={`/tes-keminatan?field=${targetFieldId}`}
-            className="text-xs sm:text-sm font-mono font-bold px-4 py-2 rounded-lg bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-sekunder hover:text-kmNeutral-tinta dark:hover:text-white transition-colors"
+            className="text-xs sm:text-sm font-mono font-bold px-4 py-2 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis text-kmNeutral-sekunder hover:text-kmNeutral-tinta transition-colors"
           >
             &larr; Ulangi / Ubah Jawaban Survey
           </Link>
         </div>
 
         {/* QUICK SWITCHER FOR JURUSAN & MATA KULIAH / SKEMA SERTIFIKASI */}
-        <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] shadow-xs">
+        <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-kmNeutral-surface border border-kmNeutral-garis shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex-1">
-              <label className="block text-xs font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase mb-2">
+              <label className="block text-xs font-mono font-bold text-[#2D6CDF] uppercase mb-2">
                 PILIH JURUSAN / PROGRAM STUDI (TERMASUK TKJ CCNA/MTCNA, RPL, DKV, ARSITEKTUR):
               </label>
               <select
                 value={targetFieldId}
                 onChange={(e) => setTargetFieldId(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-xs sm:text-sm font-semibold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm font-semibold text-kmNeutral-tinta"
               >
                 {FIELDS.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -390,13 +390,13 @@ function HasilAnalisisContent() {
             </div>
 
             <div className="flex-1">
-              <label className="block text-xs font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase mb-2">
+              <label className="block text-xs font-mono font-bold text-[#1F7A52] uppercase mb-2">
                 PILIH MATA KULIAH & JALUR SERTIFIKASI SPESIFIK:
               </label>
               <select
                 value={targetCourse.id}
                 onChange={(e) => setTargetCourseId(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-xs sm:text-sm font-semibold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm font-semibold text-kmNeutral-tinta"
               >
                 {curriculum.targetCourses.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -414,34 +414,34 @@ function HasilAnalisisContent() {
           <div
             className={`rounded-2xl p-6 sm:p-9 border-2 shadow-sm transition-colors ${
               isNowReady
-                ? "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-[#2E9E6B]"
-                : "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-[#D7263D]"
+                ? "bg-kmNeutral-surface border-[#2E9E6B]"
+                : "bg-kmNeutral-surface border-[#D7263D]"
             }`}
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-kmNeutral-garis">
               <div className="space-y-3 max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
                   {isNowReady ? (
-                    <span className="text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/40">
+                    <span className="text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-[#2E9E6B]/15 text-[#1F7A52] border border-[#2E9E6B]/40">
                       STATUS: KESIAPAN TERCAPAI &bull; SIAP MASUK JURUSAN TUJUAN
                     </span>
                   ) : (
-                    <span className="text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-[#D7263D]/15 text-[#D7263D] dark:text-[#FF5A6B] border border-[#D7263D]/40">
+                    <span className="text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-[#D7263D]/15 text-[#D7263D] border border-[#D7263D]/40">
                       PERHATIAN: NILAI KESIAPAN DI BAWAH STANDAR / PERLU BIMBINGAN AGEN
                     </span>
                   )}
-                  <span className="text-xs sm:text-sm font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                  <span className="text-xs sm:text-sm font-mono text-kmNeutral-sekunder">
                     Target Matkul: [{targetCourse.code}] {targetCourse.name}
                   </span>
                 </div>
 
-                <h1 className="font-serif font-bold text-3xl sm:text-4xl lg:text-5xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-tight">
+                <h1 className="font-serif font-bold text-3xl sm:text-4xl lg:text-5xl text-kmNeutral-tinta leading-tight">
                   {isNowReady
                     ? `Selamat! Kompetensi Anda Telah Sesuai dengan Standar ${curriculum.fieldName}`
                     : `Apa yang Harus Anda Lakukan Saat Hasil Analisis Nilai Belum Sesuai (${currentReadinessScore}%)`}
                 </h1>
 
-                <p className="text-sm sm:text-base text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder leading-relaxed">
+                <p className="text-sm sm:text-base text-kmNeutral-sekunder leading-relaxed">
                   {isNowReady
                     ? `Melalui penyelesaian materi pembelajaran dan latihan sertifikasi bersama Agen Pembimbing, skor kesiapan Anda meningkat dari ${baseScore}% menjadi ${currentReadinessScore}% (melampaui batas minimum ${targetCourse.minScore}%).`
                     : `Skor awal Anda adalah ${baseScore}%, sedangkan mata kuliah '${targetCourse.name}' pada jurusan ${curriculum.fieldName} menuntut kesiapan minimal ${targetCourse.minScore}% (selisih ${scoreGap} poin). Ikuti panduan Agen Pembimbing di bawah untuk menuntaskan modul materi berkepanjangan dan simulasi sertifikasi (${targetCourse.certificationAlignment || curriculum.mainCertificationTitle}) hingga skor Anda memenuhi syarat.`}
@@ -449,16 +449,16 @@ function HasilAnalisisContent() {
               </div>
 
               {/* Dynamic Score Meter Card */}
-              <div className="p-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] min-w-[260px] space-y-3">
+              <div className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis min-w-[260px] space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                  <span className="text-kmNeutral-sekunder">
                     SKOR KESIAPAN SAAT INI:
                   </span>
                   <span
                     className={`font-bold text-xl ${
                       isNowReady
-                        ? "text-[#1F7A52] dark:text-[#4CC992]"
-                        : "text-[#D7263D] dark:text-[#FF5A6B]"
+                        ? "text-[#1F7A52]"
+                        : "text-[#D7263D]"
                     }`}
                   >
                     {currentReadinessScore}%
@@ -467,7 +467,7 @@ function HasilAnalisisContent() {
 
                 {/* Progress bar with target marker */}
                 <div className="space-y-1">
-                  <div className="w-full h-3 rounded-full bg-kmNeutral-garis dark:bg-[#2E2E42] overflow-hidden relative">
+                  <div className="w-full h-3 rounded-full bg-kmNeutral-garis overflow-hidden relative">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         isNowReady ? "bg-[#2E9E6B]" : "bg-[#2D6CDF]"
@@ -475,29 +475,29 @@ function HasilAnalisisContent() {
                       style={{ width: `${currentReadinessScore}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                  <div className="flex justify-between text-[10px] font-mono text-kmNeutral-sekunder">
                     <span>Skor Awal: {baseScore}%</span>
                     <span>Bonus Latihan: +{moduleBonus + certBonus}%</span>
-                    <span className="font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                    <span className="font-bold text-kmNeutral-tinta">
                       Target: {targetCourse.minScore}%
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-kmNeutral-garis dark:border-[#2E2E42] grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="pt-2 border-t border-kmNeutral-garis grid grid-cols-2 gap-2 text-[11px] font-mono">
                   <div>
-                    <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder block">
+                    <span className="text-kmNeutral-sekunder block">
                       Modul Selesai:
                     </span>
-                    <span className="font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                    <span className="font-bold text-kmNeutral-tinta">
                       {completedModules.length} / {curriculum.learningModules.length} Materi
                     </span>
                   </div>
                   <div>
-                    <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder block">
+                    <span className="text-kmNeutral-sekunder block">
                       Uji Sertifikasi:
                     </span>
-                    <span className="font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                    <span className="font-bold text-kmNeutral-tinta">
                       {passedCertIds.length} / {curriculum.certificationDrills.length} Lulus
                     </span>
                   </div>
@@ -507,8 +507,8 @@ function HasilAnalisisContent() {
 
             {/* Mismatch Bridge Explanation Box */}
             {isInitialLowOrMismatch && (
-              <div className="mt-4 p-4 rounded-xl bg-[#FFC93C]/15 border border-[#E6B020]/40 text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
-                <span className="font-mono font-bold text-[11px] uppercase tracking-wider block mb-1 text-[#1B1B2F] dark:text-[#FFD25E]">
+              <div className="mt-4 p-4 rounded-xl bg-[#FFC93C]/15 border border-[#E6B020]/40 text-xs sm:text-sm text-kmNeutral-tinta">
+                <span className="font-mono font-bold text-[11px] uppercase tracking-wider block mb-1 text-[#1B1B2F]">
                   STRATEGI JEMBATAN LINTAS MINAT & PERBAIKAN NILAI OLEH AGEN:
                 </span>
                 <p className="leading-relaxed">{curriculum.mismatchBridgeAdvice}</p>
@@ -523,7 +523,7 @@ function HasilAnalisisContent() {
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "rencana"
                     ? "bg-[#D7263D] text-white shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>1. Langkah yang Harus Dilakukan</span>
@@ -535,7 +535,7 @@ function HasilAnalisisContent() {
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "materi"
                     ? "bg-[#2D6CDF] text-white shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>
@@ -548,8 +548,8 @@ function HasilAnalisisContent() {
                 onClick={() => setActiveAgentTab("pustaka")}
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "pustaka"
-                    ? "bg-[#1B1B2F] dark:bg-[#6C9BFF] text-white dark:text-[#1B1B2F] shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    ? "bg-[#1B1B2F] text-white shadow-xs"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>
@@ -563,7 +563,7 @@ function HasilAnalisisContent() {
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "sertifikasi"
                     ? "bg-[#2E9E6B] text-white shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>
@@ -577,7 +577,7 @@ function HasilAnalisisContent() {
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "konsultasi"
                     ? "bg-[#FFC93C] text-[#1B1B2F] shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>5. Tanya Agen Pembimbing AI</span>
@@ -587,13 +587,13 @@ function HasilAnalisisContent() {
 
           {/* TAB CONTENT 1: LANGKAH YANG HARUS DILAKUKAN (ACTION PLAN) */}
           {activeAgentTab === "rencana" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#D7263D] dark:text-[#FF5A6B] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#D7263D] uppercase tracking-wider">
                     PETA JALAN REMEDIAL & PENYELARASAN KOMPETENSI
                   </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     4 Langkah Wajib Jika Nilai Kecil atau Belum Sesuai dengan {curriculum.fieldName}
                   </h2>
                 </div>
@@ -610,30 +610,30 @@ function HasilAnalisisContent() {
                 {curriculum.remedialActionPlan.map((step) => (
                   <div
                     key={step.stepNumber}
-                    className="p-5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] flex flex-col justify-between space-y-3"
+                    className="p-5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex flex-col justify-between space-y-3"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="w-8 h-8 rounded-lg bg-[#D7263D]/15 text-[#D7263D] dark:text-[#FF5A6B] font-mono font-bold text-xs flex items-center justify-center border border-[#D7263D]/30">
+                        <span className="w-8 h-8 rounded-lg bg-[#D7263D]/15 text-[#D7263D] font-mono font-bold text-xs flex items-center justify-center border border-[#D7263D]/30">
                           {step.stepNumber}
                         </span>
-                        <span className="text-[11px] font-mono font-semibold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                        <span className="text-[11px] font-mono font-semibold text-kmNeutral-sekunder">
                           {step.phase}
                         </span>
                       </div>
-                      <h3 className="font-serif font-bold text-base text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                      <h3 className="font-serif font-bold text-base text-kmNeutral-tinta">
                         {step.title}
                       </h3>
-                      <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-1.5 leading-relaxed">
+                      <p className="text-xs text-kmNeutral-sekunder mt-1.5 leading-relaxed">
                         {step.action}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-kmNeutral-garis dark:border-[#2E2E42] text-[11px]">
-                      <span className="font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] block">
+                    <div className="pt-3 border-t border-kmNeutral-garis text-[11px]">
+                      <span className="font-mono font-bold text-[#1F7A52] block">
                         Target Capaian:
                       </span>
-                      <span className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                      <span className="text-kmNeutral-tinta">
                         {step.targetOutcome}
                       </span>
                     </div>
@@ -642,8 +642,8 @@ function HasilAnalisisContent() {
               </div>
 
               {/* Target Courses Checklist */}
-              <div className="p-5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] space-y-3">
-                <span className="text-xs font-mono font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks uppercase">
+              <div className="p-5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis space-y-3">
+                <span className="text-xs font-mono font-bold text-kmNeutral-tinta uppercase">
                   DAFTAR MATA KULIAH INTI & SERTIFIKASI TERKAIT (KLIK UNTUK GANTI FOKUS MATKUL):
                 </span>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -656,36 +656,36 @@ function HasilAnalisisContent() {
                         onClick={() => setTargetCourseId(c.id)}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
                           isSelectedCourse
-                            ? "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-[#2D6CDF]"
-                            : "bg-kmNeutral-surface/60 dark:bg-kmNeutral-darkPermukaan/60 border-kmNeutral-garis dark:border-[#2E2E42]"
+                            ? "bg-kmNeutral-surface border-[#2D6CDF]"
+                            : "bg-kmNeutral-surface/60 border-kmNeutral-garis"
                         }`}
                       >
                         <div>
                           <div className="flex items-center justify-between text-[11px] font-mono mb-1">
-                            <span className="font-bold text-[#2D6CDF] dark:text-[#6C9BFF]">
+                            <span className="font-bold text-[#2D6CDF]">
                               {c.code} &bull; {c.sks} SKS
                             </span>
                             <span
                               className={`px-2 py-0.5 rounded font-bold ${
                                 meetsCourse
-                                  ? "bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992]"
-                                  : "bg-[#D7263D]/15 text-[#D7263D] dark:text-[#FF5A6B]"
+                                  ? "bg-[#2E9E6B]/15 text-[#1F7A52]"
+                                  : "bg-[#D7263D]/15 text-[#D7263D]"
                               }`}
                             >
                               Min. {c.minScore}%
                             </span>
                           </div>
-                          <h4 className="font-bold text-xs text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                          <h4 className="font-bold text-xs text-kmNeutral-tinta">
                             {c.name}
                           </h4>
-                          <p className="text-[11px] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-1">
+                          <p className="text-[11px] text-kmNeutral-sekunder mt-1">
                             {c.description}
                           </p>
                         </div>
 
                         {c.certificationAlignment && (
-                          <div className="mt-2.5 pt-2 border-t border-kmNeutral-garis dark:border-[#2E2E42]">
-                            <span className="text-[10px] font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] block">
+                          <div className="mt-2.5 pt-2 border-t border-kmNeutral-garis">
+                            <span className="text-[10px] font-mono font-bold text-[#1F7A52] block">
                               Sertifikasi Matkul: {c.certificationAlignment}
                             </span>
                           </div>
@@ -700,16 +700,16 @@ function HasilAnalisisContent() {
 
           {/* TAB CONTENT 2: MATERI PEMBELAJARAN BERKEPANJANGAN (MASTERCLASS LENGKAP + PDF) */}
           {activeAgentTab === "materi" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] uppercase tracking-wider">
                     KURIKULUM MODUL MASTERCLASS MENDALAM &bull; BUKU AJAR & PRAKTIKUM MULTI-SEMESTER
                   </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     Modul Keahlian Lengkap & Dokumen PDF: {curriculum.fieldName}
                   </h2>
-                  <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-0.5">
+                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
                     Setiap modul di bawah menyajikan 5 Bab pembahasan teknis mendalam (Landasan Teori, Rumus/CLI/SOP Standar, Tahapan Langkah Kerja Profesional, Matriks Kesalahan Umum vs Solusi Ahli, serta Lampiran Modul PDF Terpusat).
                   </p>
                 </div>
@@ -718,7 +718,7 @@ function HasilAnalisisContent() {
                   <button
                     type="button"
                     onClick={() => setActiveAgentTab("pustaka")}
-                    className="h-10 px-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#2D6CDF] text-kmNeutral-tinta dark:text-kmNeutral-darkTeks font-mono font-bold text-xs transition-colors cursor-pointer"
+                    className="h-10 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis hover:border-[#2D6CDF] text-kmNeutral-tinta font-mono font-bold text-xs transition-colors cursor-pointer"
                   >
                     Buka Pustaka PDF ({pustakaDocs.length})
                   </button>
@@ -734,7 +734,7 @@ function HasilAnalisisContent() {
 
               {/* Filter Modul Berdasarkan Mata Kuliah */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mr-1">
+                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder mr-1">
                   FILTER MODUL:
                 </span>
                 <button
@@ -743,7 +743,7 @@ function HasilAnalisisContent() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                     selectedModuleFilter === "ALL"
                       ? "bg-[#2D6CDF] text-white"
-                      : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                      : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                   }`}
                 >
                   Semua Modul ({curriculum.learningModules.length})
@@ -759,7 +759,7 @@ function HasilAnalisisContent() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                       selectedModuleFilter === c.id
                         ? "bg-[#2D6CDF] text-white"
-                        : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                        : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                     }`}
                   >
                     Matkul [{c.code}]
@@ -779,47 +779,47 @@ function HasilAnalisisContent() {
                       key={mod.id}
                       className={`rounded-xl border-2 transition-all overflow-hidden ${
                         isCompleted
-                          ? "border-[#2E9E6B]/60 bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar"
-                          : "border-kmNeutral-garis dark:border-[#2E2E42] bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar"
+                          ? "border-[#2E9E6B]/60 bg-kmNeutral-latar"
+                          : "border-kmNeutral-garis bg-kmNeutral-latar"
                       }`}
                     >
                       {/* Module Header */}
                       <div
                         onClick={() => setExpandedModuleId(isExpanded ? "" : mod.id)}
-                        className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-kmNeutral-surface/50 dark:hover:bg-kmNeutral-darkPermukaan/50 transition-colors"
+                        className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-kmNeutral-surface/50 transition-colors"
                       >
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] dark:text-[#6C9BFF] font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-bold">
                               {mod.moduleCode ? mod.moduleCode : `MODUL 0${idx + 1}`} &bull; {mod.level.toUpperCase()}
                             </span>
                             {mod.semesterStage && (
-                              <span className="px-2 py-0.5 rounded bg-[#FFC93C]/20 text-[#1B1B2F] dark:text-[#FFD25E] font-bold">
+                              <span className="px-2 py-0.5 rounded bg-[#FFC93C]/20 text-[#1B1B2F] font-bold">
                                 {mod.semesterStage}
                               </span>
                             )}
-                            <span className="px-2 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] font-bold">
                               + LAMPIRAN PDF
                             </span>
-                            <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                            <span className="text-kmNeutral-sekunder">
                               Matkul: {mod.courseName}
                             </span>
-                            <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                            <span className="text-kmNeutral-sekunder">
                               &bull; Durasi: {mod.duration}
                             </span>
                           </div>
-                          <h3 className="font-serif font-bold text-base sm:text-lg text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                          <h3 className="font-serif font-bold text-base sm:text-lg text-kmNeutral-tinta">
                             {mod.title}
                           </h3>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           {isCompleted ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#2E9E6B]/20 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/40">
+                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#2E9E6B]/20 text-[#1F7A52] border border-[#2E9E6B]/40">
                               ✓ Selesai (+{mod.scoreBoost}%)
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FFC93C]/25 text-[#1B1B2F] dark:text-[#FFD25E] border border-[#E6B020]/40">
+                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FFC93C]/25 text-[#1B1B2F] border border-[#E6B020]/40">
                               +{mod.scoreBoost}% Kesiapan
                             </span>
                           )}
@@ -831,20 +831,20 @@ function HasilAnalisisContent() {
 
                       {/* Expanded Module Body */}
                       {isExpanded && (
-                        <div className="p-5 pt-0 border-t border-kmNeutral-garis dark:border-[#2E2E42] space-y-5">
-                          <p className="text-xs sm:text-sm text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder pt-3 leading-relaxed">
+                        <div className="p-5 pt-0 border-t border-kmNeutral-garis space-y-5">
+                          <p className="text-xs sm:text-sm text-kmNeutral-sekunder pt-3 leading-relaxed">
                             {mod.summary}
                           </p>
 
                           {/* Key Concepts */}
-                          <div className="p-4 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42]">
-                            <span className="text-xs font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase block mb-2">
+                          <div className="p-4 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis">
+                            <span className="text-xs font-mono font-bold text-[#2D6CDF] uppercase block mb-2">
                               KONSEP INTI YANG WAJIB DIKUASAI:
                             </span>
-                            <ul className="space-y-1.5 text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                            <ul className="space-y-1.5 text-xs sm:text-sm text-kmNeutral-tinta">
                               {mod.keyConcepts.map((kc, kIdx) => (
                                 <li key={kIdx} className="flex items-start gap-2">
-                                  <span className="font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF]">
+                                  <span className="font-mono font-bold text-[#2D6CDF]">
                                     {kIdx + 1}.
                                   </span>
                                   <span>{kc}</span>
@@ -857,12 +857,12 @@ function HasilAnalisisContent() {
                           {masterclass.deepDiveChapters.map((ch, cIdx) => (
                             <div
                               key={cIdx}
-                              className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] space-y-3"
+                              className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-3"
                             >
-                              <span className="text-xs font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase block">
+                              <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase block">
                                 {ch.chapterTitle}
                               </span>
-                              <div className="space-y-3 text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                              <div className="space-y-3 text-xs sm:text-sm text-kmNeutral-tinta leading-relaxed">
                                 {ch.paragraphs.map((pText, pIdx) => (
                                   <p key={pIdx}>{pText}</p>
                                 ))}
@@ -886,17 +886,17 @@ function HasilAnalisisContent() {
                           </div>
 
                           {/* Step-by-Step Professional Implementation Roadmap */}
-                          <div className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] space-y-3">
-                            <span className="text-xs font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase block">
+                          <div className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-3">
+                            <span className="text-xs font-mono font-bold text-[#2D6CDF] uppercase block">
                               BAB IV: TAHAPAN LANGKAH KERJA PROFESIONAL & PRAKTIKUM TERSTRUKTUR:
                             </span>
                             <div className="space-y-2.5">
                               {masterclass.professionalWorkflowSteps.map((stepText, sIdx) => (
                                 <div
                                   key={sIdx}
-                                  className="p-3 rounded-lg bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] flex items-start gap-3 text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                                  className="p-3 rounded-lg bg-kmNeutral-latar border border-kmNeutral-garis flex items-start gap-3 text-xs sm:text-sm text-kmNeutral-tinta"
                                 >
-                                  <span className="w-6 h-6 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] dark:text-[#6C9BFF] font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                  <span className="w-6 h-6 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                                     0{sIdx + 1}
                                   </span>
                                   <span className="leading-relaxed">{stepText}</span>
@@ -906,29 +906,29 @@ function HasilAnalisisContent() {
                           </div>
 
                           {/* Common Pitfalls vs Certified Expert Best Practices */}
-                          <div className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] space-y-3">
-                            <span className="text-xs font-mono font-bold text-[#D7263D] dark:text-[#FF5A6B] uppercase block">
+                          <div className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-3">
+                            <span className="text-xs font-mono font-bold text-[#D7263D] uppercase block">
                               BAB V: MATRIKS KESALAHAN UMUM PEMULA VS SOLUSI AHLI BERSERTIFIKAT:
                             </span>
                             <div className="grid grid-cols-1 gap-3">
                               {masterclass.pitfallComparisons.map((pit, pIdx) => (
                                 <div
                                   key={pIdx}
-                                  className="p-3.5 rounded-lg bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"
+                                  className="p-3.5 rounded-lg bg-kmNeutral-latar border border-kmNeutral-garis grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"
                                 >
                                   <div className="space-y-1">
-                                    <span className="font-mono font-bold text-[10px] text-[#D7263D] dark:text-[#FF5A6B] uppercase block">
+                                    <span className="font-mono font-bold text-[10px] text-[#D7263D] uppercase block">
                                       [X] Kesalahan yang Sering Terjadi #{pIdx + 1}:
                                     </span>
-                                    <p className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                                    <p className="text-kmNeutral-tinta leading-relaxed">
                                       {pit.mistake}
                                     </p>
                                   </div>
-                                  <div className="space-y-1 md:border-l md:pl-3 border-kmNeutral-garis dark:border-[#2E2E42]">
-                                    <span className="font-mono font-bold text-[10px] text-[#1F7A52] dark:text-[#4CC992] uppercase block">
+                                  <div className="space-y-1 md:border-l md:pl-3 border-kmNeutral-garis">
+                                    <span className="font-mono font-bold text-[10px] text-[#1F7A52] uppercase block">
                                       [✓] Standar Praktisi Bersertifikat:
                                     </span>
-                                    <p className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                                    <p className="text-kmNeutral-tinta leading-relaxed">
                                       {pit.expertSolution}
                                     </p>
                                   </div>
@@ -945,11 +945,11 @@ function HasilAnalisisContent() {
                                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#2D6CDF] text-white">
                                     BUKU MODUL PDF TERPUSAT
                                   </span>
-                                  <span className="text-[11px] font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                                  <span className="text-[11px] font-mono text-kmNeutral-sekunder">
                                     Lokasi Admin: {masterclass.attachedPdf.folderPath}{masterclass.attachedPdf.filename}
                                   </span>
                                 </div>
-                                <h4 className="font-serif font-bold text-sm sm:text-base text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                                <h4 className="font-serif font-bold text-sm sm:text-base text-kmNeutral-tinta">
                                   {masterclass.attachedPdf.title}
                                 </h4>
                               </div>
@@ -971,7 +971,7 @@ function HasilAnalisisContent() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   download={masterclass.attachedPdf.filename}
-                                  className="px-3.5 py-2 rounded-lg bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#2D6CDF] text-kmNeutral-tinta dark:text-kmNeutral-darkTeks font-mono font-bold text-xs transition-colors"
+                                  className="px-3.5 py-2 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis hover:border-[#2D6CDF] text-kmNeutral-tinta font-mono font-bold text-xs transition-colors"
                                 >
                                   Unduh PDF &rarr;
                                 </a>
@@ -983,7 +983,7 @@ function HasilAnalisisContent() {
                                 <iframe
                                   src={masterclass.attachedPdf.fileUrl}
                                   title={masterclass.attachedPdf.title}
-                                  className="w-full h-[540px] rounded-xl border border-kmNeutral-garis dark:border-[#2E2E42] bg-white"
+                                  className="w-full h-[540px] rounded-xl border border-kmNeutral-garis bg-white"
                                 />
                               </div>
                             )}
@@ -991,8 +991,8 @@ function HasilAnalisisContent() {
 
                           {/* External Reference Resources for Long-Term Study */}
                           {mod.referenceResources && mod.referenceResources.length > 0 && (
-                            <div className="p-4 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] space-y-2">
-                              <span className="text-xs font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase block">
+                            <div className="p-4 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-2">
+                              <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase block">
                                 REFERENSI BELAJAR EKSTERNAL & DOKUMENTASI RESMI (PEMBELAJARAN BERKEPANJANGAN):
                               </span>
                               <div className="flex flex-wrap gap-2">
@@ -1002,9 +1002,9 @@ function HasilAnalisisContent() {
                                     href={refItem.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#2D6CDF] text-xs font-medium text-kmNeutral-tinta dark:text-kmNeutral-darkTeks transition-colors"
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-kmNeutral-latar border border-kmNeutral-garis hover:border-[#2D6CDF] text-xs font-medium text-kmNeutral-tinta transition-colors"
                                   >
-                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] dark:text-[#6C9BFF]">
+                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF]">
                                       {refItem.provider}
                                     </span>
                                     <span>{refItem.title} &rarr;</span>
@@ -1017,10 +1017,10 @@ function HasilAnalisisContent() {
                           {/* Practice Exercise Input */}
                           <div className="p-4 rounded-xl bg-[#FFC93C]/10 border border-[#E6B020]/40 space-y-3">
                             <div>
-                              <span className="text-xs font-mono font-bold text-[#1B1B2F] dark:text-[#FFD25E] uppercase block">
+                              <span className="text-xs font-mono font-bold text-[#1B1B2F] uppercase block">
                                 TUGAS PRAKTIK MANDIRI (PENINGKAT KOMPETENSI):
                               </span>
-                              <p className="text-xs sm:text-sm font-medium text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-1">
+                              <p className="text-xs sm:text-sm font-medium text-kmNeutral-tinta mt-1">
                                 {mod.practiceTask}
                               </p>
                             </div>
@@ -1035,7 +1035,7 @@ function HasilAnalisisContent() {
                                 }))
                               }
                               placeholder="Tuliskan catatan jawaban, perintah konfigurasi CLI, atau rancangan singkat Anda di sini sebelum menandai modul selesai..."
-                              className="w-full p-3 rounded-lg bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                              className="w-full p-3 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis text-xs sm:text-sm text-kmNeutral-tinta"
                             />
 
                             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1047,7 +1047,7 @@ function HasilAnalisisContent() {
                                     `Bantu saya memahami lebih dalam tentang ${mod.title} pada mata kuliah ${mod.courseName}`
                                   );
                                 }}
-                                className="text-xs font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] hover:underline cursor-pointer"
+                                className="text-xs font-mono font-bold text-[#2D6CDF] hover:underline cursor-pointer"
                               >
                                 Diskusikan Materi Ini dengan Agen Pembimbing &rarr;
                               </button>
@@ -1084,16 +1084,16 @@ function HasilAnalisisContent() {
 
           {/* TAB CONTENT 2B: PUSTAKA MODUL PDF & DOKUMEN EKSTERNAL TERPUSAT (FOLDER KHUSUS ADMIN) */}
           {activeAgentTab === "pustaka" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] uppercase tracking-wider">
                     REPOSITORI DOKUMEN PEMBELAJARAN TERPUSAT &bull; FOLDER KHUSUS ADMINISTRATOR
                   </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     Pustaka Buku Modul PDF, Panduan Praktikum & Standar Sertifikasi
                   </h2>
-                  <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-0.5">
+                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
                     Seluruh berkas PDF tersimpan rapi di dalam satu direktori khusus (<code className="font-mono font-bold">public/pustaka-modul/</code>) yang terstruktur per jurusan sehingga mudah dipelihara oleh Administrator.
                   </p>
                 </div>
@@ -1104,7 +1104,7 @@ function HasilAnalisisContent() {
                     onClick={() =>
                       setPustakaScope(pustakaScope === "FIELD" ? "ALL_FIELDS" : "FIELD")
                     }
-                    className="h-10 px-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#2D6CDF] text-kmNeutral-tinta dark:text-kmNeutral-darkTeks font-mono font-bold text-xs transition-colors cursor-pointer"
+                    className="h-10 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis hover:border-[#2D6CDF] text-kmNeutral-tinta font-mono font-bold text-xs transition-colors cursor-pointer"
                   >
                     {pustakaScope === "FIELD"
                       ? "Tampilkan Semua 11 Jurusan (33 PDF)"
@@ -1167,28 +1167,28 @@ function HasilAnalisisContent() {
                         }}
                         className={`p-4 rounded-xl border-2 transition-all cursor-pointer space-y-2 ${
                           isSelected
-                            ? "border-[#2D6CDF] bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar"
-                            : "border-kmNeutral-garis dark:border-[#2E2E42] bg-kmNeutral-latar/60 dark:bg-kmNeutral-darkLatar/60 hover:border-[#2D6CDF]/50"
+                            ? "border-[#2D6CDF] bg-kmNeutral-latar"
+                            : "border-kmNeutral-garis bg-kmNeutral-latar/60 hover:border-[#2D6CDF]/50"
                         }`}
                       >
                         <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono">
-                          <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] dark:text-[#6C9BFF] font-bold">
+                          <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-bold">
                             {doc.courseCode || doc.folderName.toUpperCase()} &bull; PDF ({doc.fileSizeKb} KB)
                           </span>
-                          <span className="text-[#1F7A52] dark:text-[#4CC992] font-bold">
+                          <span className="text-[#1F7A52] font-bold">
                             {doc.certStandard}
                           </span>
                         </div>
 
-                        <h3 className="font-serif font-bold text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-snug">
+                        <h3 className="font-serif font-bold text-sm text-kmNeutral-tinta leading-snug">
                           {doc.title}
                         </h3>
 
-                        <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder leading-relaxed">
+                        <p className="text-xs text-kmNeutral-sekunder leading-relaxed">
                           {doc.summary}
                         </p>
 
-                        <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-kmNeutral-garis dark:border-[#2E2E42] text-[11px] font-mono">
+                        <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-kmNeutral-garis text-[11px] font-mono">
                           <span className="text-kmNeutral-sekunder truncate max-w-[210px]">
                             Folder: public/pustaka-modul/{doc.folderName}/
                           </span>
@@ -1211,13 +1211,13 @@ function HasilAnalisisContent() {
                 </div>
 
                 {/* Interactive Embedded PDF Reader */}
-                <div className="lg:col-span-7 flex flex-col rounded-xl border-2 border-kmNeutral-garis dark:border-[#2E2E42] bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar overflow-hidden">
-                  <div className="p-3.5 bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-b border-kmNeutral-garis dark:border-[#2E2E42] flex flex-wrap items-center justify-between gap-2">
+                <div className="lg:col-span-7 flex flex-col rounded-xl border-2 border-kmNeutral-garis bg-kmNeutral-latar overflow-hidden">
+                  <div className="p-3.5 bg-kmNeutral-surface border-b border-kmNeutral-garis flex flex-wrap items-center justify-between gap-2">
                     <div className="space-y-0.5">
-                      <span className="text-[10px] font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase block">
+                      <span className="text-[10px] font-mono font-bold text-[#2D6CDF] uppercase block">
                         PEMBACA DOKUMEN PDF INTERAKTIF
                       </span>
-                      <h4 className="font-sans font-bold text-xs text-kmNeutral-tinta dark:text-kmNeutral-darkTeks line-clamp-1">
+                      <h4 className="font-sans font-bold text-xs text-kmNeutral-tinta line-clamp-1">
                         {activePreviewPdfTitle || "Pilih dokumen PDF di sebelah kiri"}
                       </h4>
                     </div>
@@ -1253,23 +1253,23 @@ function HasilAnalisisContent() {
 
           {/* TAB CONTENT 3: LATIHAN SERTIFIKASI & UJI KOMPETENSI SESUAI JURUSAN/MATKUL */}
           {activeAgentTab === "sertifikasi" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
                     SIMULASI UJI KOMPETENSI TERSTANDAR &bull; {curriculum.certificationBody}
                   </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     {curriculum.mainCertificationTitle}
                   </h2>
-                  <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-0.5">
+                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
                     Soal latihan di bawah disesuaikan dengan jurusan dan mata kuliah pilihan Anda (seperti Cisco CCNA, MikroTik MTCNA, BNSP, Adobe ACP, Autodesk ACU).
                   </p>
                 </div>
 
-                <div className="px-3.5 py-2 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-xs font-mono">
+                <div className="px-3.5 py-2 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs font-mono">
                   Status Lulus:{" "}
-                  <strong className="text-[#1F7A52] dark:text-[#4CC992]">
+                  <strong className="text-[#1F7A52]">
                     {passedCertIds.length} / {curriculum.certificationDrills.length} Unit Kompetensi
                   </strong>
                 </div>
@@ -1277,7 +1277,7 @@ function HasilAnalisisContent() {
 
               {/* Filter Skema Sertifikasi & Mata Kuliah */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mr-1">
+                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder mr-1">
                   FILTER SKEMA SERTIFIKASI:
                 </span>
                 <button
@@ -1286,7 +1286,7 @@ function HasilAnalisisContent() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                     selectedCertFilter === "ALL"
                       ? "bg-[#2E9E6B] text-white"
-                      : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                      : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                   }`}
                 >
                   Semua Skema ({curriculum.certificationDrills.length})
@@ -1297,7 +1297,7 @@ function HasilAnalisisContent() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                     selectedCertFilter === "TARGET_COURSE"
                       ? "bg-[#2E9E6B] text-white"
-                      : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                      : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                   }`}
                 >
                   Sesuai Matkul [{targetCourse.code}]
@@ -1310,7 +1310,7 @@ function HasilAnalisisContent() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                       selectedCertFilter === trackName
                         ? "bg-[#2E9E6B] text-white"
-                        : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                        : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                     }`}
                   >
                     {trackName}
@@ -1330,27 +1330,27 @@ function HasilAnalisisContent() {
                       key={drill.id}
                       className={`p-5 rounded-xl border-2 space-y-4 ${
                         isPassed
-                          ? "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border-[#2E9E6B]/60"
-                          : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border-kmNeutral-garis dark:border-[#2E2E42]"
+                          ? "bg-kmNeutral-latar border-[#2E9E6B]/60"
+                          : "bg-kmNeutral-latar border-kmNeutral-garis"
                       }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/30">
+                          <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] border border-[#2E9E6B]/30">
                             KODE UNIT: {drill.competencyCode}
                           </span>
                           {drill.certTrack && (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] dark:text-[#6C9BFF] border border-[#2D6CDF]/30">
+                            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] border border-[#2D6CDF]/30">
                               SKEMA: {drill.certTrack}
                             </span>
                           )}
-                          <span className="text-xs font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                          <span className="text-xs font-mono text-kmNeutral-sekunder">
                             {drill.certName}
                           </span>
                         </div>
 
                         {isPassed ? (
-                          <span className="text-xs font-mono font-bold text-[#1F7A52] dark:text-[#4CC992]">
+                          <span className="text-xs font-mono font-bold text-[#1F7A52]">
                             ✓ KOMPETEN (+{drill.scoreBoost}% Skor)
                           </span>
                         ) : (
@@ -1360,7 +1360,7 @@ function HasilAnalisisContent() {
                         )}
                       </div>
 
-                      <h3 className="font-sans font-bold text-sm sm:text-base text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                      <h3 className="font-sans font-bold text-sm sm:text-base text-kmNeutral-tinta leading-relaxed">
                         {drill.question}
                       </h3>
 
@@ -1379,8 +1379,8 @@ function HasilAnalisisContent() {
                               }
                               className={`w-full text-left p-3 rounded-lg text-xs sm:text-sm border transition-all cursor-pointer flex items-start gap-2.5 ${
                                 isChosen
-                                  ? "bg-[#2D6CDF]/15 border-[#2D6CDF] text-kmNeutral-tinta dark:text-white font-semibold"
-                                  : "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder hover:border-[#2D6CDF]/50"
+                                  ? "bg-[#2D6CDF]/15 border-[#2D6CDF] text-kmNeutral-tinta font-semibold"
+                                  : "bg-kmNeutral-surface border-kmNeutral-garis text-kmNeutral-sekunder hover:border-[#2D6CDF]/50"
                               }`}
                             >
                               <span className="font-mono font-bold text-xs">
@@ -1413,8 +1413,8 @@ function HasilAnalisisContent() {
                           <span
                             className={`text-xs font-mono font-bold ${
                               isCorrectNow
-                                ? "text-[#1F7A52] dark:text-[#4CC992]"
-                                : "text-[#D7263D] dark:text-[#FF5A6B]"
+                                ? "text-[#1F7A52]"
+                                : "text-[#D7263D]"
                             }`}
                           >
                             {isCorrectNow
@@ -1428,8 +1428,8 @@ function HasilAnalisisContent() {
                         <div
                           className={`p-4 rounded-xl border text-xs sm:text-sm leading-relaxed ${
                             isCorrectNow
-                              ? "bg-[#2E9E6B]/10 border-[#2E9E6B]/40 text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
-                              : "bg-[#D7263D]/10 border-[#D7263D]/40 text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                              ? "bg-[#2E9E6B]/10 border-[#2E9E6B]/40 text-kmNeutral-tinta"
+                              : "bg-[#D7263D]/10 border-[#D7263D]/40 text-kmNeutral-tinta"
                           }`}
                         >
                           <span className="font-mono font-bold text-[11px] uppercase block mb-1">
@@ -1447,24 +1447,24 @@ function HasilAnalisisContent() {
 
           {/* TAB CONTENT 4: RUANG KONSULTASI INTERAKTIF AGEN PEMBIMBING AI */}
           {activeAgentTab === "konsultasi" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
                     PENDAMPINGAN PERSONAL &bull; AGEN PEMBIMBING KERTAMARGA
                   </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     Diskusi Bimbingan Nilai, Mata Kuliah & Sertifikasi
                   </h2>
                 </div>
-                <span className="text-xs font-mono px-3 py-1 rounded-full bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-sekunder">
+                <span className="text-xs font-mono px-3 py-1 rounded-full bg-kmNeutral-latar border border-kmNeutral-garis text-kmNeutral-sekunder">
                   Fokus: {curriculum.fieldName} ({targetCourse.code})
                 </span>
               </div>
 
               {/* Quick Question Prompts for the Mentor Agent */}
               <div className="space-y-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder block">
+                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder block">
                   Pertanyaan Cepat untuk Agen Pembimbing:
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -1478,7 +1478,7 @@ function HasilAnalisisContent() {
                       key={i}
                       type="button"
                       onClick={() => handleSendAgentMessage(qText)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar hover:bg-[#FFC93C]/20 border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#FFC93C] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder hover:text-kmNeutral-tinta dark:hover:text-white transition-colors cursor-pointer text-left"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-kmNeutral-latar hover:bg-[#FFC93C]/20 border border-kmNeutral-garis hover:border-[#FFC93C] text-kmNeutral-sekunder hover:text-kmNeutral-tinta transition-colors cursor-pointer text-left"
                     >
                       &ldquo;{qText}&rdquo;
                     </button>
@@ -1493,29 +1493,29 @@ function HasilAnalisisContent() {
                     key={turn.id}
                     className={`p-4 sm:p-5 rounded-xl border ${
                       turn.sender === "agent"
-                        ? "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border-kmNeutral-garis dark:border-[#2E2E42]"
+                        ? "bg-kmNeutral-latar border-kmNeutral-garis"
                         : "bg-[#2D6CDF]/10 border-[#2D6CDF]/30 ml-auto max-w-2xl"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[11px] font-mono font-bold uppercase text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                      <span className="text-[11px] font-mono font-bold uppercase text-kmNeutral-tinta">
                         {turn.sender === "agent"
                           ? `Agen Pembimbing ${curriculum.fieldName}`
                           : "Pertanyaan Siswa"}
                       </span>
                       {turn.diagnosisSummary && (
-                        <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#FFC93C]/25 text-[#1B1B2F] dark:text-[#FFD25E]">
+                        <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#FFC93C]/25 text-[#1B1B2F]">
                           {turn.diagnosisSummary}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                    <p className="text-xs sm:text-sm text-kmNeutral-tinta leading-relaxed">
                       {turn.text}
                     </p>
 
                     {turn.keyTakeaways && turn.keyTakeaways.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-kmNeutral-garis dark:border-[#2E2E42] space-y-1.5">
+                      <div className="mt-3 pt-3 border-t border-kmNeutral-garis space-y-1.5">
                         <span className="text-[10px] font-mono font-bold text-kmNeutral-sekunder uppercase block">
                           Poin Tindakan Utama:
                         </span>
@@ -1523,7 +1523,7 @@ function HasilAnalisisContent() {
                           {turn.keyTakeaways.map((kt, kIdx) => (
                             <span
                               key={kIdx}
-                              className="text-xs px-2.5 py-1 rounded bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] font-medium"
+                              className="text-xs px-2.5 py-1 rounded bg-kmNeutral-surface border border-kmNeutral-garis font-medium"
                             >
                               {kt}
                             </span>
@@ -1555,7 +1555,7 @@ function HasilAnalisisContent() {
                 ))}
 
                 {isAgentLoading && (
-                  <div className="p-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] flex items-center gap-3 text-xs font-mono text-kmNeutral-sekunder">
+                  <div className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex items-center gap-3 text-xs font-mono text-kmNeutral-sekunder">
                     <span className="w-4 h-4 border-2 border-[#2D6CDF] border-t-transparent rounded-full animate-spin" />
                     <span>Agen Pembimbing sedang menyusun strategi belajar dan latihan...</span>
                   </div>
@@ -1575,7 +1575,7 @@ function HasilAnalisisContent() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder={`Tanyakan materi mata kuliah ${targetCourse.name}, cara menaikkan nilai, atau latihan sertifikasi...`}
-                  className="flex-1 h-11 px-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks focus:border-[#2D6CDF]"
+                  className="flex-1 h-11 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm text-kmNeutral-tinta focus:border-[#2D6CDF]"
                 />
                 <button
                   type="submit"
@@ -1591,22 +1591,22 @@ function HasilAnalisisContent() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-t border-kmNeutral-garis dark:border-[#2E2E42] py-8 px-4 sm:px-6 lg:px-8 mt-16 transition-colors">
+      <footer className="w-full bg-kmNeutral-surface border-t border-kmNeutral-garis py-8 px-4 sm:px-6 lg:px-8 mt-16 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div>
             <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
               <span className="w-5 h-5 rounded bg-[#FFC93C] text-[#1B1B2F] font-mono font-bold text-[10px] flex items-center justify-center">
                 KM
               </span>
-              <span className="font-serif font-bold text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+              <span className="font-serif font-bold text-sm text-kmNeutral-tinta">
                 KertaMarga Bali
               </span>
             </div>
-            <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+            <p className="text-xs text-kmNeutral-sekunder">
               Inovasi Navigasi Karier & Penjurusan AI untuk Bali DigiFest 2026 (Kategori SMK)
             </p>
           </div>
-          <div className="text-[11px] font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder flex gap-3">
+          <div className="text-[11px] font-mono text-kmNeutral-sekunder flex gap-3">
             <Link href="/" className="hover:underline">
               Beranda
             </Link>
@@ -1636,7 +1636,7 @@ export default function HasilAnalisisPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-tinta dark:text-kmNeutral-darkTeks font-mono text-xs">
+        <div className="min-h-screen flex items-center justify-center bg-kmNeutral-latar text-kmNeutral-tinta font-mono text-xs">
           Memuat Halaman Hasil Analisis & Agen Pembimbing...
         </div>
       }

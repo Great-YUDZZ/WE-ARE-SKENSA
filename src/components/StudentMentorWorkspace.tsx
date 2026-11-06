@@ -320,13 +320,13 @@ export default function StudentMentorWorkspace({
   return (
     <div className="space-y-8">
       {/* SECTION 1: TARGET JURUSAN & TES KEMINATAN SISWA */}
-      <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-5 sm:p-7 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+      <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-5 sm:p-7 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
           <div>
-            <span className="text-[11px] font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase tracking-wider">
+            <span className="text-[11px] font-mono font-bold text-[#2D6CDF] uppercase tracking-wider">
               TAHAP 1 &bull; PEMETAAN TARGET & TES KEMINATAN SISWA
             </span>
-            <h2 className="font-serif font-bold text-xl sm:text-2xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+            <h2 className="font-serif font-bold text-xl sm:text-2xl text-kmNeutral-tinta mt-0.5">
               Pilih Jurusan & Mata Kuliah Tujuan Anda
             </h2>
           </div>
@@ -334,7 +334,7 @@ export default function StudentMentorWorkspace({
           <button
             type="button"
             onClick={handlePresetLowScoreScenario}
-            className="text-xs font-mono font-bold px-3.5 py-2 rounded-lg bg-[#D7263D]/10 hover:bg-[#D7263D]/20 text-[#D7263D] dark:text-[#FF5A6B] border border-[#D7263D]/30 transition-colors cursor-pointer shrink-0"
+            className="text-xs font-mono font-bold px-3.5 py-2 rounded-lg bg-[#D7263D]/10 hover:bg-[#D7263D]/20 text-[#D7263D] border border-[#D7263D]/30 transition-colors cursor-pointer shrink-0"
           >
             Simulasikan Kasus Nilai Kecil / Lintas Jurusan &rarr;
           </button>
@@ -343,13 +343,13 @@ export default function StudentMentorWorkspace({
         {/* Target Major & Target Course Selector */}
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mb-2">
+            <label className="block text-xs font-bold text-kmNeutral-tinta mb-2">
               1. Jurusan / Program Studi yang Dituju di Bali:
             </label>
             <select
               value={targetFieldId}
               onChange={(e) => setTargetFieldId(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-tinta dark:text-kmNeutral-darkTeks text-xs sm:text-sm font-medium focus:border-[#2D6CDF] transition-colors"
+              className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-kmNeutral-tinta text-xs sm:text-sm font-medium focus:border-[#2D6CDF] transition-colors"
             >
               {FIELDS.map((field) => (
                 <option key={field.id} value={field.id}>
@@ -357,13 +357,13 @@ export default function StudentMentorWorkspace({
                 </option>
               ))}
             </select>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-kmNeutral-sekunder">
               <span className={`font-mono font-bold px-2 py-0.5 rounded ${groupStyle.badgeBg} ${groupStyle.badgeText}`}>
                 {groupStyle.label}
               </span>
               <span>
                 Kampus/SMK Rujukan:{" "}
-                <strong className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                <strong className="text-kmNeutral-tinta">
                   {selectedFieldObj.institutions.map((i) => i.name).join(", ")}
                 </strong>
               </span>
@@ -371,13 +371,13 @@ export default function StudentMentorWorkspace({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mb-2">
+            <label className="block text-xs font-bold text-kmNeutral-tinta mb-2">
               2. Mata Kuliah / Kompetensi Inti yang Dituju:
             </label>
             <select
               value={targetCourse.id}
               onChange={(e) => setTargetCourseId(e.target.value)}
-              className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-tinta dark:text-kmNeutral-darkTeks text-xs sm:text-sm font-medium focus:border-[#2D6CDF] transition-colors"
+              className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-kmNeutral-tinta text-xs sm:text-sm font-medium focus:border-[#2D6CDF] transition-colors"
             >
               {curriculum.targetCourses.map((course) => (
                 <option key={course.id} value={course.id}>
@@ -385,9 +385,9 @@ export default function StudentMentorWorkspace({
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-[11px] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+            <p className="mt-2 text-[11px] text-kmNeutral-sekunder">
               Kompetensi Kunci:{" "}
-              <strong className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+              <strong className="text-kmNeutral-tinta">
                 {targetCourse.coreCompetency}
               </strong>
             </p>
@@ -395,12 +395,12 @@ export default function StudentMentorWorkspace({
         </div>
 
         {/* 4 Diagnostic Questions */}
-        <form onSubmit={handleSubmitTest} className="mt-6 space-y-5 pt-5 border-t border-kmNeutral-garis dark:border-[#2E2E42]">
+        <form onSubmit={handleSubmitTest} className="mt-6 space-y-5 pt-5 border-t border-kmNeutral-garis">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+            <span className="text-xs font-bold text-kmNeutral-tinta">
               3. Kuesioner Evaluasi Minat & Nilai Penguasaan Awal Siswa:
             </span>
-            <span className="text-[11px] font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+            <span className="text-[11px] font-mono text-kmNeutral-sekunder">
               4 Pertanyaan Diagnostik
             </span>
           </div>
@@ -409,18 +409,18 @@ export default function StudentMentorWorkspace({
             {INTEREST_TEST_QUESTIONS.map((q) => (
               <div
                 key={q.id}
-                className="p-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] flex flex-col justify-between space-y-3"
+                className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex flex-col justify-between space-y-3"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#2D6CDF]/10 text-[#2D6CDF] dark:text-[#6C9BFF]">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#2D6CDF]/10 text-[#2D6CDF]">
                       SOAL 0{q.step} &bull; {q.category.toUpperCase()}
                     </span>
                   </div>
-                  <h3 className="font-sans font-bold text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-snug">
+                  <h3 className="font-sans font-bold text-xs sm:text-sm text-kmNeutral-tinta leading-snug">
                     {q.question}
                   </h3>
-                  <p className="text-[11px] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-0.5">
+                  <p className="text-[11px] text-kmNeutral-sekunder mt-0.5">
                     {q.subtitle}
                   </p>
                 </div>
@@ -440,15 +440,15 @@ export default function StudentMentorWorkspace({
                         }
                         className={`w-full text-left p-2.5 rounded-lg text-xs transition-all cursor-pointer border flex items-start gap-2.5 ${
                           isSelected
-                            ? "bg-[#FFC93C]/25 dark:bg-[#FFD25E]/20 border-[#E6B020] text-kmNeutral-tinta dark:text-white font-semibold"
-                            : "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder hover:border-[#FFC93C]"
+                            ? "bg-[#FFC93C]/25 border-[#E6B020] text-kmNeutral-tinta font-semibold"
+                            : "bg-kmNeutral-surface border-kmNeutral-garis text-kmNeutral-sekunder hover:border-[#FFC93C]"
                         }`}
                       >
                         <span
                           className={`w-4 h-4 rounded-full shrink-0 mt-0.5 flex items-center justify-center text-[10px] font-mono font-bold ${
                             isSelected
                               ? "bg-[#1B1B2F] text-[#FFC93C]"
-                              : "border border-kmNeutral-garis dark:border-[#2E2E42]"
+                              : "border border-kmNeutral-garis"
                           }`}
                         >
                           {isSelected ? "✓" : String.fromCharCode(65 + oIdx)}
@@ -463,9 +463,9 @@ export default function StudentMentorWorkspace({
           </div>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+            <p className="text-xs text-kmNeutral-sekunder">
               Jika hasil nilai analisis masih di bawah ambang batas mata kuliah ({targetCourse.minScore}%),{" "}
-              <strong className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+              <strong className="text-kmNeutral-tinta">
                 Agen Pembimbing KertaMarga
               </strong>{" "}
               akan otomatis menyusun langkah tindak lanjut, materi belajar, dan latihan sertifikasi.
@@ -489,34 +489,34 @@ export default function StudentMentorWorkspace({
           <div
             className={`rounded-2xl p-6 sm:p-7 border-2 shadow-sm transition-colors ${
               isNowReady
-                ? "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-[#2E9E6B]"
-                : "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-[#D7263D]"
+                ? "bg-kmNeutral-surface border-[#2E9E6B]"
+                : "bg-kmNeutral-surface border-[#D7263D]"
             }`}
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-5 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-5 border-b border-kmNeutral-garis">
               <div className="space-y-2 max-w-2xl">
                 <div className="flex flex-wrap items-center gap-2">
                   {isNowReady ? (
-                    <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/40">
+                    <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-[#2E9E6B]/15 text-[#1F7A52] border border-[#2E9E6B]/40">
                       STATUS: KESIAPAN TERCAPAI &bull; SIAP MASUK JURUSAN TUJUAN
                     </span>
                   ) : (
-                    <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-[#D7263D]/15 text-[#D7263D] dark:text-[#FF5A6B] border border-[#D7263D]/40">
+                    <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-[#D7263D]/15 text-[#D7263D] border border-[#D7263D]/40">
                       PERHATIAN: NILAI KESIAPAN DI BAWAH STANDAR / PERLU BIMBINGAN AGEN
                     </span>
                   )}
-                  <span className="text-xs font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                  <span className="text-xs font-mono text-kmNeutral-sekunder">
                     Target Matkul: [{targetCourse.code}] {targetCourse.name}
                   </span>
                 </div>
 
-                <h3 className="font-serif font-bold text-2xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                <h3 className="font-serif font-bold text-2xl text-kmNeutral-tinta">
                   {isNowReady
                     ? `Selamat! Kompetensi Anda Telah Sesuai dengan Standar ${curriculum.fieldName}`
                     : `Apa yang Harus Anda Lakukan Saat Hasil Analisis Nilai Belum Sesuai (${currentReadinessScore}%)`}
                 </h3>
 
-                <p className="text-xs sm:text-sm text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder leading-relaxed">
+                <p className="text-xs sm:text-sm text-kmNeutral-sekunder leading-relaxed">
                   {isNowReady
                     ? `Melalui penyelesaian materi pembelajaran dan latihan sertifikasi bersama Agen Pembimbing, skor kesiapan Anda meningkat dari ${baseScore}% menjadi ${currentReadinessScore}% (melampaui batas minimum ${targetCourse.minScore}%).`
                     : `Skor awal Anda adalah ${baseScore}%, sedangkan mata kuliah '${targetCourse.name}' pada jurusan ${curriculum.fieldName} menuntut kesiapan minimal ${targetCourse.minScore}% (selisih ${scoreGap} poin). ${
@@ -528,16 +528,16 @@ export default function StudentMentorWorkspace({
               </div>
 
               {/* Dynamic Score Meter Card */}
-              <div className="p-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] min-w-[260px] space-y-3">
+              <div className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis min-w-[260px] space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                  <span className="text-kmNeutral-sekunder">
                     SKOR KESIAPAN SAAT INI:
                   </span>
                   <span
                     className={`font-bold text-xl ${
                       isNowReady
-                        ? "text-[#1F7A52] dark:text-[#4CC992]"
-                        : "text-[#D7263D] dark:text-[#FF5A6B]"
+                        ? "text-[#1F7A52]"
+                        : "text-[#D7263D]"
                     }`}
                   >
                     {currentReadinessScore}%
@@ -546,7 +546,7 @@ export default function StudentMentorWorkspace({
 
                 {/* Progress bar with target marker */}
                 <div className="space-y-1">
-                  <div className="w-full h-3 rounded-full bg-kmNeutral-garis dark:bg-[#2E2E42] overflow-hidden relative">
+                  <div className="w-full h-3 rounded-full bg-kmNeutral-garis overflow-hidden relative">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         isNowReady ? "bg-[#2E9E6B]" : "bg-[#2D6CDF]"
@@ -554,29 +554,29 @@ export default function StudentMentorWorkspace({
                       style={{ width: `${currentReadinessScore}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                  <div className="flex justify-between text-[10px] font-mono text-kmNeutral-sekunder">
                     <span>Skor Awal: {baseScore}%</span>
                     <span>Bonus Latihan: +{moduleBonus + certBonus}%</span>
-                    <span className="font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                    <span className="font-bold text-kmNeutral-tinta">
                       Target: {targetCourse.minScore}%
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-kmNeutral-garis dark:border-[#2E2E42] grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="pt-2 border-t border-kmNeutral-garis grid grid-cols-2 gap-2 text-[11px] font-mono">
                   <div>
-                    <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder block">
+                    <span className="text-kmNeutral-sekunder block">
                       Modul Selesai:
                     </span>
-                    <span className="font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                    <span className="font-bold text-kmNeutral-tinta">
                       {completedModules.length} / {curriculum.learningModules.length} Materi
                     </span>
                   </div>
                   <div>
-                    <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder block">
+                    <span className="text-kmNeutral-sekunder block">
                       Uji Sertifikasi:
                     </span>
-                    <span className="font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                    <span className="font-bold text-kmNeutral-tinta">
                       {passedCertIds.length} / {curriculum.certificationDrills.length} Lulus
                     </span>
                   </div>
@@ -586,8 +586,8 @@ export default function StudentMentorWorkspace({
 
             {/* Mismatch Bridge Explanation Box (Always shown if initial score was low or mismatched) */}
             {isInitialLowOrMismatch && (
-              <div className="mt-4 p-4 rounded-xl bg-[#FFC93C]/15 border border-[#E6B020]/40 text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
-                <span className="font-mono font-bold text-[11px] uppercase tracking-wider block mb-1 text-[#1B1B2F] dark:text-[#FFD25E]">
+              <div className="mt-4 p-4 rounded-xl bg-[#FFC93C]/15 border border-[#E6B020]/40 text-xs sm:text-sm text-kmNeutral-tinta">
+                <span className="font-mono font-bold text-[11px] uppercase tracking-wider block mb-1 text-[#1B1B2F]">
                   STRATEGI JEMBATAN LINTAS MINAT & PERBAIKAN NILAI OLEH AGEN:
                 </span>
                 <p className="leading-relaxed">{curriculum.mismatchBridgeAdvice}</p>
@@ -602,7 +602,7 @@ export default function StudentMentorWorkspace({
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "rencana"
                     ? "bg-[#D7263D] text-white shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>1. Langkah yang Harus Dilakukan</span>
@@ -614,7 +614,7 @@ export default function StudentMentorWorkspace({
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "materi"
                     ? "bg-[#2D6CDF] text-white shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>
@@ -628,7 +628,7 @@ export default function StudentMentorWorkspace({
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "sertifikasi"
                     ? "bg-[#2E9E6B] text-white shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>
@@ -642,7 +642,7 @@ export default function StudentMentorWorkspace({
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeAgentTab === "konsultasi"
                     ? "bg-[#FFC93C] text-[#1B1B2F] shadow-xs"
-                    : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder border border-kmNeutral-garis dark:border-[#2E2E42]"
+                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
                 }`}
               >
                 <span>4. Tanya Agen Pembimbing AI</span>
@@ -652,13 +652,13 @@ export default function StudentMentorWorkspace({
 
           {/* TAB CONTENT 1: LANGKAH YANG HARUS DILAKUKAN (ACTION PLAN) */}
           {activeAgentTab === "rencana" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#D7263D] dark:text-[#FF5A6B] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#D7263D] uppercase tracking-wider">
                     PETA JALAN REMEDIAL & PENYELARASAN KOMPETENSI
                   </span>
-                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     4 Langkah Wajib Jika Nilai Kecil atau Belum Sesuai dengan {curriculum.fieldName}
                   </h4>
                 </div>
@@ -675,30 +675,30 @@ export default function StudentMentorWorkspace({
                 {curriculum.remedialActionPlan.map((step) => (
                   <div
                     key={step.stepNumber}
-                    className="p-5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] flex flex-col justify-between space-y-3"
+                    className="p-5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex flex-col justify-between space-y-3"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="w-8 h-8 rounded-lg bg-[#D7263D]/15 text-[#D7263D] dark:text-[#FF5A6B] font-mono font-bold text-xs flex items-center justify-center border border-[#D7263D]/30">
+                        <span className="w-8 h-8 rounded-lg bg-[#D7263D]/15 text-[#D7263D] font-mono font-bold text-xs flex items-center justify-center border border-[#D7263D]/30">
                           {step.stepNumber}
                         </span>
-                        <span className="text-[11px] font-mono font-semibold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                        <span className="text-[11px] font-mono font-semibold text-kmNeutral-sekunder">
                           {step.phase}
                         </span>
                       </div>
-                      <h5 className="font-serif font-bold text-base text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                      <h5 className="font-serif font-bold text-base text-kmNeutral-tinta">
                         {step.title}
                       </h5>
-                      <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-1.5 leading-relaxed">
+                      <p className="text-xs text-kmNeutral-sekunder mt-1.5 leading-relaxed">
                         {step.action}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-kmNeutral-garis dark:border-[#2E2E42] text-[11px]">
-                      <span className="font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] block">
+                    <div className="pt-3 border-t border-kmNeutral-garis text-[11px]">
+                      <span className="font-mono font-bold text-[#1F7A52] block">
                         Target Capaian:
                       </span>
-                      <span className="text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                      <span className="text-kmNeutral-tinta">
                         {step.targetOutcome}
                       </span>
                     </div>
@@ -707,8 +707,8 @@ export default function StudentMentorWorkspace({
               </div>
 
               {/* Target Courses Checklist */}
-              <div className="p-5 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] space-y-3">
-                <span className="text-xs font-mono font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks uppercase">
+              <div className="p-5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis space-y-3">
+                <span className="text-xs font-mono font-bold text-kmNeutral-tinta uppercase">
                   DAFTAR MATA KULIAH INTI YANG WAJIB DIPERSIAPKAN DI JURUSAN INI:
                 </span>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -721,28 +721,28 @@ export default function StudentMentorWorkspace({
                         onClick={() => setTargetCourseId(c.id)}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                           isSelectedCourse
-                            ? "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-[#2D6CDF]"
-                            : "bg-kmNeutral-surface/60 dark:bg-kmNeutral-darkPermukaan/60 border-kmNeutral-garis dark:border-[#2E2E42]"
+                            ? "bg-kmNeutral-surface border-[#2D6CDF]"
+                            : "bg-kmNeutral-surface/60 border-kmNeutral-garis"
                         }`}
                       >
                         <div className="flex items-center justify-between text-[11px] font-mono mb-1">
-                          <span className="font-bold text-[#2D6CDF] dark:text-[#6C9BFF]">
+                          <span className="font-bold text-[#2D6CDF]">
                             {c.code} &bull; {c.sks} SKS
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded font-bold ${
                               meetsCourse
-                                ? "bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992]"
-                                : "bg-[#D7263D]/15 text-[#D7263D] dark:text-[#FF5A6B]"
+                                ? "bg-[#2E9E6B]/15 text-[#1F7A52]"
+                                : "bg-[#D7263D]/15 text-[#D7263D]"
                             }`}
                           >
                             Min. {c.minScore}%
                           </span>
                         </div>
-                        <h6 className="font-bold text-xs text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                        <h6 className="font-bold text-xs text-kmNeutral-tinta">
                           {c.name}
                         </h6>
-                        <p className="text-[11px] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-1">
+                        <p className="text-[11px] text-kmNeutral-sekunder mt-1">
                           {c.description}
                         </p>
                       </div>
@@ -755,16 +755,16 @@ export default function StudentMentorWorkspace({
 
           {/* TAB CONTENT 2: MATERI PEMBELAJARAN TERARAH */}
           {activeAgentTab === "materi" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] uppercase tracking-wider">
                     MODUL PEMBELAJARAN PENDAMPING MATKUL & JURUSAN
                   </span>
-                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     Materi Pembelajaran {curriculum.fieldName}
                   </h4>
-                  <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-0.5">
+                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
                     Pelajari ringkasan konsep inti di bawah dan kerjakan latihan praktiknya untuk menambah skor kesiapan Anda (+10% per modul).
                   </p>
                 </div>
@@ -788,8 +788,8 @@ export default function StudentMentorWorkspace({
                       key={mod.id}
                       className={`rounded-xl border-2 transition-all overflow-hidden ${
                         isCompleted
-                          ? "border-[#2E9E6B]/60 bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar"
-                          : "border-kmNeutral-garis dark:border-[#2E2E42] bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar"
+                          ? "border-[#2E9E6B]/60 bg-kmNeutral-latar"
+                          : "border-kmNeutral-garis bg-kmNeutral-latar"
                       }`}
                     >
                       {/* Module Header */}
@@ -797,32 +797,32 @@ export default function StudentMentorWorkspace({
                         onClick={() =>
                           setExpandedModuleId(isExpanded ? "" : mod.id)
                         }
-                        className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-kmNeutral-surface/50 dark:hover:bg-kmNeutral-darkPermukaan/50 transition-colors"
+                        className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-kmNeutral-surface/50 transition-colors"
                       >
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] dark:text-[#6C9BFF] font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-bold">
                               MODUL 0{idx + 1} &bull; {mod.level.toUpperCase()}
                             </span>
-                            <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                            <span className="text-kmNeutral-sekunder">
                               Matkul: {mod.courseName}
                             </span>
-                            <span className="text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                            <span className="text-kmNeutral-sekunder">
                               &bull; Durasi: {mod.duration}
                             </span>
                           </div>
-                          <h5 className="font-serif font-bold text-base sm:text-lg text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                          <h5 className="font-serif font-bold text-base sm:text-lg text-kmNeutral-tinta">
                             {mod.title}
                           </h5>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           {isCompleted ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#2E9E6B]/20 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/40">
+                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#2E9E6B]/20 text-[#1F7A52] border border-[#2E9E6B]/40">
                               ✓ Selesai (+{mod.scoreBoost}%)
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FFC93C]/25 text-[#1B1B2F] dark:text-[#FFD25E] border border-[#E6B020]/40">
+                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FFC93C]/25 text-[#1B1B2F] border border-[#E6B020]/40">
                               +{mod.scoreBoost}% Kesiapan
                             </span>
                           )}
@@ -834,20 +834,20 @@ export default function StudentMentorWorkspace({
 
                       {/* Expanded Module Body */}
                       {isExpanded && (
-                        <div className="p-5 pt-0 border-t border-kmNeutral-garis dark:border-[#2E2E42] space-y-4">
-                          <p className="text-xs sm:text-sm text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder pt-3 leading-relaxed">
+                        <div className="p-5 pt-0 border-t border-kmNeutral-garis space-y-4">
+                          <p className="text-xs sm:text-sm text-kmNeutral-sekunder pt-3 leading-relaxed">
                             {mod.summary}
                           </p>
 
                           {/* Key Concepts */}
-                          <div className="p-4 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42]">
-                            <span className="text-xs font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] uppercase block mb-2">
+                          <div className="p-4 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis">
+                            <span className="text-xs font-mono font-bold text-[#2D6CDF] uppercase block mb-2">
                               KONSEP INTI YANG WAJIB DIKUASAI:
                             </span>
-                            <ul className="space-y-1.5 text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                            <ul className="space-y-1.5 text-xs sm:text-sm text-kmNeutral-tinta">
                               {mod.keyConcepts.map((kc, kIdx) => (
                                 <li key={kIdx} className="flex items-start gap-2">
-                                  <span className="font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF]">
+                                  <span className="font-mono font-bold text-[#2D6CDF]">
                                     {kIdx + 1}.
                                   </span>
                                   <span>{kc}</span>
@@ -857,14 +857,14 @@ export default function StudentMentorWorkspace({
                           </div>
 
                           {/* Full Study Material */}
-                          <div className="p-4 rounded-xl bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] space-y-2">
-                            <span className="text-xs font-mono font-bold text-kmNeutral-tinta dark:text-kmNeutral-darkTeks uppercase block">
+                          <div className="p-4 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-2">
+                            <span className="text-xs font-mono font-bold text-kmNeutral-tinta uppercase block">
                               URAIAN MATERI PEMBELAJARAN:
                             </span>
-                            <p className="text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                            <p className="text-xs sm:text-sm text-kmNeutral-tinta leading-relaxed">
                               {mod.studyMaterial}
                             </p>
-                            <div className="pt-2 mt-2 border-t border-kmNeutral-garis dark:border-[#2E2E42] text-xs text-[#1F7A52] dark:text-[#4CC992] font-medium">
+                            <div className="pt-2 mt-2 border-t border-kmNeutral-garis text-xs text-[#1F7A52] font-medium">
                               {mod.baliCaseStudy}
                             </div>
                           </div>
@@ -872,10 +872,10 @@ export default function StudentMentorWorkspace({
                           {/* Practice Exercise Input */}
                           <div className="p-4 rounded-xl bg-[#FFC93C]/10 border border-[#E6B020]/40 space-y-3">
                             <div>
-                              <span className="text-xs font-mono font-bold text-[#1B1B2F] dark:text-[#FFD25E] uppercase block">
+                              <span className="text-xs font-mono font-bold text-[#1B1B2F] uppercase block">
                                 TUGAS PRAKTIK MANDIRI (PENINGKAT KOMPETENSI):
                               </span>
-                              <p className="text-xs sm:text-sm font-medium text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-1">
+                              <p className="text-xs sm:text-sm font-medium text-kmNeutral-tinta mt-1">
                                 {mod.practiceTask}
                               </p>
                             </div>
@@ -890,7 +890,7 @@ export default function StudentMentorWorkspace({
                                 }))
                               }
                               placeholder="Tuliskan catatan jawaban atau rancangan singkat Anda di sini sebelum menandai modul selesai..."
-                              className="w-full p-3 rounded-lg bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                              className="w-full p-3 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis text-xs sm:text-sm text-kmNeutral-tinta"
                             />
 
                             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -902,7 +902,7 @@ export default function StudentMentorWorkspace({
                                     `Bantu saya memahami lebih dalam tentang ${mod.title} pada mata kuliah ${mod.courseName}`
                                   );
                                 }}
-                                className="text-xs font-mono font-bold text-[#2D6CDF] dark:text-[#6C9BFF] hover:underline cursor-pointer"
+                                className="text-xs font-mono font-bold text-[#2D6CDF] hover:underline cursor-pointer"
                               >
                                 Diskusikan Materi Ini dengan Agen Pembimbing &rarr;
                               </button>
@@ -939,23 +939,23 @@ export default function StudentMentorWorkspace({
 
           {/* TAB CONTENT 3: LATIHAN SERTIFIKASI & UJI KOMPETENSI */}
           {activeAgentTab === "sertifikasi" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
                     SIMULASI UJI KOMPETENSI &bull; {curriculum.certificationBody}
                   </span>
-                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     {curriculum.mainCertificationTitle}
                   </h4>
-                  <p className="text-xs text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder mt-0.5">
+                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
                     Selesaikan latihan uji kompetensi di bawah agar Anda semakin ahli dan memiliki bukti kesiapan sertifikasi (+7% skor per soal benar).
                   </p>
                 </div>
 
-                <div className="px-3.5 py-2 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-xs font-mono">
+                <div className="px-3.5 py-2 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs font-mono">
                   Status Lulus:{" "}
-                  <strong className="text-[#1F7A52] dark:text-[#4CC992]">
+                  <strong className="text-[#1F7A52]">
                     {passedCertIds.length} / {curriculum.certificationDrills.length} Unit Kompetensi
                   </strong>
                 </div>
@@ -973,22 +973,22 @@ export default function StudentMentorWorkspace({
                       key={drill.id}
                       className={`p-5 rounded-xl border-2 space-y-4 ${
                         isPassed
-                          ? "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border-[#2E9E6B]/60"
-                          : "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border-kmNeutral-garis dark:border-[#2E2E42]"
+                          ? "bg-kmNeutral-latar border-[#2E9E6B]/60"
+                          : "bg-kmNeutral-latar border-kmNeutral-garis"
                       }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] dark:text-[#4CC992] border border-[#2E9E6B]/30">
+                          <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] border border-[#2E9E6B]/30">
                             UNIT KOMPETENSI: {drill.competencyCode}
                           </span>
-                          <span className="text-xs font-mono text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder">
+                          <span className="text-xs font-mono text-kmNeutral-sekunder">
                             {drill.certName}
                           </span>
                         </div>
 
                         {isPassed ? (
-                          <span className="text-xs font-mono font-bold text-[#1F7A52] dark:text-[#4CC992]">
+                          <span className="text-xs font-mono font-bold text-[#1F7A52]">
                             ✓ KOMPETEN (+{drill.scoreBoost}% Skor)
                           </span>
                         ) : (
@@ -998,7 +998,7 @@ export default function StudentMentorWorkspace({
                         )}
                       </div>
 
-                      <h5 className="font-sans font-bold text-sm sm:text-base text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                      <h5 className="font-sans font-bold text-sm sm:text-base text-kmNeutral-tinta leading-relaxed">
                         {drill.question}
                       </h5>
 
@@ -1017,8 +1017,8 @@ export default function StudentMentorWorkspace({
                               }
                               className={`w-full text-left p-3 rounded-lg text-xs sm:text-sm border transition-all cursor-pointer flex items-start gap-2.5 ${
                                 isChosen
-                                  ? "bg-[#2D6CDF]/15 border-[#2D6CDF] text-kmNeutral-tinta dark:text-white font-semibold"
-                                  : "bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder hover:border-[#2D6CDF]/50"
+                                  ? "bg-[#2D6CDF]/15 border-[#2D6CDF] text-kmNeutral-tinta font-semibold"
+                                  : "bg-kmNeutral-surface border-kmNeutral-garis text-kmNeutral-sekunder hover:border-[#2D6CDF]/50"
                               }`}
                             >
                               <span className="font-mono font-bold text-xs">
@@ -1051,8 +1051,8 @@ export default function StudentMentorWorkspace({
                           <span
                             className={`text-xs font-mono font-bold ${
                               isCorrectNow
-                                ? "text-[#1F7A52] dark:text-[#4CC992]"
-                                : "text-[#D7263D] dark:text-[#FF5A6B]"
+                                ? "text-[#1F7A52]"
+                                : "text-[#D7263D]"
                             }`}
                           >
                             {isCorrectNow
@@ -1066,8 +1066,8 @@ export default function StudentMentorWorkspace({
                         <div
                           className={`p-4 rounded-xl border text-xs sm:text-sm leading-relaxed ${
                             isCorrectNow
-                              ? "bg-[#2E9E6B]/10 border-[#2E9E6B]/40 text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
-                              : "bg-[#D7263D]/10 border-[#D7263D]/40 text-kmNeutral-tinta dark:text-kmNeutral-darkTeks"
+                              ? "bg-[#2E9E6B]/10 border-[#2E9E6B]/40 text-kmNeutral-tinta"
+                              : "bg-[#D7263D]/10 border-[#D7263D]/40 text-kmNeutral-tinta"
                           }`}
                         >
                           <span className="font-mono font-bold text-[11px] uppercase block mb-1">
@@ -1085,24 +1085,24 @@ export default function StudentMentorWorkspace({
 
           {/* TAB CONTENT 4: RUANG KONSULTASI INTERAKTIF AGEN PEMBIMBING AI */}
           {activeAgentTab === "konsultasi" && (
-            <div className="bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border-2 border-kmNeutral-garis dark:border-[#2E2E42] rounded-2xl p-6 sm:p-7 space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-kmNeutral-garis dark:border-[#2E2E42]">
+            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-kmNeutral-garis">
                 <div>
-                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] dark:text-[#4CC992] uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
                     PENDAMPINGAN PERSONAL &bull; AGEN PEMBIMBING KERTAMARGA
                   </span>
-                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta dark:text-kmNeutral-darkTeks mt-0.5">
+                  <h4 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
                     Diskusi Bimbingan Nilai, Mata Kuliah & Sertifikasi
                   </h4>
                 </div>
-                <span className="text-xs font-mono px-3 py-1 rounded-full bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-kmNeutral-sekunder">
+                <span className="text-xs font-mono px-3 py-1 rounded-full bg-kmNeutral-latar border border-kmNeutral-garis text-kmNeutral-sekunder">
                   Fokus: {curriculum.fieldName} ({targetCourse.code})
                 </span>
               </div>
 
               {/* Quick Question Prompts for the Mentor Agent */}
               <div className="space-y-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder block">
+                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder block">
                   Pertanyaan Cepat untuk Agen Pembimbing:
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -1116,7 +1116,7 @@ export default function StudentMentorWorkspace({
                       key={i}
                       type="button"
                       onClick={() => handleSendAgentMessage(qText)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar hover:bg-[#FFC93C]/20 border border-kmNeutral-garis dark:border-[#2E2E42] hover:border-[#FFC93C] text-kmNeutral-sekunder dark:text-kmNeutral-darkSekunder hover:text-kmNeutral-tinta dark:hover:text-white transition-colors cursor-pointer text-left"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-kmNeutral-latar hover:bg-[#FFC93C]/20 border border-kmNeutral-garis hover:border-[#FFC93C] text-kmNeutral-sekunder hover:text-kmNeutral-tinta transition-colors cursor-pointer text-left"
                     >
                       &ldquo;{qText}&rdquo;
                     </button>
@@ -1131,29 +1131,29 @@ export default function StudentMentorWorkspace({
                     key={turn.id}
                     className={`p-4 sm:p-5 rounded-xl border ${
                       turn.sender === "agent"
-                        ? "bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border-kmNeutral-garis dark:border-[#2E2E42]"
+                        ? "bg-kmNeutral-latar border-kmNeutral-garis"
                         : "bg-[#2D6CDF]/10 border-[#2D6CDF]/30 ml-auto max-w-2xl"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[11px] font-mono font-bold uppercase text-kmNeutral-tinta dark:text-kmNeutral-darkTeks">
+                      <span className="text-[11px] font-mono font-bold uppercase text-kmNeutral-tinta">
                         {turn.sender === "agent"
                           ? `Agen Pembimbing ${curriculum.fieldName}`
                           : "Pertanyaan Siswa"}
                       </span>
                       {turn.diagnosisSummary && (
-                        <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#FFC93C]/25 text-[#1B1B2F] dark:text-[#FFD25E]">
+                        <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#FFC93C]/25 text-[#1B1B2F]">
                           {turn.diagnosisSummary}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks leading-relaxed">
+                    <p className="text-xs sm:text-sm text-kmNeutral-tinta leading-relaxed">
                       {turn.text}
                     </p>
 
                     {turn.keyTakeaways && turn.keyTakeaways.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-kmNeutral-garis dark:border-[#2E2E42] space-y-1.5">
+                      <div className="mt-3 pt-3 border-t border-kmNeutral-garis space-y-1.5">
                         <span className="text-[10px] font-mono font-bold text-kmNeutral-sekunder uppercase block">
                           Poin Tindakan Utama:
                         </span>
@@ -1161,7 +1161,7 @@ export default function StudentMentorWorkspace({
                           {turn.keyTakeaways.map((kt, kIdx) => (
                             <span
                               key={kIdx}
-                              className="text-xs px-2.5 py-1 rounded bg-kmNeutral-surface dark:bg-kmNeutral-darkPermukaan border border-kmNeutral-garis dark:border-[#2E2E42] font-medium"
+                              className="text-xs px-2.5 py-1 rounded bg-kmNeutral-surface border border-kmNeutral-garis font-medium"
                             >
                               {kt}
                             </span>
@@ -1193,7 +1193,7 @@ export default function StudentMentorWorkspace({
                 ))}
 
                 {isAgentLoading && (
-                  <div className="p-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] flex items-center gap-3 text-xs font-mono text-kmNeutral-sekunder">
+                  <div className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex items-center gap-3 text-xs font-mono text-kmNeutral-sekunder">
                     <span className="w-4 h-4 border-2 border-[#2D6CDF] border-t-transparent rounded-full animate-spin" />
                     <span>Agen Pembimbing sedang menyusun strategi belajar dan latihan...</span>
                   </div>
@@ -1213,7 +1213,7 @@ export default function StudentMentorWorkspace({
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder={`Tanyakan materi mata kuliah ${targetCourse.name}, cara menaikkan nilai, atau latihan sertifikasi...`}
-                  className="flex-1 h-11 px-4 rounded-xl bg-kmNeutral-latar dark:bg-kmNeutral-darkLatar border border-kmNeutral-garis dark:border-[#2E2E42] text-xs sm:text-sm text-kmNeutral-tinta dark:text-kmNeutral-darkTeks focus:border-[#2D6CDF]"
+                  className="flex-1 h-11 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm text-kmNeutral-tinta focus:border-[#2D6CDF]"
                 />
                 <button
                   type="submit"

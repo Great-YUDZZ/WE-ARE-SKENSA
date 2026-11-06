@@ -209,7 +209,7 @@ export default function Home() {
                 <span className="w-5 h-5 rounded-full bg-[#3B66FF] border-2 border-[#141413] text-white flex items-center justify-center text-xs font-black">
                   ✓
                 </span>
-                <span>Data Resmi BAN-PT &amp; PDDIKTI</span>
+                <span>Data Terverifikasi</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#FFBE2E] border-2 border-[#141413] text-[#141413] flex items-center justify-center text-xs font-black">
@@ -262,17 +262,12 @@ export default function Home() {
               <span className="font-display font-extrabold text-base text-white">
                 KertaMarga Bali
               </span>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#FFBE2E] text-[#141413]">
-                DIGIFEST 2026
-              </span>
             </div>
             <p className="text-xs text-[#F0ECE1]/80">
               Studio Eksplorasi Jurusan &amp; Penjurusan AI untuk Pelajar SMP, SMA, dan SMK di Bali
             </p>
           </div>
           <div className="text-xs font-mono text-[#F0ECE1]/70 flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
-            <span>Data Resmi: PDDIKTI, BAN-PT, BPS Bali</span>
-            <span className="hidden sm:inline">&bull;</span>
             <span className="text-[#B8F348]">Desain Ramah Pelajar &amp; Bebas Iklan</span>
           </div>
         </div>

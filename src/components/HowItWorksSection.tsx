@@ -157,7 +157,7 @@ export default function HowItWorksSection() {
               </div>
 
               <h3 className="font-display font-extrabold text-2xl text-white leading-tight">
-                Komputasi AI + Data Resmi PDDIKTI & BAN-PT
+                Komputasi AI + Data Terverifikasi
               </h3>
               <p className="mt-2 text-sm text-white/90 leading-relaxed">
                 Hasil rekomendasimu murni dihitung dari kecocokan profil dan data akreditasi resmi kampus/SMK se-Bali, tanpa iklan titipan.
@@ -167,7 +167,7 @@ export default function HowItWorksSection() {
             <div className="mt-6 p-4 rounded-2xl bg-[#141413] text-white border-2 border-[#141413] space-y-2 font-mono text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[#B8F348]">SUMBER DATA:</span>
-                <span>PDDIKTI & BAN-PT 2026</span>
+                <span>Terverifikasi 2026</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#1AD598]">CAKUPAN WILAYAH:</span>

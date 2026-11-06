@@ -15,6 +15,9 @@ export default function Navbar({
   onOpenRegister,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Modal lama dipertahankan sebagai fallback agar page lama tetap kompatibel
+  void onOpenLogin;
+  void onOpenRegister;
 
   return (
     <header className="w-full sticky top-0 z-40 px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pointer-events-none">
@@ -28,14 +31,9 @@ export default function Navbar({
             <div className="w-9 h-9 rounded-xl bg-[#B8F348] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center justify-center text-[#141413] group-hover:-rotate-6 transition-transform font-display font-black text-base">
               KM
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-extrabold text-lg sm:text-xl text-[#141413] tracking-tight">
-                KertaMarga
-              </span>
-              <span className="text-[10px] font-mono font-bold tracking-wider text-[#141413] uppercase px-2 py-0.5 rounded-md bg-[#FFBE2E] border-2 border-[#141413] hidden sm:inline">
-                BALI GEN-Z
-              </span>
-            </div>
+            <span className="font-display font-extrabold text-lg sm:text-xl text-[#141413] tracking-tight">
+              KertaMarga
+            </span>
           </Link>
 
           {/* Center Navigation Links */}
@@ -81,13 +79,18 @@ export default function Navbar({
 
           {/* Right Action Group */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <button
-              onClick={onOpenLogin}
-              type="button"
+            <Link
+              href="/login"
               className="hidden sm:inline-flex text-xs sm:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-3.5 py-2 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer"
             >
               Masuk
-            </button>
+            </Link>
+            <Link
+              href="/daftar"
+              className="hidden sm:inline-flex text-xs sm:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-3.5 py-2 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+            >
+              Buat Akun
+            </Link>
 
             {/* Primary Tactile Keycap Button */}
             <Link
@@ -169,16 +172,20 @@ export default function Navbar({
               Buka AI Navigator &rarr;
             </Link>
             <div className="pt-2 border-t-2 border-[#141413]/10 flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  onOpenLogin();
-                  setMobileMenuOpen(false);
-                }}
-                type="button"
-                className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1] text-[#141413] text-xs font-bold"
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1] text-[#141413] text-xs font-bold text-center"
               >
                 Masuk Akun
-              </button>
+              </Link>
+              <Link
+                href="/daftar"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#FFBE2E] text-[#141413] text-xs font-bold text-center"
+              >
+                Buat Akun Baru
+              </Link>
               <Link
                 href="/eksplorasi"
                 onClick={() => setMobileMenuOpen(false)}

@@ -262,7 +262,7 @@ export default function KatalogInstitusiPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-xs font-mono text-[#F0ECE1]/80">
           <div>
             <span className="font-display font-black text-white text-sm block">KertaMarga Bali</span>
-            <span>Platform Eksplorasi Pendidikan Berbasis Data Resmi PDDIKTI &amp; BAN-PT</span>
+            <span>Platform Eksplorasi Pendidikan Bali</span>
           </div>
           <div className="flex gap-4">
             <Link href="/" className="hover:underline">Beranda</Link>
