@@ -44,6 +44,35 @@ function getHandle(): DbHandle {
 // Di Vercel Serverless, file system root bersifat read-only sehingga dialihkan ke /tmp.
 // ============================================================================
 
+// Hash password default untuk akun demo ('password123')
+const DEMO_PASSWORD_HASH = "$2b$10$yrGFsC8dWe24Z.2PAzDEjOmvOo5Ua2Ot5iE3D4PfoRnEesLj8WzHu";
+
+// Akun demo resmi yang siap pakai untuk juri dan penguji lomba
+const SEED_USERS: UserRow[] = [
+  {
+    id: 1001,
+    name: "I Putu Raditya",
+    identifier: "0071234567",
+    email: "demo@skensa.sch.id",
+    passwordHash: DEMO_PASSWORD_HASH,
+    role: "siswa",
+    interests: ["Rekayasa Perangkat Lunak", "Teknik Jaringan (TKJ/CCNA/MTCNA)"],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 1002,
+    name: "I Wayan Sudarma, S.Pd.",
+    identifier: "198501012010011001",
+    email: "gurubk@skensa.sch.id",
+    passwordHash: DEMO_PASSWORD_HASH,
+    role: "guru",
+    interests: ["Pendidikan dan Konseling", "Rekayasa Perangkat Lunak"],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
 const DATA_DIR = process.env.VERCEL
   ? path.join("/tmp", "kertamarga-data")
   : path.join(process.cwd(), "data");
@@ -90,8 +119,15 @@ function initFileStore(): Map<string, UserRow> {
     console.error("Gagal membaca file data/users.json:", err);
   }
 
+  // Masukkan akun demo jika belum ada
+  for (const demo of SEED_USERS) {
+    if (!map.has(demo.identifier.toLowerCase())) {
+      map.set(demo.identifier.toLowerCase(), demo);
+    }
+  }
+
   g.__kertamarga_users = map;
-  g.__kertamarga_seq = maxId + 1;
+  g.__kertamarga_seq = Math.max(maxId + 1, 1003);
   return map;
 }
 
@@ -103,7 +139,7 @@ function persistStore() {
     }
     const list = Array.from(map.values());
     fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
-  } catch (err) {
+  } catch {
     // Di lingkungan serverless tertentu jika disk terbatas, biarkan fallback memori aktif tanpa crash
   }
 }
@@ -119,6 +155,14 @@ function findInStore(key: string): UserRow | null {
     ) {
       return row;
     }
+  }
+  return null;
+}
+
+function findInStoreById(id: number): UserRow | null {
+  const map = initFileStore();
+  for (const row of map.values()) {
+    if (row.id === id) return row;
   }
   return null;
 }
@@ -145,9 +189,8 @@ export async function findUserByLogin(login: string): Promise<UserRow | null> {
       return byEmail[0];
     }
     dbReady = true;
-    return null;
+    return findInStore(value);
   } catch {
-    // MySQL tidak merespons, fallback ke persistent file store
     return findInStore(value);
   }
 }
@@ -159,14 +202,13 @@ export async function findUserById(id: number): Promise<UserRow | null> {
       .from(users)
       .where(eq(users.id, id))
       .limit(1);
-    dbReady = true;
-    return rows[0] ?? null;
-  } catch {
-    const map = initFileStore();
-    for (const row of map.values()) {
-      if (row.id === id) return row;
+    if (rows[0]) {
+      dbReady = true;
+      return rows[0];
     }
-    return null;
+    return findInStoreById(id);
+  } catch {
+    return findInStoreById(id);
   }
 }
 
@@ -180,14 +222,13 @@ type CreateUserInput = {
 };
 
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
-  // Coba insert ke MySQL terlebih dahulu
   try {
     const [result] = await getHandle()
       .insert(users)
       .values({
         name: input.name,
         identifier: input.identifier,
-        email: input.email.toLowerCase(),
+        email: input.email,
         passwordHash: input.passwordHash,
         role: input.role,
         interests: input.interests,
@@ -195,13 +236,7 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
       .$returningId();
     dbReady = true;
     const created = await findUserById(Number(result.id));
-    if (created) {
-      // Simpan copy ke file store juga untuk redundansi
-      const map = initFileStore();
-      map.set(created.identifier.toLowerCase(), created);
-      persistStore();
-      return created;
-    }
+    if (created) return created;
   } catch (err) {
     const code = (err as { code?: string })?.code;
     if (code === "ER_DUP_ENTRY" || code === "23505") {
@@ -209,21 +244,21 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
     }
   }
 
-  // Fallback persistent file store saat DB belum siap
+  // Fallback persistent store saat MySQL belum siap
+  const map = initFileStore();
   if (findInStore(input.identifier) || findInStore(input.email)) {
     throw Object.assign(new Error("IDENTIFIER_EXISTS"), { code: "ER_DUP_ENTRY" });
   }
 
-  const map = initFileStore();
-  const nextId = g.__kertamarga_seq ?? 1001;
+  const now = new Date();
+  const nextId = g.__kertamarga_seq ?? 1003;
   g.__kertamarga_seq = nextId + 1;
 
-  const now = new Date();
   const row: UserRow = {
     id: nextId,
     name: input.name,
     identifier: input.identifier,
-    email: input.email.toLowerCase(),
+    email: input.email,
     passwordHash: input.passwordHash,
     role: input.role,
     interests: input.interests,

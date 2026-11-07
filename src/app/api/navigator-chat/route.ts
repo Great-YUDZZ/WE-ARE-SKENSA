@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callRouterWithFailover } from "@/lib/router-client";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -142,97 +143,88 @@ Peran & Tanggung Jawab:
    - JANGAN gunakan tanda pisah panjang em-dash (—). Gunakan tanda hubung (-) biasa atau koma.
    - Bahasa: Bahasa Indonesia yang inspiratif, mudah dicerna anak muda, sopan, dan berbobot.`;
 
-    // 1. Coba 9Router Gateway (Primary AI Tier)
-    const routerBase = process.env.ROUTER_API_BASE || process.env.NINEROUTER_API_BASE;
-    if (routerBase) {
+    // 1. Coba 9Router Multi-Provider Gateway (Antigravity + Kiro + OpenRouter Failover)
+    const promptMessages = [
+      { role: "system" as const, content: systemInstruction },
+      ...messages.slice(-8).map((m) => ({
+        role: m.role as "system" | "user" | "assistant",
+        content: m.content,
+      })),
+      { role: "user" as const, content: "Balas murni dalam format JSON sesuai skema." }
+    ];
+
+    const routerResult = await callRouterWithFailover({
+      model: process.env.ROUTER_MODEL_FAST || process.env.ROUTER_COMBO_MODEL || "skensa-failover",
+      messages: promptMessages,
+      responseFormatJson: true,
+      timeoutMs: 25000,
+    });
+
+    if (routerResult?.content) {
       try {
-        const routerKey = process.env.ROUTER_API_KEY || process.env.NINEROUTER_API_KEY || "";
-        const routerModel = process.env.ROUTER_MODEL_FAST || "ag/gemini-3.8-flash-low";
-        const endpoint = routerBase.replace(/\/+$/, "") + (routerBase.includes("/v1") ? "/chat/completions" : "/v1/chat/completions");
-
-        const promptMessages = [
-          { role: "system", content: systemInstruction },
-          ...messages.slice(-8).map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          { role: "user", content: "Balas murni dalam format JSON sesuai skema." }
-        ];
-
-        const routerRes = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(routerKey ? { Authorization: `Bearer ${routerKey}` } : {}),
-          },
-          body: JSON.stringify({
-            model: routerModel,
-            stream: false,
-            messages: promptMessages,
-            response_format: { type: "json_object" },
-          }),
-        });
-
-        if (routerRes.ok) {
-          const rData = await routerRes.json();
-          let rText = rData?.choices?.[0]?.message?.content;
-          if (rText) {
-            rText = rText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-            const parsed = JSON.parse(rText);
-            if (parsed.reply) {
-              return NextResponse.json({
-                reply: parsed.reply,
-                matchedFieldId: parsed.matchedFieldId || null,
-                sourceMode: "9router-live",
-              } satisfies NavigatorChatResponse);
-            }
-          }
+        let rText = routerResult.content;
+        rText = rText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+        const parsed = JSON.parse(rText);
+        if (parsed.reply) {
+          return NextResponse.json({
+            reply: parsed.reply,
+            matchedFieldId: parsed.matchedFieldId || null,
+            sourceMode: "9router-live",
+          } satisfies NavigatorChatResponse);
         }
       } catch {
-        // Fallback ke tier berikutnya
+        // Parse error, continue to secondary tier
       }
     }
 
-    // 2. Coba Gemini API Langsung (Secondary AI Tier)
+    // 2. Coba Gemini API Langsung (Secondary AI Tier - Model Gratis gemini-3.5-flash-lite)
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
-      try {
-        const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
-        const contents = [
-          {
-            role: "user",
-            parts: [{ text: `${systemInstruction}\n\nPercakapan:\n${messages.map(m => `${m.role}: ${m.content}`).join("\n")}\n\nBalas murni JSON.` }]
-          }
-        ];
+      const candidateGeminiModels = [
+        process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+      ];
 
-        const geminiRes = await fetch(geminiEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents,
-            generationConfig: {
-              responseMimeType: "application/json",
-            },
-          }),
-        });
+      for (const gModel of candidateGeminiModels) {
+        try {
+          const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`;
+          const contents = [
+            {
+              role: "user",
+              parts: [{ text: `${systemInstruction}\n\nPercakapan:\n${messages.map(m => `${m.role}: ${m.content}`).join("\n")}\n\nBalas murni JSON.` }]
+            }
+          ];
 
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          let gText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (gText) {
-            gText = gText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-            const parsed = JSON.parse(gText);
-            if (parsed.reply) {
-              return NextResponse.json({
-                reply: parsed.reply,
-                matchedFieldId: parsed.matchedFieldId || null,
-                sourceMode: "gemini-live",
-              } satisfies NavigatorChatResponse);
+          const geminiRes = await fetch(geminiEndpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents,
+              generationConfig: {
+                responseMimeType: "application/json",
+              },
+            }),
+          });
+
+          if (geminiRes.ok) {
+            const gData = await geminiRes.json();
+            let gText = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (gText) {
+              gText = gText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+              const parsed = JSON.parse(gText);
+              if (parsed.reply) {
+                return NextResponse.json({
+                  reply: parsed.reply,
+                  matchedFieldId: parsed.matchedFieldId || null,
+                  sourceMode: "gemini-live",
+                } satisfies NavigatorChatResponse);
+              }
             }
           }
+        } catch {
+          // Fallback ke model berikutnya
         }
-      } catch {
-        // Fallback ke tier deterministik
       }
     }
 

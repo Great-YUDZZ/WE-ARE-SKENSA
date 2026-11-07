@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MENTOR_CURRICULUM_BY_FIELD } from "@/data/mentorCurriculum";
+import { callRouterWithFailover } from "@/lib/router-client";
 
 interface MentorRequestPayload {
   fieldId: string;
@@ -58,113 +59,104 @@ Aturan ketat:
 
     const userPrompt = `Pertanyaan siswa: "${body.userMessage}". Skor saat ini: ${currentScore}%, Target: ${targetScore}%, Modul selesai: ${(body.completedModules || []).length}/${curriculum.learningModules.length}, Soal sertifikasi lulus: ${(body.passedCerts || []).length}/${curriculum.certificationDrills.length}.`;
 
-    // 1. Integrasi 9Router (OpenAI-compatible proxy) jika tersedia
-    const routerBase = process.env.ROUTER_API_BASE || process.env.NINEROUTER_API_BASE;
-    if (routerBase) {
+    // 1. Integrasi 9Router Multi-Provider Gateway (Antigravity + Kiro + OpenRouter Failover)
+    const routerResult = await callRouterWithFailover({
+      model: process.env.ROUTER_MODEL || process.env.ROUTER_COMBO_MODEL || "skensa-failover",
+      messages: [
+        { role: "system" as const, content: systemInstruction },
+        { role: "user" as const, content: `${userPrompt} Balas murni dalam format JSON.` },
+      ],
+      responseFormatJson: true,
+      timeoutMs: 30000,
+    });
+
+    if (routerResult?.content) {
       try {
-        const routerKey = process.env.ROUTER_API_KEY || process.env.NINEROUTER_API_KEY || "";
-        const routerModel = process.env.ROUTER_MODEL || "ag/gemini-3.8-flash-high";
-        const endpoint = routerBase.replace(/\/+$/, "") + (routerBase.includes("/v1") ? "/chat/completions" : "/v1/chat/completions");
-
-        const routerRes = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(routerKey ? { Authorization: `Bearer ${routerKey}` } : {}),
-          },
-          body: JSON.stringify({
-            model: routerModel,
-            stream: false,
-            messages: [
-              { role: "system", content: systemInstruction },
-              { role: "user", content: `${userPrompt} Balas murni dalam format JSON.` },
-            ],
-            response_format: { type: "json_object" },
-          }),
-        });
-
-        if (routerRes.ok) {
-          const rData = await routerRes.json();
-          let rText = rData?.choices?.[0]?.message?.content;
-          if (rText) {
-            rText = rText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-            const parsed = JSON.parse(rText);
-            return NextResponse.json({
-              agentTitle: parsed.agentTitle || `Agen Pembimbing ${curriculum.fieldName}`,
-              diagnosisSummary:
-                parsed.diagnosisSummary ||
-                `Selisih kesiapan saat ini ${gap} poin menuju ambang batas mata kuliah ${targetCourse.name}.`,
-              replyMessage: parsed.replyMessage || parsed.message || "",
-              recommendedActionType: parsed.recommendedActionType || "materi",
-              recommendedItemTitle: parsed.recommendedItemTitle || nextModule.title,
-              keyTakeaways: Array.isArray(parsed.keyTakeaways)
-                ? parsed.keyTakeaways
-                : nextModule.keyConcepts.slice(0, 3),
-              encouragementNote:
-                parsed.encouragementNote ||
-                "Setiap modul dan latihan sertifikasi yang Anda tuntaskan akan meningkatkan kesiapan akademik secara terukur.",
-              sourceMode: "9router-structured",
-            } satisfies MentorAgentResponse);
-          }
-        }
+        let rText = routerResult.content;
+        rText = rText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+        const parsed = JSON.parse(rText);
+        return NextResponse.json({
+          agentTitle: parsed.agentTitle || `Agen Pembimbing ${curriculum.fieldName}`,
+          diagnosisSummary:
+            parsed.diagnosisSummary ||
+            `Selisih kesiapan saat ini ${gap} poin menuju ambang batas mata kuliah ${targetCourse.name}.`,
+          replyMessage: parsed.replyMessage || parsed.message || "",
+          recommendedActionType: parsed.recommendedActionType || "materi",
+          recommendedItemTitle: parsed.recommendedItemTitle || nextModule.title,
+          keyTakeaways: Array.isArray(parsed.keyTakeaways)
+            ? parsed.keyTakeaways
+            : nextModule.keyConcepts.slice(0, 3),
+          encouragementNote:
+            parsed.encouragementNote ||
+            "Setiap modul dan latihan sertifikasi yang Anda tuntaskan akan meningkatkan kesiapan akademik secara terukur.",
+          sourceMode: "9router-structured",
+        } satisfies MentorAgentResponse);
       } catch {
-        // Fallback otomatis ke Gemini langsung atau deterministik
+        // Fallback otomatis ke Gemini langsung atau deterministik jika parse gagal
       }
     }
 
-    // 2. Optional Gemini API integration if GEMINI_API_KEY is available
+    // 2. Optional Gemini API integration if GEMINI_API_KEY is available (Model Gratis gemini-3.5-flash-lite)
     const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: systemInstruction }] },
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    {
-                      text: userPrompt,
-                    },
-                  ],
-                },
-              ],
-              generationConfig: {
-                responseMimeType: "application/json",
-              },
-            }),
-          }
-        );
+      const candidateGeminiModels = [
+        process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+      ];
 
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const parsed = JSON.parse(rawText);
-            return NextResponse.json({
-              agentTitle: parsed.agentTitle || `Agen Pembimbing ${curriculum.fieldName}`,
-              diagnosisSummary:
-                parsed.diagnosisSummary ||
-                `Selisih kesiapan saat ini ${gap} poin menuju ambang batas mata kuliah ${targetCourse.name}.`,
-              replyMessage: parsed.replyMessage || parsed.message || "",
-              recommendedActionType: parsed.recommendedActionType || "materi",
-              recommendedItemTitle: parsed.recommendedItemTitle || nextModule.title,
-              keyTakeaways: Array.isArray(parsed.keyTakeaways)
-                ? parsed.keyTakeaways
-                : nextModule.keyConcepts.slice(0, 3),
-              encouragementNote:
-                parsed.encouragementNote ||
-                "Setiap modul dan latihan sertifikasi yang Anda tuntaskan akan meningkatkan kesiapan akademik secara terukur.",
-              sourceMode: "gemini-structured",
-            } satisfies MentorAgentResponse);
+      for (const gModel of candidateGeminiModels) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: userPrompt,
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                },
+              }),
+            }
+          );
+
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              const parsed = JSON.parse(rawText);
+              return NextResponse.json({
+                agentTitle: parsed.agentTitle || `Agen Pembimbing ${curriculum.fieldName}`,
+                diagnosisSummary:
+                  parsed.diagnosisSummary ||
+                  `Selisih kesiapan saat ini ${gap} poin menuju ambang batas mata kuliah ${targetCourse.name}.`,
+                replyMessage: parsed.replyMessage || parsed.message || "",
+                recommendedActionType: parsed.recommendedActionType || "materi",
+                recommendedItemTitle: parsed.recommendedItemTitle || nextModule.title,
+                keyTakeaways: Array.isArray(parsed.keyTakeaways)
+                  ? parsed.keyTakeaways
+                  : nextModule.keyConcepts.slice(0, 3),
+                encouragementNote:
+                  parsed.encouragementNote ||
+                  "Setiap modul dan latihan sertifikasi yang Anda tuntaskan akan meningkatkan kesiapan akademik secara terukur.",
+                sourceMode: "gemini-structured",
+              } satisfies MentorAgentResponse);
+            }
           }
+        } catch {
+          // Lanjut ke model berikutnya jika gagal
         }
-      } catch {
-        // Fallback deterministik aktif secara otomatis sesuai AGENT.md
       }
     }
 
