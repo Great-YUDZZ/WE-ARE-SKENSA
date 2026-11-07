@@ -140,25 +140,27 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         </button>
       </div>
 
-      <div className="mt-4">
-        <p className="text-xs font-mono font-bold uppercase mb-2">Pilih stiker minat awalmu:</p>
-        <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
-          {INTEREST_CHIPS.map((chip) => {
-            const active = selectedInterests.includes(chip);
-            return (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => toggleInterest(chip)}
-                aria-pressed={active}
-                className={`text-xs px-2.5 py-1 rounded-lg font-display font-bold border-2 border-[#141413] transition-all ${active ? "bg-[#B8F348] shadow-[2px_2px_0px_#141413]" : "bg-white text-[#52514E] hover:bg-[#F0ECE1]"}`}
-              >
-                {chip}
-              </button>
-            );
-          })}
+      {isRegister && (
+        <div className="mt-4">
+          <p className="text-xs font-mono font-bold uppercase mb-2">Pilih stiker minat awalmu:</p>
+          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+            {INTEREST_CHIPS.map((chip) => {
+              const active = selectedInterests.includes(chip);
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => toggleInterest(chip)}
+                  aria-pressed={active}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-display font-bold border-2 border-[#141413] transition-all ${active ? "bg-[#B8F348] shadow-[2px_2px_0px_#141413]" : "bg-white text-[#52514E] hover:bg-[#F0ECE1]"}`}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {error && (
         <div role="alert" className="mt-4 border-2 border-[#141413] rounded-xl bg-[#FFE5E0] text-[#7A1A12] text-xs font-bold px-3 py-2.5">

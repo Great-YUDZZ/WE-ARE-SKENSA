@@ -25,7 +25,8 @@ export default function Navbar({
   return (
     <header className="w-full sticky top-0 z-40 px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pointer-events-none">
       <div className="max-w-7xl mx-auto pointer-events-auto">
-        <div className="bg-white border-2 border-[#141413] rounded-2xl shadow-[0_5px_0_#141413] px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between transition-all">
+        {/* Unified Single Navbar Card */}
+        <div className="bg-white border-2 border-[#141413] rounded-2xl shadow-[0_5px_0_#141413] px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3 lg:gap-4 transition-all">
           {/* Brand Logo + Sticker Tag */}
           <Link
             href="/"
@@ -40,51 +41,48 @@ export default function Navbar({
           </Link>
 
           {/* Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#141413]">
-            <Link
-              href="/eksplorasi"
-              className="px-3 py-1.5 rounded-lg bg-[#B8F348]/20 hover:bg-[#B8F348] text-[#141413] border border-[#141413] transition-colors"
-            >
-              Kuesioner Minat
-            </Link>
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs xl:text-sm font-bold text-[#141413]">
             <Link
               href="/peta-bidang/informatika"
-              className="px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors"
+              className="px-2.5 xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
             >
               Peta Bidang
             </Link>
             <Link
               href="/katalog"
-              className="px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors"
+              className="px-2.5 xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
             >
               Katalog Kampus
             </Link>
             <Link
               href="/#peta-kampus"
-              className="px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors"
+              className="px-2.5 xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
             >
-              Radar Peta Bali
+              Radar Bali
             </Link>
             <Link
               href="/hasil-analisis"
-              className="px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors"
+              className="px-2.5 xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
             >
-              Modul & Sertifikasi
+              Modul &amp; Sertifikasi
             </Link>
             <Link
               href="/ai-navigator"
-              className="ml-1 px-3 py-1.5 rounded-lg bg-[#3B66FF]/10 border border-[#3B66FF] text-[#3B66FF] hover:bg-[#3B66FF] hover:text-white transition-colors flex items-center gap-1.5 font-mono text-xs"
+              className="ml-1 mr-1 px-3 py-1.5 rounded-lg bg-[#3B66FF]/10 border border-[#3B66FF] text-[#3B66FF] hover:bg-[#3B66FF] hover:text-white transition-colors flex items-center gap-1.5 font-mono text-xs whitespace-nowrap shrink-0 shadow-xs"
             >
               <span className="w-2 h-2 rounded-full bg-[#1AD598] border border-[#141413]" />
               <span>AI Navigator</span>
             </Link>
           </nav>
 
-          {/* Right Action Group */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Visual Divider between navigation and auth actions */}
+          <div className="hidden lg:block h-6 w-[2px] bg-[#141413]/15 mx-1 xl:mx-2 shrink-0" />
+
+          {/* Right Action Group - Integrated inside navbar with balanced padding */}
+          <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 shrink-0">
             {user ? (
               <div className="hidden sm:flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1]">
+                <div className="flex items-center gap-2 px-3 h-9 sm:h-10 rounded-xl border-2 border-[#141413] bg-[#F0ECE1]">
                   <span className="w-6 h-6 rounded-lg bg-[#B8F348] border border-[#141413] flex items-center justify-center font-display font-extrabold text-xs text-[#141413]">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
@@ -100,7 +98,7 @@ export default function Navbar({
                 <button
                   type="button"
                   onClick={logout}
-                  className="text-xs font-bold text-[#141413] hover:bg-[#FFE5E0] hover:text-[#7A1A12] px-3 py-2 rounded-xl border-2 border-[#141413] bg-white transition-all cursor-pointer"
+                  className="h-9 sm:h-10 text-xs font-bold text-[#141413] hover:bg-[#FFE5E0] hover:text-[#7A1A12] px-3.5 rounded-xl border-2 border-[#141413] bg-white transition-all cursor-pointer"
                   title="Keluar dari akun"
                 >
                   Keluar
@@ -110,26 +108,26 @@ export default function Navbar({
               <>
                 <Link
                   href="/login"
-                  className="hidden sm:inline-flex text-xs sm:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-3.5 py-2 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer"
+                  className="hidden sm:inline-flex items-center justify-center h-9 sm:h-10 text-xs sm:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-3 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer whitespace-nowrap"
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/daftar"
-                  className="hidden sm:inline-flex text-xs sm:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-3.5 py-2 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+                  className="hidden sm:inline-flex items-center justify-center h-9 sm:h-10 text-xs sm:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-3.5 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_2px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer whitespace-nowrap"
                 >
                   Buat Akun
                 </Link>
               </>
             )}
 
-            {/* Primary Tactile Keycap Button */}
+            {/* Primary Tactile Keycap Button - Inside the card with symmetric right padding */}
             <Link
               href="/eksplorasi"
-              className="group inline-flex items-center gap-2.5 pl-4 pr-1.5 py-1.5 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_3px_0_#141413] active:translate-y-[4px] active:shadow-none font-display font-extrabold text-xs sm:text-sm transition-all duration-150 cursor-pointer"
+              className="group inline-flex items-center justify-center h-9 sm:h-10 gap-2 pl-3.5 sm:pl-4 pr-1.5 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_3px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_2px_0_#141413] active:translate-y-[3px] active:shadow-none font-display font-extrabold text-xs sm:text-sm transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0"
             >
               <span>Mulai Eksplorasi</span>
-              <span className="w-7 h-7 rounded-lg bg-[#B8F348] text-[#141413] border-2 border-[#141413] flex items-center justify-center font-mono text-xs font-bold group-hover:translate-x-0.5 transition-transform">
+              <span className="w-6 h-6 rounded-lg bg-[#B8F348] text-[#141413] border border-[#141413] flex items-center justify-center font-mono text-xs font-bold group-hover:translate-x-0.5 transition-transform">
                 &rarr;
               </span>
             </Link>
@@ -138,7 +136,7 @@ export default function Navbar({
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               type="button"
-              className="md:hidden p-2 rounded-xl bg-[#F0ECE1] border-2 border-[#141413] text-[#141413] transition-colors"
+              className="lg:hidden p-2 rounded-xl bg-[#F0ECE1] border-2 border-[#141413] text-[#141413] transition-colors"
               aria-label="Buka menu navigasi"
             >
               <svg
@@ -159,7 +157,7 @@ export default function Navbar({
 
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-2 bg-white border-2 border-[#141413] rounded-2xl shadow-[4px_4px_0px_#141413] p-4 space-y-2.5">
+          <div className="lg:hidden mt-2 bg-white border-2 border-[#141413] rounded-2xl shadow-[4px_4px_0px_#141413] p-4 space-y-2.5">
             <Link
               href="/eksplorasi"
               onClick={() => setMobileMenuOpen(false)}
