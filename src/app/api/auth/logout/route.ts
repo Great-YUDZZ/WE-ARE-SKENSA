@@ -3,10 +3,14 @@ import { clearSessionCookie } from "@/lib/auth";
 
 export async function POST() {
   await clearSessionCookie();
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  res.cookies.delete("kertamarga_session");
+  return res;
 }
 
 export async function DELETE() {
   await clearSessionCookie();
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  res.cookies.delete("kertamarga_session");
+  return res;
 }

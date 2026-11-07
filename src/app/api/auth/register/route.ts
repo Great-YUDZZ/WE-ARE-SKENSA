@@ -65,7 +65,17 @@ export async function POST(req: NextRequest) {
     });
     const token = await signSession(user.id);
     await setSessionCookie(token);
-    const res = NextResponse.json({ user: toSafeResponse(user), storage: isDbReady() ? "mysql" : "memory-demo" }, { status: 201 });
+    const res = NextResponse.json(
+      { user: toSafeResponse(user), storage: isDbReady() ? "mysql" : "file-storage" },
+      { status: 201 }
+    );
+    res.cookies.set("kertamarga_session", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
     return res;
   } catch (err) {
     const code = (err as { code?: string })?.code;

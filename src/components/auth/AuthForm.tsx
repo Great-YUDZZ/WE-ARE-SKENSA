@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PasswordField from "./PasswordField";
+import { saveUserToStorage } from "@/lib/useAuth";
 
 const INTEREST_CHIPS = [
   "Rekayasa Perangkat Lunak",
@@ -78,7 +79,10 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         setError(data.error ?? "Gagal masuk, coba lagi");
         return;
       }
-      // Sesuk launched: arahkan ke eksplorasi dengan toast query sederhana
+      if (data.user) {
+        saveUserToStorage(data.user);
+      }
+      // Arahkan ke eksplorasi dengan sesi tersimpan
       router.push("/eksplorasi");
       router.refresh();
     } catch {

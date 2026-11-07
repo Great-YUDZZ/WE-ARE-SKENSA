@@ -1,11 +1,11 @@
+import fs from "fs";
+import path from "path";
 import { createPool, type Pool } from "mysql2/promise";
 import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
 import { eq } from "drizzle-orm";
 import { users, type UserRow, type SafeUser, toSafeUser } from "./schema";
 
-// Klien database MySQL MariaDB dengan fallback memori untuk demo offline
-// Fallback memori dipakai hanya jika DB tidak tersedia, agar demo tetap jalan
-// dan tidak mengarahkan data ke server saat kredensial belum disiapkan
+// Klien database MySQL MariaDB dengan persistent file fallback untuk offline / demo
 type DbHandle = MySql2Database;
 
 let pool: Pool | null = null;
@@ -14,7 +14,6 @@ let dbReady = false;
 
 function getPool(): Pool {
   if (pool) return pool;
-  // Prioritas: DATABASE_URL, lalu variabel terpisah DB_HOST dan teman teman
   const url = process.env.DATABASE_URL;
   if (url) {
     return (pool = createPool(url));
@@ -38,13 +37,86 @@ function getHandle(): DbHandle {
   return handle;
 }
 
-// Penyimpanan memori sementara untuk fallback demo
-const memoryStore = new Map<string, UserRow>();
-let memorySeq = 1000;
+// ============================================================================
+// PERSISTENT FILE STORAGE FALLBACK (data/users.json atau /tmp di Vercel)
+// Digunakan saat MySQL offline atau belum terkonfigurasi, agar akun siswa
+// dan guru tetap tersimpan permanen dan tidak hilang saat reload atau antar route.
+// Di Vercel Serverless, file system root bersifat read-only sehingga dialihkan ke /tmp.
+// ============================================================================
 
-function findInMemory(key: string): UserRow | null {
-  for (const row of memoryStore.values()) {
-    if (row.identifier === key || row.email.toLowerCase() === key.toLowerCase()) {
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "kertamarga-data")
+  : path.join(process.cwd(), "data");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+
+interface GlobalStore {
+  __kertamarga_users?: Map<string, UserRow>;
+  __kertamarga_seq?: number;
+}
+
+const g = globalThis as unknown as GlobalStore;
+
+function initFileStore(): Map<string, UserRow> {
+  if (g.__kertamarga_users) {
+    return g.__kertamarga_users;
+  }
+
+  const map = new Map<string, UserRow>();
+  let maxId = 1000;
+
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+
+    if (fs.existsSync(USERS_FILE)) {
+      const raw = fs.readFileSync(USERS_FILE, "utf-8");
+      const list = JSON.parse(raw) as UserRow[];
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          const row: UserRow = {
+            ...item,
+            createdAt: new Date(item.createdAt),
+            updatedAt: new Date(item.updatedAt),
+          };
+          map.set(row.identifier.toLowerCase(), row);
+          if (row.id > maxId) {
+            maxId = row.id;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Gagal membaca file data/users.json:", err);
+  }
+
+  g.__kertamarga_users = map;
+  g.__kertamarga_seq = maxId + 1;
+  return map;
+}
+
+function persistStore() {
+  const map = initFileStore();
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const list = Array.from(map.values());
+    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+  } catch (err) {
+    // Di lingkungan serverless tertentu jika disk terbatas, biarkan fallback memori aktif tanpa crash
+  }
+}
+
+function findInStore(key: string): UserRow | null {
+  const map = initFileStore();
+  const cleanKey = key.trim().toLowerCase();
+
+  for (const row of map.values()) {
+    if (
+      row.identifier.trim().toLowerCase() === cleanKey ||
+      row.email.trim().toLowerCase() === cleanKey
+    ) {
       return row;
     }
   }
@@ -75,8 +147,8 @@ export async function findUserByLogin(login: string): Promise<UserRow | null> {
     dbReady = true;
     return null;
   } catch {
-    // Gagal koneksi DB, baca dari memori agar tidak crash
-    return findInMemory(value);
+    // MySQL tidak merespons, fallback ke persistent file store
+    return findInStore(value);
   }
 }
 
@@ -90,7 +162,8 @@ export async function findUserById(id: number): Promise<UserRow | null> {
     dbReady = true;
     return rows[0] ?? null;
   } catch {
-    for (const row of memoryStore.values()) {
+    const map = initFileStore();
+    for (const row of map.values()) {
       if (row.id === id) return row;
     }
     return null;
@@ -107,13 +180,14 @@ type CreateUserInput = {
 };
 
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
+  // Coba insert ke MySQL terlebih dahulu
   try {
     const [result] = await getHandle()
       .insert(users)
       .values({
         name: input.name,
         identifier: input.identifier,
-        email: input.email,
+        email: input.email.toLowerCase(),
         passwordHash: input.passwordHash,
         role: input.role,
         interests: input.interests,
@@ -121,31 +195,44 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
       .$returningId();
     dbReady = true;
     const created = await findUserById(Number(result.id));
-    if (created) return created;
+    if (created) {
+      // Simpan copy ke file store juga untuk redundansi
+      const map = initFileStore();
+      map.set(created.identifier.toLowerCase(), created);
+      persistStore();
+      return created;
+    }
   } catch (err) {
     const code = (err as { code?: string })?.code;
-    // Duplikat identifier atau email diteruskan agar API bisa balas 409
     if (code === "ER_DUP_ENTRY" || code === "23505") {
       throw err;
     }
   }
-  // Fallback memori saat DB belum siap
-  if (findInMemory(input.identifier) || findInMemory(input.email)) {
+
+  // Fallback persistent file store saat DB belum siap
+  if (findInStore(input.identifier) || findInStore(input.email)) {
     throw Object.assign(new Error("IDENTIFIER_EXISTS"), { code: "ER_DUP_ENTRY" });
   }
+
+  const map = initFileStore();
+  const nextId = g.__kertamarga_seq ?? 1001;
+  g.__kertamarga_seq = nextId + 1;
+
   const now = new Date();
   const row: UserRow = {
-    id: memorySeq++,
+    id: nextId,
     name: input.name,
     identifier: input.identifier,
-    email: input.email,
+    email: input.email.toLowerCase(),
     passwordHash: input.passwordHash,
     role: input.role,
     interests: input.interests,
     createdAt: now,
     updatedAt: now,
   };
-  memoryStore.set(row.identifier, row);
+
+  map.set(row.identifier.toLowerCase(), row);
+  persistStore();
   return row;
 }
 

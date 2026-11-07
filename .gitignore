@@ -30,6 +30,11 @@ yarn-error.log*
 .env.local
 !.env.example
 
+# local data storage (users fallback)
+data/
+*.db
+*.sqlite
+
 # vercel
 .vercel
 

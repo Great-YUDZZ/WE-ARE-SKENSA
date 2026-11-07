@@ -13,9 +13,9 @@ export default function ClosingCtaBand({
   onOpenLogin,
 }: ClosingCtaBandProps) {
   return (
-    <section className="w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8 border-t-2 border-[#141413] bg-[#F0ECE1]">
+    <section className="w-full py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-2 border-[#141413] bg-[#F0ECE1]">
       <div className="max-w-6xl mx-auto">
-        <div className="neo-card-lg rounded-3xl bg-[#B8F348] p-8 sm:p-12 lg:p-14 text-[#141413] relative overflow-hidden">
+        <div className="neo-card-lg rounded-3xl bg-[#B8F348] p-8 sm:p-12 lg:p-14 text-[#141413] relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Copy */}
             <div className="lg:col-span-8 space-y-4 text-left">
@@ -23,9 +23,9 @@ export default function ClosingCtaBand({
                 SIAP TENTUKAN LANGKAHMU?
               </div>
 
-              <h2 className="font-display font-black text-3xl sm:text-5xl text-[#141413] tracking-tight leading-[1.08]">
+              <h2 className="font-display font-black text-3xl sm:text-5xl text-[#141413] tracking-tight leading-[1.18] sm:leading-[1.12]">
                 Jangan Pilih Jurusan Cuma Karena{" "}
-                <span className="inline-block px-3 py-0.5 rounded-xl bg-[#FFBE2E] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1">
+                <span className="inline-block px-3 py-0.5 rounded-xl bg-[#FFBE2E] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1 my-1">
                   Ikut-Ikutan Teman.
                 </span>
               </h2>
@@ -36,7 +36,7 @@ export default function ClosingCtaBand({
             </div>
 
             {/* Right Tactile Keycap Buttons */}
-            <div className="lg:col-span-4 flex flex-col gap-3.5">
+            <div className="lg:col-span-4 flex flex-col gap-3.5 pb-2">
               <Link
                 href="/eksplorasi"
                 className="group w-full inline-flex items-center justify-between gap-4 pl-5 pr-2.5 py-2.5 rounded-2xl bg-[#141413] hover:bg-[#272725] text-white border-2 border-[#141413] shadow-[0_6px_0_#FF5E4D] hover:translate-y-[2px] hover:shadow-[0_4px_0_#FF5E4D] active:translate-y-[6px] active:shadow-none transition-all duration-150 cursor-pointer"

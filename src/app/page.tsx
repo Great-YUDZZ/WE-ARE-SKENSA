@@ -53,7 +53,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
+    <div className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
       {/* Floating Tactile Toast Notification */}
       {toastMessage && (
         <div className="fixed top-24 right-4 sm:right-8 z-50 neo-card px-5 py-3 rounded-2xl bg-[#141413] text-white flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md">
@@ -72,9 +72,9 @@ export default function Home() {
       />
 
       {/* Main Content Body */}
-      <main className="flex-1 flex flex-col relative z-10">
+      <main className="flex-1 w-full flex flex-col relative z-10">
         {/* SECTION 1: HERO SECTION (Clean Centered Landing Page Layout) */}
-        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
+        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 lg:pt-32 pb-20 sm:pb-28 text-center">
           <div className="flex flex-col items-center space-y-6 sm:space-y-8 max-w-4xl mx-auto">
             {/* Sticker Pill Tag */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border-2 border-[#141413] shadow-[2px_2px_0px_#141413]">
@@ -85,13 +85,13 @@ export default function Home() {
             </div>
 
             {/* Display Headline with Inline Pill Badges */}
-            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-[64px] text-[#141413] leading-[1.1] tracking-tight">
+            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-[64px] text-[#141413] leading-[1.22] sm:leading-[1.16] tracking-tight">
               Bingung Lulus Mau ke Mana? Temukan{" "}
-              <span className="inline-block px-3.5 sm:px-4 py-0.5 rounded-2xl bg-[#B8F348] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1 align-baseline">
+              <span className="inline-block px-3.5 sm:px-4 py-1 rounded-2xl bg-[#B8F348] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1 align-baseline my-1">
                 Jurusan
               </span>{" "}
               &amp;{" "}
-              <span className="inline-block px-3.5 sm:px-4 py-0.5 rounded-2xl bg-[#FFBE2E] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] rotate-1 align-baseline">
+              <span className="inline-block px-3.5 sm:px-4 py-1 rounded-2xl bg-[#FFBE2E] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] rotate-1 align-baseline my-1">
                 Kampus Bali
               </span>{" "}
               yang Satu Frekuensi.
@@ -103,7 +103,7 @@ export default function Home() {
             </p>
 
             {/* Tactile Keycap Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <div className="pt-4 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-5 w-full">
               {/* Primary Keycap Button with Inner Icon Box */}
               <Link
                 href="/eksplorasi"
@@ -252,7 +252,7 @@ export default function Home() {
       </main>
 
       {/* Tactile Neo-Pop Footer */}
-      <footer className="w-full bg-[#141413] text-white border-t-2 border-[#141413] py-10 px-4 sm:px-6 lg:px-8 relative z-10">
+      <footer className="w-full bg-[#141413] text-white border-t-2 border-[#141413] py-12 sm:py-16 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div>
             <div className="flex items-center justify-center md:justify-start gap-2.5 mb-1.5">

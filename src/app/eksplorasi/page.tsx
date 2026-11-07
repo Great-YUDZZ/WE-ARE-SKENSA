@@ -281,15 +281,7 @@ export default function EksplorasiPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t-2 border-[#141413]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <button
-                  type="button"
-                  onClick={handleApplyDemoProfile}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1] hover:bg-[#e5dfd0] font-mono font-bold text-xs text-[#141413] transition-colors cursor-pointer"
-                >
-                  Gunakan Profil Demo Sintetis (Untuk Juri / Uji Cepat)
-                </button>
-
+              <div className="pt-4 border-t-2 border-[#141413]/10 flex flex-col sm:flex-row items-center justify-end gap-4">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}

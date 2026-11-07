@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/lib/useAuth";
 
 interface NavbarProps {
-  onOpenLogin: () => void;
-  onOpenTest: () => void;
+  onOpenLogin?: () => void;
+  onOpenTest?: () => void;
   onOpenRegister?: () => void;
 }
 
@@ -15,9 +16,11 @@ export default function Navbar({
   onOpenRegister,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
   // Modal lama dipertahankan sebagai fallback agar page lama tetap kompatibel
   void onOpenLogin;
   void onOpenRegister;
+  void onOpenTest;
 
   return (
     <header className="w-full sticky top-0 z-40 px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pointer-events-none">
@@ -79,18 +82,46 @@ export default function Navbar({
 
           {/* Right Action Group */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex text-xs sm:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-3.5 py-2 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer"
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/daftar"
-              className="hidden sm:inline-flex text-xs sm:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-3.5 py-2 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
-            >
-              Buat Akun
-            </Link>
+            {user ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1]">
+                  <span className="w-6 h-6 rounded-lg bg-[#B8F348] border border-[#141413] flex items-center justify-center font-display font-extrabold text-xs text-[#141413]">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="text-left leading-none">
+                    <span className="block font-display font-extrabold text-xs text-[#141413] max-w-[120px] truncate">
+                      {user.name}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#52514E] uppercase">
+                      {user.role === "guru" ? "Guru BK" : "Siswa"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-xs font-bold text-[#141413] hover:bg-[#FFE5E0] hover:text-[#7A1A12] px-3 py-2 rounded-xl border-2 border-[#141413] bg-white transition-all cursor-pointer"
+                  title="Keluar dari akun"
+                >
+                  Keluar
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden sm:inline-flex text-xs sm:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-3.5 py-2 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer"
+                >
+                  Masuk
+                </Link>
+                <Link
+                  href="/daftar"
+                  className="hidden sm:inline-flex text-xs sm:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-3.5 py-2 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+                >
+                  Buat Akun
+                </Link>
+              </>
+            )}
 
             {/* Primary Tactile Keycap Button */}
             <Link
@@ -172,20 +203,52 @@ export default function Navbar({
               Buka AI Navigator &rarr;
             </Link>
             <div className="pt-2 border-t-2 border-[#141413]/10 flex flex-col gap-2">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1] text-[#141413] text-xs font-bold text-center"
-              >
-                Masuk Akun
-              </Link>
-              <Link
-                href="/daftar"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#FFBE2E] text-[#141413] text-xs font-bold text-center"
-              >
-                Buat Akun Baru
-              </Link>
+              {user ? (
+                <>
+                  <div className="p-2.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg bg-[#B8F348] border border-[#141413] flex items-center justify-center font-display font-extrabold text-xs text-[#141413]">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                      <div>
+                        <p className="font-display font-extrabold text-xs text-[#141413]">
+                          {user.name}
+                        </p>
+                        <p className="text-[10px] font-mono text-[#52514E]">
+                          {user.role === "guru" ? "Guru BK" : "Siswa"} &bull; {user.identifier}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#FFE5E0] text-[#7A1A12] text-xs font-bold text-center cursor-pointer"
+                  >
+                    Keluar dari Akun
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#F0ECE1] text-[#141413] text-xs font-bold text-center"
+                  >
+                    Masuk Akun
+                  </Link>
+                  <Link
+                    href="/daftar"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-2.5 rounded-xl border-2 border-[#141413] bg-[#FFBE2E] text-[#141413] text-xs font-bold text-center"
+                  >
+                    Buat Akun Baru
+                  </Link>
+                </>
+              )}
               <Link
                 href="/eksplorasi"
                 onClick={() => setMobileMenuOpen(false)}

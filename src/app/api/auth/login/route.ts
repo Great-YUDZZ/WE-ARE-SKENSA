@@ -4,8 +4,8 @@ import { findUserByLogin, isDbReady, toSafeResponse } from "@/lib/db";
 import { verifyPassword, signSession, setSessionCookie, isRateLimited } from "@/lib/auth";
 
 const loginSchema = z.object({
-  login: z.string().trim().min(4, "Identifier minimal 4 karakter").max(160),
-  password: z.string().min(8, "Password minimal 8 karakter").max(128),
+  login: z.string().trim().min(3, "Identifier minimal 3 karakter").max(160),
+  password: z.string().min(6, "Password minimal 6 karakter").max(128),
   role: z.enum(["siswa", "guru"]).optional(),
 });
 
@@ -42,5 +42,16 @@ export async function POST(req: NextRequest) {
 
   const token = await signSession(user.id);
   await setSessionCookie(token);
-  return NextResponse.json({ user: toSafeResponse(user), storage: isDbReady() ? "mysql" : "memory-demo" });
+  const res = NextResponse.json({
+    user: toSafeResponse(user),
+    storage: isDbReady() ? "mysql" : "file-storage",
+  });
+  res.cookies.set("kertamarga_session", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+  return res;
 }

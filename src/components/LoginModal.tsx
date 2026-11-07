@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { saveUserToStorage } from "@/lib/useAuth";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -38,10 +39,13 @@ export default function LoginModal({
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
     "Rekayasa Perangkat Lunak",
   ]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
+      setError(null);
     }
   }, [isOpen, initialMode]);
 
@@ -69,9 +73,65 @@ export default function LoginModal({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onProceedToTest(false, selectedInterests);
+    setError(null);
+
+    if (password.length < 6) {
+      setError("Kata sandi minimal 6 karakter");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (mode === "login") {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ login: identifier.trim(), password, role }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(data.error ?? "Identifier atau password salah");
+          return;
+        }
+        if (data.user) {
+          saveUserToStorage(data.user);
+        }
+        onProceedToTest(false, selectedInterests);
+      } else {
+        const emailFallback = identifier.includes("@")
+          ? identifier.trim()
+          : `${identifier.trim()}@siswa.kertamarga.id`;
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim() || identifier.trim(),
+            identifier: identifier.trim(),
+            email: emailFallback,
+            password,
+            passwordConfirm: password,
+            role,
+            interests: selectedInterests,
+            agreed: true,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(data.error ?? "Gagal mendaftar akun");
+          return;
+        }
+        if (data.user) {
+          saveUserToStorage(data.user);
+        }
+        onProceedToTest(false, selectedInterests);
+      }
+    } catch {
+      setError("Gagal terhubung ke server, coba lagi");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -204,6 +264,16 @@ export default function LoginModal({
               </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div
+                role="alert"
+                className="mt-3 p-2.5 rounded-xl border-2 border-[#141413] bg-[#FFE5E0] text-[#7A1A12] text-xs font-bold"
+              >
+                {error}
+              </div>
+            )}
+
             {/* Form */}
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               {mode === "register" && (
@@ -258,10 +328,13 @@ export default function LoginModal({
 
               <button
                 type="submit"
-                className="neo-btn w-full h-11 mt-2 bg-[#FF5E4D] hover:bg-[#ff4936] text-white font-display font-extrabold text-xs sm:text-sm rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
+                disabled={loading}
+                className="neo-btn w-full h-11 mt-2 bg-[#FF5E4D] hover:bg-[#ff4936] text-white font-display font-extrabold text-xs sm:text-sm rounded-xl cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:pointer-events-none"
               >
                 <span>
-                  {mode === "login"
+                  {loading
+                    ? "Memproses..."
+                    : mode === "login"
                     ? "Masuk & Lihat Rekomendasi"
                     : "Simpan Akun & Mulai Tes"}
                 </span>
