@@ -73,12 +73,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 pt-4 border-t-2 border-[#141413]/10 flex flex-wrap gap-2">
-                <span className="text-[11px] font-mono font-bold border-2 border-[#141413] rounded-lg px-2 py-1 bg-[#F0ECE1]">Next.js 15</span>
-                <span className="text-[11px] font-mono font-bold border-2 border-[#141413] rounded-lg px-2 py-1 bg-[#F0ECE1]">Gemini</span>
-                <span className="text-[11px] font-mono font-bold border-2 border-[#141413] rounded-lg px-2 py-1 bg-[#F0ECE1]">Tailwind</span>
-              </div>
-              <div className="mt-5 flex justify-center">
+              <div className="mt-8 flex justify-center">
                 <JepunMascot />
               </div>
             </div>
