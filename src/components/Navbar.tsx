@@ -84,8 +84,8 @@ export default function Navbar({
           {/* Right Action Group - Integrated inside navbar with balanced padding */}
           <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-3 shrink-0">
             {user ? (
-              <div className="hidden sm:flex items-center gap-1.5 xl:gap-2">
-                <div className="flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-3 h-8.5 sm:h-9 xl:h-10 rounded-xl border-2 border-[#141413] bg-[#F0ECE1]">
+              <div className="flex items-center gap-1.5 xl:gap-2">
+                <div className="flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-3 h-9 sm:h-10 rounded-xl border-2 border-[#141413] bg-[#F0ECE1]">
                   <span className="w-5 h-5 xl:w-6 xl:h-6 rounded-lg bg-[#B8F348] border border-[#141413] flex items-center justify-center font-display font-extrabold text-[10px] xl:text-xs text-[#141413]">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
@@ -101,7 +101,7 @@ export default function Navbar({
                 <button
                   type="button"
                   onClick={logout}
-                  className="h-8.5 sm:h-9 xl:h-10 text-xs font-bold text-[#141413] hover:bg-[#FFE5E0] hover:text-[#7A1A12] px-2.5 xl:px-3.5 rounded-xl border-2 border-[#141413] bg-white transition-all cursor-pointer"
+                  className="h-9 sm:h-10 text-xs font-bold text-[#141413] hover:bg-[#FFE5E0] hover:text-[#7A1A12] px-2.5 xl:px-3.5 rounded-xl border-2 border-[#141413] bg-white transition-all cursor-pointer whitespace-nowrap"
                   title="Keluar dari akun"
                 >
                   Keluar
@@ -111,29 +111,28 @@ export default function Navbar({
               <>
                 <Link
                   href="/login"
-                  className="hidden sm:inline-flex items-center justify-center h-8.5 sm:h-9 xl:h-10 text-xs xl:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-2.5 xl:px-3 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer whitespace-nowrap"
+                  className="hidden sm:inline-flex items-center justify-center h-9 sm:h-10 text-xs xl:text-sm font-bold text-[#141413] hover:bg-[#F0ECE1] px-2.5 xl:px-3 rounded-xl border-2 border-transparent hover:border-[#141413] transition-all cursor-pointer whitespace-nowrap"
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/daftar"
-                  className="hidden sm:inline-flex items-center justify-center h-8.5 sm:h-9 xl:h-10 text-xs xl:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-2.5 xl:px-3.5 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_2px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer whitespace-nowrap"
+                  className="hidden sm:inline-flex items-center justify-center h-9 sm:h-10 text-xs xl:text-sm font-bold bg-[#FFBE2E] text-[#141413] hover:bg-[#ffcf4d] px-2.5 xl:px-3.5 rounded-xl border-2 border-[#141413] shadow-[0_3px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_2px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer whitespace-nowrap"
                 >
                   Buat Akun
                 </Link>
+                {/* Primary Tactile Keycap Button - Inside the card with symmetric right padding */}
+                <Link
+                  href="/eksplorasi"
+                  className="group inline-flex items-center justify-center h-9 sm:h-10 gap-1.5 xl:gap-2 pl-3 xl:pl-4 pr-1.5 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_3px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_2px_0_#141413] active:translate-y-[3px] active:shadow-none font-display font-extrabold text-xs xl:text-sm transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <span>Mulai Eksplorasi</span>
+                  <span className="w-5 h-5 xl:w-6 xl:h-6 rounded-lg bg-[#B8F348] text-[#141413] border border-[#141413] flex items-center justify-center font-mono text-[10px] xl:text-xs font-bold group-hover:translate-x-0.5 transition-transform">
+                    &rarr;
+                  </span>
+                </Link>
               </>
             )}
-
-            {/* Primary Tactile Keycap Button - Inside the card with symmetric right padding */}
-            <Link
-              href="/eksplorasi"
-              className="group inline-flex items-center justify-center h-8.5 sm:h-9 xl:h-10 gap-1.5 xl:gap-2 pl-3 xl:pl-4 pr-1.5 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_3px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_2px_0_#141413] active:translate-y-[3px] active:shadow-none font-display font-extrabold text-xs xl:text-sm transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <span>Mulai Eksplorasi</span>
-              <span className="w-5 h-5 xl:w-6 xl:h-6 rounded-lg bg-[#B8F348] text-[#141413] border border-[#141413] flex items-center justify-center font-mono text-[10px] xl:text-xs font-bold group-hover:translate-x-0.5 transition-transform">
-                &rarr;
-              </span>
-            </Link>
 
             {/* Mobile Menu Toggle Button */}
             <button
