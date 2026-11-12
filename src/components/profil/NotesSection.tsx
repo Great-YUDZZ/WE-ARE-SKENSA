@@ -36,6 +36,7 @@ export default function NotesSection({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterField, setFilterField] = useState("ALL");
   const [filterCategory, setFilterCategory] = useState("ALL");
+  const [noteViewMode, setNoteViewMode] = useState<"jurnal" | "praktik">("jurnal");
 
   // Composer state for Personal Journal Notes
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -141,43 +142,96 @@ export default function NotesSection({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Filter & Quick Create Bar */}
-      <div className="neo-card rounded-2xl bg-white p-4 sm:p-5 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
+    <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-5">
+      {/* Unified Header + Sub-Toggle + Filter Bar */}
+      <div className="space-y-4 pb-4 border-b border-[#141413]/15">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <span className="text-xs font-mono font-bold text-[#3B66FF] uppercase">
+            <span className="text-[11px] font-mono font-bold text-[#3B66FF] uppercase">
               Catatan Pembelajaran Saya
             </span>
             <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413]">
-              Jurnal Belajar &amp; Catatan Tugas Modul
+              Jurnal &amp; Tugas Praktik Modul
             </h2>
           </div>
 
           <button
             type="button"
-            onClick={() => (isFormOpen ? setIsFormOpen(false) : openCreateForm())}
-            className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-black text-xs sm:text-sm cursor-pointer shrink-0"
+            onClick={() => {
+              if (isFormOpen) {
+                setIsFormOpen(false);
+              } else {
+                setNoteViewMode("jurnal");
+                openCreateForm();
+              }
+            }}
+            className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-display font-black text-xs sm:text-sm cursor-pointer shrink-0"
           >
-            {isFormOpen ? "Tutup Form Catatan" : "+ Tambah Catatan Belajar"}
+            {isFormOpen ? "Tutup Form Catatan" : "+ Tambah Catatan"}
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Sub-Toggle Switcher */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            role="tablist"
+            aria-label="Jenis catatan"
+            className="inline-flex p-1 rounded-xl bg-[#FAF7F2] border border-[#141413]/20 gap-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={noteViewMode === "jurnal"}
+              onClick={() => setNoteViewMode("jurnal")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-colors cursor-pointer ${
+                noteViewMode === "jurnal"
+                  ? "bg-[#141413] text-[#B8F348]"
+                  : "text-[#52514E] hover:text-[#141413]"
+              }`}
+            >
+              Jurnal Pribadi ({filteredPersonalNotes.length})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={noteViewMode === "praktik"}
+              onClick={() => setNoteViewMode("praktik")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-display font-bold transition-colors cursor-pointer ${
+                noteViewMode === "praktik"
+                  ? "bg-[#141413] text-[#B8F348]"
+                  : "text-[#52514E] hover:text-[#141413]"
+              }`}
+            >
+              Tugas Praktik ({filteredPracticeNotes.length})
+            </button>
+          </div>
+
+          {noteViewMode === "praktik" && (
+            <Link
+              href="/hasil-analisis"
+              className="text-xs font-mono font-bold text-[#3B66FF] hover:underline"
+            >
+              Buka Workspace Modul &rarr;
+            </Link>
+          )}
+        </div>
+
+        {/* Search & Filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari judul materi, topik, atau isi catatan..."
+            placeholder="Cari judul materi, topik, atau isi..."
             aria-label="Cari catatan pembelajaran"
-            className="w-full min-h-[44px] px-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs sm:text-sm font-medium text-[#141413] placeholder:text-[#52514E] focus:outline-none focus:ring-2 focus:ring-[#3B66FF]"
+            className="w-full min-h-[42px] px-3.5 rounded-xl bg-[#FAF7F2] border border-[#141413]/25 text-xs sm:text-sm font-medium text-[#141413] placeholder:text-[#52514E] focus:outline-none focus:border-[#141413] focus:ring-2 focus:ring-[#3B66FF]/30"
           />
 
           <select
             value={filterField}
             onChange={(e) => setFilterField(e.target.value)}
             aria-label="Filter bidang catatan"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs sm:text-sm font-bold text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF] cursor-pointer"
+            className="w-full min-h-[42px] px-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/25 text-xs sm:text-sm font-semibold text-[#141413] focus:outline-none focus:border-[#141413] focus:ring-2 focus:ring-[#3B66FF]/30 cursor-pointer"
           >
             <option value="ALL">Semua Bidang Studi</option>
             <option value="umum">Catatan Umum Studi</option>
@@ -191,8 +245,9 @@ export default function NotesSection({
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
+            disabled={noteViewMode === "praktik"}
             aria-label="Filter kategori catatan"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs sm:text-sm font-bold text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF] cursor-pointer"
+            className="w-full min-h-[42px] px-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/25 disabled:opacity-50 text-xs sm:text-sm font-semibold text-[#141413] focus:outline-none focus:border-[#141413] focus:ring-2 focus:ring-[#3B66FF]/30 cursor-pointer"
           >
             <option value="ALL">Semua Kategori Jurnal</option>
             {NOTE_CATEGORIES.map((cat) => (
@@ -208,13 +263,13 @@ export default function NotesSection({
       {isFormOpen && (
         <form
           onSubmit={handleSubmitNote}
-          className="neo-card rounded-2xl bg-[#FAF7F2] p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#3B66FF] space-y-4"
+          className="rounded-2xl bg-[#FAF7F2] p-5 border-2 border-[#141413] space-y-4"
         >
-          <div className="flex items-center justify-between gap-2 pb-3 border-b-2 border-[#141413]">
-            <h3 className="font-display font-black text-lg text-[#141413]">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#141413]/15">
+            <h3 className="font-display font-black text-base sm:text-lg text-[#141413]">
               {editingNoteId ? "Edit Catatan Pembelajaran" : "Tulis Catatan Pembelajaran Baru"}
             </h3>
-            <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-[#3B66FF] text-white border border-[#141413]">
+            <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-[#3B66FF] text-white">
               Jurnal Pribadi
             </span>
           </div>
@@ -222,7 +277,7 @@ export default function NotesSection({
           {formError && (
             <div
               role="alert"
-              className="p-3 rounded-xl bg-[#FFE5E0] border-2 border-[#141413] text-xs font-bold text-[#7A1A12]"
+              className="p-3 rounded-xl bg-[#FFE5E0] border border-[#141413]/30 text-xs font-bold text-[#7A1A12]"
             >
               {formError}
             </div>
@@ -312,243 +367,225 @@ export default function NotesSection({
       )}
 
       {/* Part A: Personal Study Journal Notes */}
-      <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-[#141413]">
-          <div>
-            <h3 className="font-display font-black text-lg sm:text-xl text-[#141413]">
-              1. Jurnal Catatan Belajar Pribadi ({filteredPersonalNotes.length})
-            </h3>
-            <p className="text-xs text-[#52514E] font-medium">
-              Simpan ringkasan modul, target kampus Bali, catatan konsultasi Guru BK, dan poin latihan ujian.
-            </p>
-          </div>
-        </div>
-
-        {filteredPersonalNotes.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-[#FAF7F2] border-2 border-dashed border-[#141413]/40 text-center space-y-3">
-            <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
-              {snapshot.personalNotes.length === 0
-                ? "Belum ada jurnal catatan pembelajaran yang tersimpan."
-                : "Tidak ada catatan yang sesuai dengan kata kunci atau filter aktif."}
-            </p>
-            <p className="text-xs text-[#52514E] max-w-md mx-auto">
-              Catat materi penting selama belajar di modul KertaMarga agar progres pemahamanmu selalu terekam rapi.
-            </p>
-            {snapshot.personalNotes.length === 0 && (
-              <button
-                type="button"
-                onClick={openCreateForm}
-                className="neo-btn px-4 py-2.5 rounded-xl bg-[#B8F348] text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-display font-bold text-xs cursor-pointer"
-              >
-                + Tulis Catatan Pertama
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredPersonalNotes.map((note) => (
-              <article
-                key={note.id}
-                className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] flex flex-col justify-between gap-3"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-[#FFBE2E] text-[#141413] border border-[#141413] font-mono font-bold text-[11px]">
-                      {note.category}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-lg bg-white text-[#3B66FF] border border-[#141413] font-mono font-bold text-[11px]">
-                      {getFieldLabelById(note.fieldId)}
-                    </span>
-                  </div>
-
-                  <h4 className="font-display font-black text-base text-[#141413] leading-snug">
-                    {note.title}
-                  </h4>
-
-                  <p className="text-xs sm:text-sm text-[#141413]/90 leading-relaxed whitespace-pre-line break-words">
-                    {note.content}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[#141413]/20 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono text-[#52514E]">
-                    Diperbarui: {formatDate(note.updatedAt)}
-                  </span>
-
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {note.fieldId !== "umum" && (
-                      <Link
-                        href={`/hasil-analisis?field=${encodeURIComponent(note.fieldId)}`}
-                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#B8F348]/40 border border-[#141413] text-[11px] font-mono font-bold text-[#141413]"
-                      >
-                        Modul &rarr;
-                      </Link>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => openEditForm(note)}
-                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#F0ECE1] border border-[#141413] text-[11px] font-mono font-bold text-[#141413] cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeletePersonalNote(note.id)}
-                      className="px-2.5 py-1 rounded-lg bg-[#FFE5E0] hover:bg-[#ffd0c7] border border-[#141413] text-[11px] font-mono font-bold text-[#7A1A12] cursor-pointer"
-                    >
-                      Hapus
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Part B: Integrated Module Practice Notes from Workspace */}
-      <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-[#141413]">
-          <div>
-            <h3 className="font-display font-black text-lg sm:text-xl text-[#141413]">
-              2. Catatan Tugas Praktik Modul ({filteredPracticeNotes.length})
-            </h3>
-            <p className="text-xs text-[#52514E] font-medium">
-              Tersinkron langsung dengan jawaban latihan mandiri yang Anda tulis di halaman Modul &amp; Sertifikasi.
-            </p>
-          </div>
-          <Link
-            href="/hasil-analisis"
-            className="neo-btn px-3.5 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#B8F348]/40 border-2 border-[#141413] text-xs font-mono font-bold text-[#141413]"
-          >
-            Buka Workspace Modul &rarr;
-          </Link>
-        </div>
-
-        {filteredPracticeNotes.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-[#FAF7F2] border-2 border-dashed border-[#141413]/40 text-center space-y-2.5">
-            <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
-              Belum ada catatan tugas praktik modul yang diisi.
-            </p>
-            <p className="text-xs text-[#52514E] max-w-lg mx-auto">
-              Buka salah satu modul di halaman Modul &amp; Sertifikasi lalu isi kolom &quot;Tugas Praktik Mandiri&quot; agar catatan Anda muncul di sini.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3.5">
-            {filteredPracticeNotes.map((item) => {
-              const practiceKey = `${item.fieldId}:${item.moduleId}`;
-              const isEditing = editingPracticeKey === practiceKey;
-
-              return (
-                <article
-                  key={practiceKey}
-                  className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] space-y-3"
+      {noteViewMode === "jurnal" && (
+        <div className="space-y-4">
+          {filteredPersonalNotes.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-[#FAF7F2] border border-dashed border-[#141413]/30 text-center space-y-3">
+              <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
+                {snapshot.personalNotes.length === 0
+                  ? "Belum ada jurnal catatan pembelajaran yang tersimpan."
+                  : "Tidak ada catatan yang sesuai dengan kata kunci atau filter aktif."}
+              </p>
+              <p className="text-xs text-[#52514E] max-w-md mx-auto">
+                Simpan ringkasan modul, target kampus Bali, catatan konsultasi Guru BK, dan poin latihan ujian di sini.
+              </p>
+              {snapshot.personalNotes.length === 0 && (
+                <button
+                  type="button"
+                  onClick={openCreateForm}
+                  className="neo-btn px-4 py-2 rounded-xl bg-[#B8F348] text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-display font-bold text-xs cursor-pointer"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                      <span className="px-2.5 py-0.5 rounded-lg bg-[#3B66FF] text-white border border-[#141413] font-bold">
-                        {item.moduleCode}
+                  + Tulis Catatan Pertama
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredPersonalNotes.map((note) => (
+                <article
+                  key={note.id}
+                  className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#141413]/20 hover:border-[#141413] transition-colors flex flex-col justify-between gap-3"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#FFBE2E]/60 text-[#141413] border border-[#141413]/20 font-mono font-bold text-[11px]">
+                        {note.category}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-lg bg-white text-[#141413] border border-[#141413] font-bold">
-                        {item.fieldName}
-                      </span>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-lg border border-[#141413] font-bold ${
-                          item.isCompleted
-                            ? "bg-[#B8F348] text-[#141413]"
-                            : "bg-[#FFBE2E] text-[#141413]"
-                        }`}
-                      >
-                        {item.isCompleted ? `Selesai (+${item.scoreBoost}%)` : "Dalam Progres"}
+                      <span className="px-2.5 py-0.5 rounded-md bg-white text-[#3B66FF] border border-[#141413]/20 font-mono font-bold text-[11px]">
+                        {getFieldLabelById(note.fieldId)}
                       </span>
                     </div>
 
-                    <Link
-                      href={`/hasil-analisis?field=${encodeURIComponent(item.fieldId)}`}
-                      className="text-xs font-mono font-bold text-[#3B66FF] hover:underline shrink-0"
-                    >
-                      Buka di Workspace &rarr;
-                    </Link>
-                  </div>
+                    <h3 className="font-display font-black text-base text-[#141413] leading-snug">
+                      {note.title}
+                    </h3>
 
-                  <div>
-                    <h4 className="font-display font-black text-base text-[#141413]">
-                      {item.moduleTitle}
-                    </h4>
-                    <p className="text-xs text-[#52514E] font-medium mt-0.5">
-                      Matkul {item.courseCode}: {item.courseName}
+                    <p className="text-xs sm:text-sm text-[#141413]/85 leading-relaxed whitespace-pre-line break-words">
+                      {note.content}
                     </p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-white border border-[#141413]/30 text-xs text-[#52514E]">
-                    <span className="font-mono font-bold text-[#141413] uppercase block mb-0.5">
-                      Instruksi Tugas Praktik:
+                  <div className="pt-3 border-t border-[#141413]/15 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono text-[#52514E]">
+                      {formatDate(note.updatedAt)}
                     </span>
-                    {item.practiceTask}
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {note.fieldId !== "umum" && (
+                        <Link
+                          href={`/hasil-analisis?field=${encodeURIComponent(note.fieldId)}`}
+                          className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#B8F348]/40 border border-[#141413]/25 text-[11px] font-mono font-bold text-[#141413]"
+                        >
+                          Modul &rarr;
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => openEditForm(note)}
+                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#F0ECE1] border border-[#141413]/25 text-[11px] font-mono font-bold text-[#141413] cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeletePersonalNote(note.id)}
+                        className="px-2.5 py-1 rounded-lg bg-[#FFE5E0] hover:bg-[#ffd0c7] border border-[#141413]/25 text-[11px] font-mono font-bold text-[#7A1A12] cursor-pointer"
+                      >
+                        Hapus
+                      </button>
+                    </div>
                   </div>
-
-                  {isEditing ? (
-                    <div className="space-y-2.5">
-                      <textarea
-                        rows={3}
-                        value={practiceDraft}
-                        onChange={(e) => setPracticeDraft(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-white border-2 border-[#141413] text-xs sm:text-sm text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF]"
-                      />
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setEditingPracticeKey(null)}
-                          className="px-3 py-1.5 rounded-xl bg-white border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
-                        >
-                          Batal
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onSavePracticeNote(item.fieldId, item.moduleId, practiceDraft);
-                            setEditingPracticeKey(null);
-                          }}
-                          className="neo-btn px-4 py-1.5 rounded-xl bg-[#B8F348] border-2 border-[#141413] text-xs font-display font-bold text-[#141413] cursor-pointer"
-                        >
-                          Simpan Jawaban Praktik
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2.5">
-                      <div className="p-3.5 rounded-xl bg-white border-2 border-[#141413] text-xs sm:text-sm text-[#141413] whitespace-pre-line break-words leading-relaxed">
-                        {item.noteText}
-                      </div>
-
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingPracticeKey(practiceKey);
-                            setPracticeDraft(item.noteText);
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F0ECE1] border border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
-                        >
-                          Edit Jawaban
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onSavePracticeNote(item.fieldId, item.moduleId, "")}
-                          className="px-3 py-1.5 rounded-lg bg-[#FFE5E0] hover:bg-[#ffd0c7] border border-[#141413] text-xs font-mono font-bold text-[#7A1A12] cursor-pointer"
-                        >
-                          Hapus Catatan
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Part B: Integrated Module Practice Notes from Workspace */}
+      {noteViewMode === "praktik" && (
+        <div className="space-y-4">
+          {filteredPracticeNotes.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-[#FAF7F2] border border-dashed border-[#141413]/30 text-center space-y-3">
+              <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
+                Belum ada catatan tugas praktik modul yang diisi.
+              </p>
+              <p className="text-xs text-[#52514E] max-w-lg mx-auto">
+                Buka salah satu modul di halaman Modul &amp; Sertifikasi lalu isi kolom &quot;Tugas Praktik Mandiri&quot; agar catatan Anda muncul di sini.
+              </p>
+              <Link
+                href="/hasil-analisis"
+                className="neo-btn inline-flex items-center px-4 py-2 rounded-xl bg-white hover:bg-[#B8F348]/40 border-2 border-[#141413] text-xs font-mono font-bold text-[#141413]"
+              >
+                Buka Workspace Modul &rarr;
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredPracticeNotes.map((item) => {
+                const practiceKey = `${item.fieldId}:${item.moduleId}`;
+                const isEditing = editingPracticeKey === practiceKey;
+
+                return (
+                  <article
+                    key={practiceKey}
+                    className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#141413]/20 hover:border-[#141413] transition-colors space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                        <span className="px-2.5 py-0.5 rounded-md bg-[#3B66FF] text-white font-bold">
+                          {item.moduleCode}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-md bg-white text-[#141413] border border-[#141413]/20 font-bold">
+                          {item.fieldName}
+                        </span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md border border-[#141413]/20 font-bold ${
+                            item.isCompleted
+                              ? "bg-[#B8F348]/60 text-[#141413]"
+                              : "bg-[#FFBE2E]/60 text-[#141413]"
+                          }`}
+                        >
+                          {item.isCompleted ? `Selesai (+${item.scoreBoost}%)` : "Dalam Progres"}
+                        </span>
+                      </div>
+
+                      <Link
+                        href={`/hasil-analisis?field=${encodeURIComponent(item.fieldId)}`}
+                        className="text-xs font-mono font-bold text-[#3B66FF] hover:underline shrink-0"
+                      >
+                        Buka di Workspace &rarr;
+                      </Link>
+                    </div>
+
+                    <div>
+                      <h3 className="font-display font-black text-base text-[#141413]">
+                        {item.moduleTitle}
+                      </h3>
+                      <p className="text-xs text-[#52514E] font-medium mt-0.5">
+                        Matkul {item.courseCode}: {item.courseName}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-white border border-[#141413]/15 text-xs text-[#52514E]">
+                      <span className="font-mono font-bold text-[#141413] uppercase block mb-0.5">
+                        Instruksi Tugas Praktik:
+                      </span>
+                      {item.practiceTask}
+                    </div>
+
+                    {isEditing ? (
+                      <div className="space-y-2.5">
+                        <textarea
+                          rows={3}
+                          value={practiceDraft}
+                          onChange={(e) => setPracticeDraft(e.target.value)}
+                          className="w-full p-3 rounded-xl bg-white border-2 border-[#141413] text-xs sm:text-sm text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF]"
+                        />
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingPracticeKey(null)}
+                            className="px-3 py-1.5 rounded-xl bg-white border border-[#141413]/30 text-xs font-mono font-bold text-[#141413] cursor-pointer"
+                          >
+                            Batal
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSavePracticeNote(item.fieldId, item.moduleId, practiceDraft);
+                              setEditingPracticeKey(null);
+                            }}
+                            className="neo-btn px-4 py-1.5 rounded-xl bg-[#B8F348] border-2 border-[#141413] text-xs font-display font-bold text-[#141413] cursor-pointer"
+                          >
+                            Simpan Jawaban Praktik
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <div className="p-3.5 rounded-xl bg-white border border-[#141413]/20 text-xs sm:text-sm text-[#141413] whitespace-pre-line break-words leading-relaxed">
+                          {item.noteText}
+                        </div>
+
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingPracticeKey(practiceKey);
+                              setPracticeDraft(item.noteText);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F0ECE1] border border-[#141413]/25 text-xs font-mono font-bold text-[#141413] cursor-pointer"
+                          >
+                            Edit Jawaban
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSavePracticeNote(item.fieldId, item.moduleId, "")}
+                            className="px-3 py-1.5 rounded-lg bg-[#FFE5E0] hover:bg-[#ffd0c7] border border-[#141413]/25 text-xs font-mono font-bold text-[#7A1A12] cursor-pointer"
+                          >
+                            Hapus Catatan
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

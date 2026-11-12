@@ -33,6 +33,16 @@ Berdasarkan evaluasi pasca penyisihan dan *pentest* menuju penjurian final, peni
    - Mengubah mekanisme soal pada tab **Tes Sertifikasi** (`/hasil-analisis`) dari statis menjadi **dinamis** (`src/lib/dynamic-assessment.ts` + `CertificationTab.tsx`): pertanyaan, skenario studi kasus Bali, dan urutan pilihan jawaban A-D terus berotasi/di-generate baru setiap percobaan atau tombol *Acak & Buat Soal Baru*.
    - Menambahkan tab baru **Verifikasi Kemampuan** (`VerificationTab.tsx`) yang terbuka otomatis setelah siswa menyelesaikan **seluruh modul materi dan seluruh unit quiz sertifikasi** pada bidang aktif. Sistem men-generate 4 soal analisis lintas modul serta 1 studi kasus uraian dari catatan praktik siswa, mengevaluasi jawaban secara terverifikasi JWT/HMAC tanpa membocorkan kunci jawaban ke klien, lalu menyimpan lencana skor ke `/profil` dan `/api/profile`.
 
+7. **Katalog 285 Lembaga Bali, Estimasi Jarak Jalan, `Rute Maps`, & Filter Hasil Tes (`/katalog`, `/peta-bidang`)**
+   - Menghadirkan direktori terpadu **285 lembaga pendidikan Bali** (61 PT, 109 SMK, 115 SMA) dengan Drawer Detail, modal perbandingan hingga 3 kampus/sekolah (`CompareInstitutionsModal.tsx`), serta pemetaan koordinat jalan lebih spesifik dan faktor rute jalan Bali `1.28x` pada `haversineKm`.
+   - Menambahkan `buildGoogleMapsDirectionsUrl` agar tombol `Rute Maps` langsung membuka rute berkendara Google Maps dari alamat rumah atau GPS pengguna tanpa ketergantungan API berbayar.
+   - Merapikan panel filter `/katalog` menjadi 3 baris terstruktur, menggabungkan tab audit menjadi filter `Audit Lengkap (14)`, dan menambahkan filter `Sesuai Hasil Tes` berdasarkan bidang minat serta jenjang pendidikan terakhir.
+
+8. **Ekspor Laporan PDF A4, Gate Akses, & Penyempurnaan UX Profil/Auth (`/profil`, `/login`, `/daftar`)**
+   - Menyatukan seluruh ekspor laporan hasil tes ke format **PDF A4 profesional** (`src/lib/test-report-download.ts`) dengan filter rekomendasi sekolah/kampus otomatis sesuai jenjang (`SMP` ke SMK/SMA, `SMA/SMK` ke Perguruan Tinggi), dilengkapi `PdfExportGateModal` untuk mengarahkan pengguna yang belum mengerjakan tes atau belum login.
+   - Merombak tampilan `/profil` menjadi layout 2-kolom (sticky sidebar + workspace) dengan Loading Skeleton, transisi tab `framer-motion`, dan ringkasan bookmark bidang, serta membatasi akses `/profil` melalui klik username di `Navbar.tsx`.
+   - Memperbarui `PasswordField.tsx` dengan tombol ikon mata yang bersih pada halaman `/login` dan `/daftar`.
+
 ---
 
 ## 2. AI & Technology Disclosure (Versi Final - Lampiran C)
@@ -46,7 +56,7 @@ Berdasarkan evaluasi pasca penyisihan dan *pentest* menuju penjurian final, peni
 | **Hosting / Deployment** | Vercel Production (Region `sin1` Singapura, HTTPS aktif 24/7) |
 | **AI Model / API / Method** | Multi-tier pipeline: 9Router Gateway (`ag/gemini-3-flash`, `ag/gemini-3-flash-agent`, `ag/gemini-3.8-flash-low`, `openrouter/openrouter/free`), Google Gemini REST API (`gemini-3.5-flash-lite`, `gemini-flash-lite-latest`, `gemini-3.5-flash`), AI Scope Guard 2-Lapis (`src/lib/ai-scope-guard.ts`), Skoring Deterministik Multi-Dimensi (`src/lib/scoring.ts`) & Deterministic Fallback Engine |
 | **Peran AI dalam Produk** | Menganalisis kesenjangan kesiapan akademik siswa dan merekomendasikan modul/latihan sertifikasi di `/api/mentor-agent`, serta konsultasi interaktif jurusan dan institusi Bali yang dibatasi cakupan topik di `/api/navigator-chat` |
-| **Dataset / Data Source** | Data program studi & akreditasi PDDIKTI, BAN-PT, BAN-SM; standar kompetensi BNSP; koordinat geografis 9 kabupaten/kota Bali (284 entitas direktori pendidikan Bali: 61 PT, 108 SMK, 115 SMA + 15 sorotan program katalog = 285 katalog terpadu dalam 11 bidang program) |
+| **Dataset / Data Source** | Data program studi & akreditasi PDDIKTI, BAN-PT, BAN-SM; standar kompetensi BNSP; koordinat geografis 9 kabupaten/kota Bali (285 entitas katalog pendidikan Bali: 61 PT, 109 SMK, 115 SMA dalam 11 bidang program) |
 | **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `gsap`, `@gsap/react`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `@types/leaflet`, `clsx`, `tailwind-merge`, `typescript`, `tailwindcss`, `postcss`, `autoprefixer` |
 | **Template / Boilerplate** | Tidak memakai template jadi; struktur dasar dibuat dari `create-next-app` lalu dirancang khusus sesuai arsitektur visual KertaMarga Bali |
 | **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring modular, audit keamanan, type safety TypeScript, penyusunan automated smoke test, dan review kualitas kode) |

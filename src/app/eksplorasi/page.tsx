@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
 import LocationOriginControl from "@/components/LocationOriginControl";
+import PdfExportGateModal, {
+  type PdfGateReason,
+} from "@/components/PdfExportGateModal";
 import { formatOriginLabel } from "@/data/catalog";
 import { BASE_QUESTIONS, ADAPTIVE_BRANCH_QUESTIONS, AssessmentQuestion } from "@/data/questions";
 import { type AssessmentAnalysisResult } from "@/lib/scoring";
@@ -13,7 +16,6 @@ import { useBaliLocation } from "@/lib/useBaliLocation";
 import { useAuth } from "@/lib/useAuth";
 import {
   buildExplorationReportHtml,
-  downloadHtmlFile,
   openPrintableReport,
 } from "@/lib/test-report-download";
 import {
@@ -26,6 +28,8 @@ export default function EksplorasiPage() {
   const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [pdfGateReason, setPdfGateReason] = useState<PdfGateReason>(null);
+  const [dismissedGuestNotice, setDismissedGuestNotice] = useState(false);
 
   // Step state: 1 = Profil & Persetujuan, 2 = Kuesioner, 3 = Hasil Rekomendasi
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -276,6 +280,14 @@ export default function EksplorasiPage() {
       )}
 
       {/* Floating Navbar */}
+      <PdfExportGateModal
+        reason={pdfGateReason}
+        onClose={() => setPdfGateReason(null)}
+        onDeclineLogin={() => {
+          setDismissedGuestNotice(true);
+          triggerToast("Tanpa login, file PDF tidak dapat diunduh.");
+        }}
+      />
       <Navbar
         onOpenLogin={() => {
           setAuthMode("login");
@@ -628,27 +640,10 @@ export default function EksplorasiPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const html = buildExplorationReportHtml({
-                          result: analysisResult,
-                          educationLevel,
-                          originLabel: formatOriginLabel(origin),
-                          weights: { matchWeight, distanceWeight, costWeight },
-                          userName: user?.name,
-                          userIdentifier: user?.identifier,
-                        });
-                        downloadHtmlFile(
-                          `kertamarga-hasil-eksplorasi-${new Date().toISOString().slice(0, 10)}.html`,
-                          html
-                        );
-                        triggerToast("Laporan hasil tes eksplorasi berhasil diunduh.");
-                      }}
-                      className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
-                    >
-                      Unduh Hasil Tes (.html) &darr;
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
+                        if (!user) {
+                          setPdfGateReason("need-login");
+                          return;
+                        }
                         const html = buildExplorationReportHtml({
                           result: analysisResult,
                           educationLevel,
@@ -662,11 +657,42 @@ export default function EksplorasiPage() {
                           `kertamarga-hasil-eksplorasi-${new Date().toISOString().slice(0, 10)}.html`
                         );
                       }}
-                      className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+                      className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
                     >
-                      Cetak / Simpan PDF
+                      Unduh Laporan PDF
                     </button>
                   </div>
+
+                  {!user && !dismissedGuestNotice && (
+                    <div className="p-4 rounded-2xl bg-[#FFBE2E]/25 border-2 border-[#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <p className="font-display font-bold text-xs sm:text-sm text-[#141413]">
+                          Login untuk Mengunduh Laporan PDF
+                        </p>
+                        <p className="text-xs text-[#52514E]">
+                          Hasil tes Anda sudah siap. Masuk ke akun untuk mengunduh file PDF, atau pilih tidak ingin login (tidak dapat mengunduh PDF).
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <Link
+                          href="/login"
+                          className="neo-btn px-3.5 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] font-display font-bold text-xs"
+                        >
+                          Login untuk Unduh
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDismissedGuestNotice(true);
+                            triggerToast("Anda melanjutkan tanpa login (file PDF tidak dapat diunduh).");
+                          }}
+                          className="px-3 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#52514E] border border-[#141413]/30 font-mono font-bold text-xs cursor-pointer"
+                        >
+                          Tidak Ingin Login
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Sinyal Ekstraksi dari Refleksi */}
                   {analysisResult.extractedSignals.length > 0 && (

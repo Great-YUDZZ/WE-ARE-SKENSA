@@ -15,8 +15,13 @@ import { BALI_KABUPATEN_COORDS, formatOriginLabel } from "@/data/catalog";
 import { BaliEntityCategory } from "@/data/bali-institutions";
 import {
   UnifiedKatalogInstitution,
+  getFieldLabelById,
   getUnifiedKatalogInstitutions,
 } from "@/data/katalog-adapter";
+import {
+  StoredEducationLevel,
+  getStoredEducationLevel,
+} from "@/lib/test-report-download";
 import { useBaliLocation } from "@/lib/useBaliLocation";
 import { useCardDeckTransition } from "@/lib/useCardDeckTransition";
 
@@ -24,9 +29,14 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
 }
 
-type KatalogTab = "all" | "audited" | BaliEntityCategory;
+type KatalogTab = "all" | BaliEntityCategory;
 type StatusFilter = "all" | "negeri" | "swasta";
 type SortOrder = "distance" | "name";
+
+interface SavedSurveySummary {
+  fieldId: string;
+  score: number;
+}
 
 const PAGE_SIZE = 6;
 const MAX_COMPARE = 3;
@@ -34,6 +44,23 @@ const MAX_CARD_CHIPS = 4;
 
 function isNegeriStatus(status: string): boolean {
   return status.toLowerCase().includes("negeri");
+}
+
+function getTestMatchScore(
+  item: UnifiedKatalogInstitution,
+  fieldId: string,
+  educationLevel: StoredEducationLevel | null
+): number {
+  const hasField = item.matchedFields.includes(fieldId);
+  if (educationLevel === "SMP") {
+    if (item.category === "smk" && hasField) return 2;
+    if (item.category === "sma") return 1;
+    return 0;
+  }
+  if (educationLevel === "SMA" || educationLevel === "SMK") {
+    return item.category === "perguruan-tinggi" && hasField ? 2 : 0;
+  }
+  return hasField ? 2 : 0;
 }
 
 function KatalogSkeleton() {
@@ -79,6 +106,11 @@ function KatalogPageContent() {
   const [activeTab, setActiveTab] = useState<KatalogTab>("all");
   const [lokasiFilter, setLokasiFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [onlyAudited, setOnlyAudited] = useState<boolean>(false);
+  const [matchTestFilter, setMatchTestFilter] = useState<boolean>(false);
+  const [showTestPrompt, setShowTestPrompt] = useState<boolean>(false);
+  const [savedSurvey, setSavedSurvey] = useState<SavedSurveySummary | null>(null);
+  const [educationLevel, setEducationLevel] = useState<StoredEducationLevel | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("distance");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -95,6 +127,22 @@ function KatalogPageContent() {
   const toastTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("kertamarga_survey_result");
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<SavedSurveySummary>;
+        if (typeof parsed.fieldId === "string" && parsed.fieldId.trim().length > 0) {
+          setSavedSurvey({
+            fieldId: parsed.fieldId,
+            score: typeof parsed.score === "number" ? parsed.score : 0,
+          });
+        }
+      }
+      setEducationLevel(getStoredEducationLevel());
+    } catch {
+      // Ignore storage read errors
+    }
+
     return () => {
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
@@ -139,17 +187,22 @@ function KatalogPageContent() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, lokasiFilter, statusFilter, sortOrder, searchQuery]);
+  }, [activeTab, lokasiFilter, statusFilter, onlyAudited, matchTestFilter, sortOrder, searchQuery]);
 
   const filteredList = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
     const matches = allInstitutions.filter((item) => {
-      if (activeTab === "audited" && !item.hasAudit) return false;
+      if (activeTab !== "all" && item.category !== activeTab) {
+        return false;
+      }
+      if (onlyAudited && !item.hasAudit) {
+        return false;
+      }
       if (
-        activeTab !== "all" &&
-        activeTab !== "audited" &&
-        item.category !== activeTab
+        matchTestFilter &&
+        savedSurvey &&
+        getTestMatchScore(item, savedSurvey.fieldId, educationLevel) === 0
       ) {
         return false;
       }
@@ -174,6 +227,12 @@ function KatalogPageContent() {
     });
 
     return matches.sort((a, b) => {
+      if (matchTestFilter && savedSurvey) {
+        const scoreDiff =
+          getTestMatchScore(b, savedSurvey.fieldId, educationLevel) -
+          getTestMatchScore(a, savedSurvey.fieldId, educationLevel);
+        if (scoreDiff !== 0) return scoreDiff;
+      }
       if (sortOrder === "name") {
         return a.name.localeCompare(b.name, "id");
       }
@@ -185,7 +244,11 @@ function KatalogPageContent() {
   }, [
     activeTab,
     allInstitutions,
+    educationLevel,
     lokasiFilter,
+    matchTestFilter,
+    onlyAudited,
+    savedSurvey,
     searchQuery,
     sortOrder,
     statusFilter,
@@ -201,7 +264,7 @@ function KatalogPageContent() {
   const { gridRef: cardsGridRef, transitionToPage } = useCardDeckTransition(
     ".katalog-card-item",
     safePage,
-    `${activeTab}-${lokasiFilter}-${statusFilter}-${sortOrder}-${searchQuery}`
+    `${activeTab}-${lokasiFilter}-${statusFilter}-${onlyAudited}-${matchTestFilter}-${sortOrder}-${searchQuery}`
   );
 
   const selectedDetailInstitution = useMemo(
@@ -254,6 +317,9 @@ function KatalogPageContent() {
     setActiveTab("all");
     setLokasiFilter("all");
     setStatusFilter("all");
+    setOnlyAudited(false);
+    setMatchTestFilter(false);
+    setShowTestPrompt(false);
     setSortOrder("distance");
     setSearchQuery("");
     setCurrentPage(1);
@@ -352,7 +418,6 @@ function KatalogPageContent() {
 
   const tabOptions: { id: KatalogTab; label: string; count: number }[] = [
     { id: "all", label: "Semua Lembaga", count: counts.all },
-    { id: "audited", label: "Audit Biaya & Akreditasi", count: counts.audited },
     { id: "perguruan-tinggi", label: "Perguruan Tinggi", count: counts.pt },
     { id: "smk", label: "SMK Kejuruan", count: counts.smk },
     { id: "sma", label: "SMA", count: counts.sma },
@@ -362,6 +427,8 @@ function KatalogPageContent() {
     activeTab !== "all" ||
     lokasiFilter !== "all" ||
     statusFilter !== "all" ||
+    onlyAudited ||
+    matchTestFilter ||
     searchQuery.trim().length > 0;
 
   return (
@@ -538,7 +605,8 @@ function KatalogPageContent() {
           </div>
 
           <div className="bg-white border-2 border-[#141413] rounded-2xl shadow-[4px_4px_0px_#141413] p-5 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            {/* Baris 1: Pencarian, Wilayah, dan Lokasi Asal */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
               {/* Search */}
               <div className="md:col-span-4 space-y-1.5">
                 <label
@@ -597,8 +665,9 @@ function KatalogPageContent() {
               </div>
             </div>
 
+            {/* Baris 2: Filter Status, Audit, Hasil Tes & Urutan */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#141413]/15">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <div className="inline-flex bg-[#FAF7F2] p-1 rounded-xl border-2 border-[#141413]">
                   {(
                     [
@@ -622,40 +691,147 @@ function KatalogPageContent() {
                   ))}
                 </div>
 
-                <div className="inline-flex items-center gap-2">
-                  <label
-                    htmlFor="katalog-sort"
-                    className="text-xs sm:text-sm font-bold text-[#52514E]"
+                <span
+                  aria-hidden="true"
+                  className="hidden sm:block h-6 w-px bg-[#141413]/20 mx-0.5"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setOnlyAudited((prev) => !prev)}
+                  aria-pressed={onlyAudited}
+                  className={`px-3 py-1.5 rounded-xl border-2 border-[#141413] text-xs sm:text-sm font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                    onlyAudited
+                      ? "bg-[#3B66FF] text-white shadow-[2px_2px_0px_#141413]"
+                      : "bg-[#FAF7F2] text-[#141413] hover:bg-[#F0ECE1]"
+                  }`}
+                >
+                  <span>Audit Lengkap</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded font-mono text-[11px] font-bold ${
+                      onlyAudited
+                        ? "bg-white text-[#141413]"
+                        : "bg-[#F0ECE1] text-[#141413]"
+                    }`}
                   >
-                    Urutkan:
-                  </label>
-                  <select
-                    id="katalog-sort"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                    className="px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-white text-xs sm:text-sm font-bold text-[#141413]"
-                  >
-                    <option value="distance">Jarak Terdekat</option>
-                    <option value="name">Nama (A - Z)</option>
-                  </select>
-                </div>
+                    {counts.audited}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!savedSurvey) {
+                      setShowTestPrompt((prev) => !prev);
+                      return;
+                    }
+                    setShowTestPrompt(false);
+                    setMatchTestFilter((prev) => !prev);
+                  }}
+                  aria-pressed={matchTestFilter}
+                  title={
+                    savedSurvey
+                      ? "Saring sekolah/kampus sesuai bidang dan jenjang hasil tes Anda"
+                      : "Kerjakan Tes Keminatan terlebih dahulu untuk membuka filter ini"
+                  }
+                  className={`px-3 py-1.5 rounded-xl border-2 border-[#141413] text-xs sm:text-sm font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                    matchTestFilter && savedSurvey
+                      ? "bg-[#B8F348] text-[#141413] shadow-[2px_2px_0px_#141413]"
+                      : savedSurvey
+                      ? "bg-white text-[#141413] hover:bg-[#F0ECE1]"
+                      : "bg-[#F0ECE1] text-[#52514E] hover:bg-[#E7E1D3]"
+                  }`}
+                >
+                  {!savedSurvey && (
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      className="w-3.5 h-3.5"
+                    >
+                      <rect x="4" y="11" width="16" height="10" rx="2" />
+                      <path d="M8 11V7a4 4 0 1 1 8 0v4" />
+                    </svg>
+                  )}
+                  <span>Sesuai Hasil Tes</span>
+                </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-xs sm:text-sm font-semibold text-[#52514E]">
-                  Ditemukan {filteredList.length} institusi (acuan: {originLabel})
-                </span>
-                {hasActiveFilters && (
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    className="text-xs sm:text-sm font-bold text-[#FF5E4D] underline hover:text-[#141413] cursor-pointer"
-                  >
-                    Reset Filter
-                  </button>
-                )}
+              <div className="inline-flex items-center gap-2 ml-auto">
+                <label
+                  htmlFor="katalog-sort"
+                  className="text-xs sm:text-sm font-bold text-[#52514E]"
+                >
+                  Urutkan:
+                </label>
+                <select
+                  id="katalog-sort"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                  className="px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-white text-xs sm:text-sm font-bold text-[#141413]"
+                >
+                  <option value="distance">Jarak Terdekat</option>
+                  <option value="name">Nama (A - Z)</option>
+                </select>
               </div>
             </div>
+
+            {/* Baris 3: Footer Status Hasil & Reset */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#141413]/10">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm">
+                <span className="font-semibold text-[#52514E]">
+                  Ditemukan {filteredList.length} institusi (acuan: {originLabel})
+                </span>
+                {matchTestFilter && savedSurvey && (
+                  <span className="font-semibold text-[#141413]">
+                    &middot; Bidang: {getFieldLabelById(savedSurvey.fieldId)} (
+                    {educationLevel ?? "Semua Jenjang"}){" "}
+                    <Link
+                      href="/hasil-analisis"
+                      className="underline text-[#3B66FF] hover:text-[#141413]"
+                    >
+                      Detail Tes
+                    </Link>
+                  </span>
+                )}
+              </div>
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-xs sm:text-sm font-bold text-[#FF5E4D] underline hover:text-[#141413] cursor-pointer ml-auto"
+                >
+                  Reset Filter
+                </button>
+              )}
+            </div>
+
+            {showTestPrompt && !savedSurvey && (
+              <div className="p-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-xs sm:text-sm text-[#52514E]">
+                  <strong className="text-[#141413]">Filter Sesuai Hasil Tes belum terbuka.</strong>{" "}
+                  Kerjakan Tes Keminatan agar sistem menyaring sekolah sesuai bidang minat dan jenjangmu.
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href="/tes-keminatan"
+                    className="px-3 py-1.5 rounded-xl bg-[#B8F348] hover:bg-[#c8f76b] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] text-xs font-display font-bold text-[#141413]"
+                  >
+                    Kerjakan Tes
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowTestPrompt(false)}
+                    className="px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#141413] text-xs font-bold text-[#52514E] hover:text-[#141413] cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -723,6 +899,16 @@ function KatalogPageContent() {
                               Audit Lengkap
                             </span>
                           )}
+                          {savedSurvey &&
+                            getTestMatchScore(
+                              item,
+                              savedSurvey.fieldId,
+                              educationLevel
+                            ) === 2 && (
+                              <span className="px-2.5 py-1 rounded-lg bg-[#FFBE2E] text-[#141413] border-2 border-[#141413] text-xs font-bold">
+                                Cocok Hasil Tes
+                              </span>
+                            )}
                         </div>
 
                         <span
@@ -814,9 +1000,10 @@ function KatalogPageContent() {
                           href={item.mapsUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          title="Buka rute Google Maps dari lokasi Anda"
                           className="px-3 py-2 rounded-xl bg-white hover:bg-[#F0ECE1] border-2 border-[#141413] text-xs sm:text-sm font-display font-bold text-[#141413]"
                         >
-                          Peta
+                          Rute Maps
                         </a>
                       </div>
                     </div>

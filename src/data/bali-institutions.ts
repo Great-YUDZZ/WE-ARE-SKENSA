@@ -28,6 +28,35 @@ export function buildGoogleMapsSearchUrl(name: string, address: string): string 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name}, ${address}, Bali`)}`;
 }
 
+export function buildGoogleMapsDirectionsUrl(
+  name: string,
+  address: string,
+  origin?: string | GeoPoint | UserLocationOrigin
+): string {
+  const dest = `${name}, ${address}, Bali`;
+  let originStr = "";
+  if (typeof origin === "string") {
+    originStr = origin.trim();
+  } else if (origin && "kabupaten" in origin) {
+    if (origin.addressQuery?.trim()) {
+      originStr = `${origin.addressQuery.trim()}, ${origin.kabupaten}, Bali`;
+    } else if (origin.coords) {
+      originStr = `${origin.coords.lat},${origin.coords.lng}`;
+    } else if (origin.areaLabel?.trim()) {
+      originStr = `${origin.areaLabel.trim()}, Bali`;
+    } else if (origin.kabupaten?.trim()) {
+      originStr = `${origin.kabupaten.trim()}, Bali`;
+    }
+  } else if (origin && "lat" in origin && "lng" in origin) {
+    originStr = `${origin.lat},${origin.lng}`;
+  }
+
+  if (originStr) {
+    return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originStr)}&destination=${encodeURIComponent(dest)}&travelmode=driving`;
+  }
+  return buildGoogleMapsSearchUrl(name, address);
+}
+
 export const BALI_EDUCATION_DIRECTORY: BaliEducationEntity[] = [
   {
     "id": "pt-001013-universitas-udayana-unud",
@@ -5178,7 +5207,7 @@ export function getBaliEntitiesForField(
       item.kabupaten,
       item.address
     ),
-    mapsUrl: buildGoogleMapsSearchUrl(item.name, item.address),
+    mapsUrl: buildGoogleMapsDirectionsUrl(item.name, item.address, origin),
   });
 
   const byDistThenName = (a: EnrichedBaliEducationEntity, b: EnrichedBaliEducationEntity) =>

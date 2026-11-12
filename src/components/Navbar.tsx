@@ -94,13 +94,6 @@ export default function Navbar({
               <span className="xl:hidden inline">Modul</span>
             </Link>
             <Link
-              href="/profil"
-              title="Profil & Catatan Belajar"
-              className={navLinkClass("/profil")}
-            >
-              Profil
-            </Link>
-            <Link
               href="/ai-navigator"
               className={`ml-0.5 px-2.5 py-1.5 rounded-lg border border-[#3B66FF] transition-colors flex items-center gap-1.5 font-mono text-xs whitespace-nowrap shrink-0 shadow-xs ${
                 isRouteActive("/ai-navigator")
@@ -108,7 +101,6 @@ export default function Navbar({
                   : "bg-[#3B66FF]/10 text-[#3B66FF] hover:bg-[#3B66FF] hover:text-white"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-[#1AD598] border border-[#141413]" />
               <span>AI Navigator</span>
             </Link>
           </nav>
@@ -234,13 +226,6 @@ export default function Navbar({
               className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
             >
               Modul &amp; Sertifikasi
-            </Link>
-            <Link
-              href="/profil"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
-            >
-              Profil &amp; Catatan Belajar
             </Link>
             <Link
               href="/ai-navigator"

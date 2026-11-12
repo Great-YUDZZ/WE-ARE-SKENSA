@@ -9,7 +9,7 @@ import {
 import {
   BALI_EDUCATION_DIRECTORY,
   BaliEntityCategory,
-  buildGoogleMapsSearchUrl,
+  buildGoogleMapsDirectionsUrl,
 } from "./bali-institutions";
 
 export interface UnifiedKatalogInstitution {
@@ -81,7 +81,7 @@ export function getUnifiedKatalogInstitutions(
           entity.kabupaten,
           entity.address
         ),
-        mapsUrl: buildGoogleMapsSearchUrl(entity.name, entity.address),
+        mapsUrl: buildGoogleMapsDirectionsUrl(entity.name, entity.address, origin),
         auditSpotlights: audits,
         hasAudit: audits.length > 0,
       };
@@ -107,9 +107,10 @@ export function getUnifiedKatalogInstitutions(
         extra.kabupaten,
         extra.district
       ),
-      mapsUrl: buildGoogleMapsSearchUrl(
+      mapsUrl: buildGoogleMapsDirectionsUrl(
         extra.institutionName,
-        `${extra.district}, ${extra.kabupaten}`
+        `${extra.district}, ${extra.kabupaten}`,
+        origin
       ),
       auditSpotlights: [extra],
       hasAudit: true,

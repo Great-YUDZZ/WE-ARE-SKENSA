@@ -2,8 +2,12 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import KertaMargaLogo from "@/components/KertaMargaLogo";
+import PdfExportGateModal, {
+  type PdfGateReason,
+} from "@/components/PdfExportGateModal";
 import NotesSection from "@/components/profil/NotesSection";
 import ProgressSection from "@/components/profil/ProgressSection";
 import AccountSettingsSection from "@/components/profil/AccountSettingsSection";
@@ -11,13 +15,11 @@ import { saveUserToStorage, useAuth } from "@/lib/useAuth";
 import { useBaliLocation } from "@/lib/useBaliLocation";
 import {
   buildProfileTestReportHtml,
-  downloadHtmlFile,
   openPrintableReport,
 } from "@/lib/test-report-download";
 import {
   applyFullLearningSnapshotToStorage,
   collectModulePracticeNoteViews,
-  exportLearningReportMarkdown,
   mergeLearningSnapshots,
   readFullLearningSnapshot,
   updateModulePracticeNoteInStorage,
@@ -50,7 +52,9 @@ export default function ProfilPage() {
 
   const [activeTab, setActiveTab] = useState<ProfileTabId>("catatan");
   const [snapshot, setSnapshot] = useState<FullLearningSnapshot>(EMPTY_SNAPSHOT);
+  const [savedFieldIds, setSavedFieldIds] = useState<string[]>([]);
   const [isStorageReady, setIsStorageReady] = useState(false);
+  const [pdfGateReason, setPdfGateReason] = useState<PdfGateReason>(null);
 
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [isSyncingServer, setIsSyncingServer] = useState(false);
@@ -81,6 +85,19 @@ export default function ProfilPage() {
   useEffect(() => {
     const initial = readFullLearningSnapshot();
     setSnapshot(initial);
+    try {
+      const rawBookmarks = window.localStorage.getItem("kertamarga_saved_fields");
+      if (rawBookmarks) {
+        const parsed = JSON.parse(rawBookmarks);
+        if (Array.isArray(parsed)) {
+          setSavedFieldIds(
+            parsed.filter((item): item is string => typeof item === "string")
+          );
+        }
+      }
+    } catch {
+      // Abaikan jika localStorage dibatasi
+    }
     setIsStorageReady(true);
   }, []);
 
@@ -145,9 +162,7 @@ export default function ProfilPage() {
         const localHadData =
           localSnap.personalNotes.length > 0 ||
           Object.keys(localSnap.progressByField).length > 0 ||
-          Boolean(localSnap.surveyResult) ||
-          Boolean(localSnap.explorationResult) ||
-          (localSnap.savedFieldIds?.length || 0) > 0;
+          Boolean(localSnap.surveyResult);
         if (localHadData) {
           void pushSnapshotToServer(merged, false);
         }
@@ -169,9 +184,13 @@ export default function ProfilPage() {
   const stats = useMemo(() => {
     let completedModulesCount = 0;
     let passedCertsCount = 0;
+    let verifiedFieldsCount = 0;
     for (const prog of Object.values(snapshot.progressByField)) {
       completedModulesCount += prog.completedModules.length;
       passedCertsCount += prog.passedCertIds.length;
+      if (prog.verification?.status === "passed") {
+        verifiedFieldsCount += 1;
+      }
     }
     const totalNotesCount =
       snapshot.personalNotes.length + practiceNoteViews.length;
@@ -179,6 +198,7 @@ export default function ProfilPage() {
     return {
       completedModulesCount,
       passedCertsCount,
+      verifiedFieldsCount,
       totalNotesCount,
       surveyScore: snapshot.surveyResult ? `${snapshot.surveyResult.score}%` : "Belum Ada",
     };
@@ -285,56 +305,27 @@ export default function ProfilPage() {
     await pushSnapshotToServer(currentSnap, true);
   };
 
-  const handleExportMarkdown = () => {
-    const originLabel =
-      origin.areaLabel || origin.addressQuery || origin.kabupaten || "Kota Denpasar";
-    const markdown = exportLearningReportMarkdown(snapshot, user, originLabel);
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `kertamarga-catatan-belajar-${new Date().toISOString().slice(0, 10)}.md`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    showStatus("Rekap catatan belajar berhasil diunduh (.md).");
-  };
-
-  const handleDownloadTestReportHtml = () => {
-    const latestSnap = readFullLearningSnapshot();
-    const originLabel =
-      origin.areaLabel || origin.addressQuery || origin.kabupaten || "Kota Denpasar";
-    const html = buildProfileTestReportHtml({
-      snapshot: latestSnap,
-      user,
-      originLabel,
-    });
-    downloadHtmlFile(
-      `kertamarga-rekap-keseluruhan-${new Date().toISOString().slice(0, 10)}.html`,
-      html
-    );
-    showStatus("Rekap hasil keseluruhan website berhasil diunduh (.html).");
-  };
-
   const handlePrintTestReportPdf = () => {
-    const latestSnap = readFullLearningSnapshot();
+    if (!snapshot.surveyResult) {
+      setPdfGateReason("no-test");
+      return;
+    }
+    if (!user) {
+      setPdfGateReason("need-login");
+      return;
+    }
     const originLabel =
       origin.areaLabel || origin.addressQuery || origin.kabupaten || "Kota Denpasar";
     const html = buildProfileTestReportHtml({
-      snapshot: latestSnap,
+      snapshot,
       user,
       originLabel,
+      origin,
     });
-    const opened = openPrintableReport(
+    openPrintableReport(
       html,
-      `kertamarga-rekap-keseluruhan-${new Date().toISOString().slice(0, 10)}.html`
+      `kertamarga-laporan-profil-${new Date().toISOString().slice(0, 10)}.html`
     );
-    if (opened) {
-      showStatus("Membuka dialog Simpan sebagai PDF untuk rekapan keseluruhan website.");
-    } else {
-      showStatus("Popup diblokir; rekapan lengkap diunduh sebagai HTML siap cetak PDF.");
-    }
   };
 
   const tabs: { id: ProfileTabId; label: string; badge: string }[] = [
@@ -355,12 +346,30 @@ export default function ProfilPage() {
     },
   ];
 
-  const originDisplay =
+  const rawOriginDisplay =
     origin.areaLabel || origin.addressQuery || origin.kabupaten || "Kota Denpasar";
+  const originDisplay = rawOriginDisplay.replace(
+    /,\s*([^,]+)\s*\(\1\)\s*$/,
+    ", $1"
+  );
+
+  const userSubtitle = user
+    ? user.identifier && user.identifier.toLowerCase() !== user.email.toLowerCase()
+      ? `${user.identifier} | ${user.email}`
+      : user.email
+    : "Kelola catatan belajar, tugas praktik, hasil survey, dan sertifikasi Anda.";
 
   return (
     <div className="min-h-screen flex flex-col neopop-canvas-subtle overflow-x-clip">
       <Navbar />
+
+      <PdfExportGateModal
+        reason={pdfGateReason}
+        onClose={() => setPdfGateReason(null)}
+        onDeclineLogin={() =>
+          showStatus("Tanpa login, file PDF tidak dapat diunduh.")
+        }
+      />
 
       {statusMessage && (
         <div
@@ -372,223 +381,301 @@ export default function ProfilPage() {
         </div>
       )}
 
-      <main className="flex-1 pt-8 sm:pt-10 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Breadcrumb */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <nav
-              aria-label="Breadcrumb"
-              className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold text-[#52514E]"
-            >
-              <Link href="/" className="hover:text-[#141413] transition-colors">
-                Beranda
-              </Link>
-              <span>/</span>
-              <span className="text-[#141413]">Profil &amp; Catatan Pembelajaran</span>
-            </nav>
+      <main className="flex-1 pt-6 sm:pt-8 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-5">
+          {/* Clean Breadcrumb */}
+          <nav
+            aria-label="Breadcrumb"
+            className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold text-[#52514E]"
+          >
+            <Link href="/" className="hover:text-[#141413] transition-colors">
+              Beranda
+            </Link>
+            <span>/</span>
+            <span className="text-[#141413]">Profil &amp; Catatan Pembelajaran</span>
+          </nav>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/hasil-analisis"
-                className="neo-btn inline-flex items-center min-h-[40px] px-3.5 rounded-xl bg-white border-2 border-[#141413] hover:bg-[#FAF7F2] text-xs font-mono font-bold text-[#141413]"
-              >
-                Workspace Modul &rarr;
-              </Link>
-              <Link
-                href="/ai-navigator"
-                className="neo-btn inline-flex items-center min-h-[40px] px-3.5 rounded-xl bg-[#3B66FF] text-white border-2 border-[#141413] hover:bg-[#2F55DF] text-xs font-mono font-bold"
-              >
-                AI Navigator &rarr;
-              </Link>
-            </div>
-          </div>
-
-          {/* Profile Hero Summary Card */}
-          <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-5">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex items-start sm:items-center gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#B8F348] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] flex items-center justify-center font-display font-black text-2xl sm:text-3xl text-[#141413] shrink-0">
+          {/* 2-Column Sticky Sidebar + Workspace (Hanya untuk user login) */}
+          {!authLoading && !user ? (
+            <section className="neo-card rounded-2xl bg-white p-6 sm:p-10 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] max-w-2xl mx-auto text-center space-y-4">
+              <span className="inline-block px-3 py-1 rounded-lg bg-[#3B66FF] text-white font-mono font-bold text-xs uppercase">
+                Akses Terbatas
+              </span>
+              <h1 className="font-display font-black text-2xl sm:text-3xl text-[#141413]">
+                Login Diperlukan untuk Mengakses Profil
+              </h1>
+              <p className="text-xs sm:text-sm text-[#52514E] max-w-md mx-auto leading-relaxed">
+                Halaman profil, catatan belajar, progres sertifikasi, dan unduhan laporan PDF hanya tersedia untuk akun yang sudah login. Silakan masuk terlebih dahulu melalui tombol username atau halaman login.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <Link
+                  href="/login"
+                  className="neo-btn min-h-[44px] px-6 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] font-display font-bold text-xs sm:text-sm inline-flex items-center"
+                >
+                  Masuk Akun &rarr;
+                </Link>
+                <Link
+                  href="/"
+                  className="neo-btn min-h-[44px] px-5 rounded-xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs inline-flex items-center"
+                >
+                  Kembali ke Beranda
+                </Link>
+              </div>
+            </section>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Sticky Profile Sidebar */}
+            <aside className="lg:col-span-4 lg:sticky lg:top-24 neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-5">
+              {/* Identity Header */}
+              <div className="flex items-start gap-3.5">
+                <div className="w-14 h-14 rounded-2xl bg-[#B8F348] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] flex items-center justify-center font-display font-black text-2xl text-[#141413] shrink-0">
                   {(user?.name || "P").charAt(0).toUpperCase()}
                 </div>
 
-                <div className="space-y-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-[#3B66FF] text-white border border-[#141413] font-mono font-bold text-[11px] uppercase">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-[#3B66FF] text-white font-mono font-bold text-[10px] uppercase">
                       {authLoading
-                        ? "Memuat Profil"
+                        ? "Memuat"
                         : user
                         ? user.role === "guru"
                           ? "Guru BK"
                           : "Siswa Terdaftar"
-                        : "Mode Tamu Browser"}
+                        : "Mode Tamu"}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-lg bg-[#FAF7F2] text-[#141413] border border-[#141413] font-mono font-bold text-[11px]">
-                      Domisili: {originDisplay}
-                    </span>
+                    {user && lastSyncedAt && (
+                      <span className="px-2 py-0.5 rounded-md bg-[#B8F348]/40 text-[#141413] border border-[#141413]/20 font-mono font-bold text-[10px]">
+                        Sinkron {lastSyncedAt}
+                      </span>
+                    )}
                   </div>
 
-                  <h1 className="font-display font-black text-2xl sm:text-3xl text-[#141413] truncate">
-                    {user ? user.name : "Profil Belajar Pelajar Bali"}
+                  <h1 className="font-display font-black text-xl sm:text-2xl text-[#141413] truncate">
+                    {user ? user.name : "Profil Belajar"}
                   </h1>
-                  <p className="text-xs sm:text-sm text-[#52514E] font-medium">
-                    {user
-                      ? `${user.identifier} | ${user.email}`
-                      : "Kelola catatan belajar, tugas praktik modul, hasil survey, dan target sertifikasi Anda di satu tempat."}
+                  <p className="text-xs text-[#52514E] font-medium break-words">
+                    {userSubtitle}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {/* Domicile & Interests */}
+              <div className="pt-3 border-t border-[#141413]/15 space-y-2.5">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-mono font-bold text-[#52514E]">Domisili</span>
+                  <span className="font-semibold text-[#141413] text-right truncate">
+                    {originDisplay}
+                  </span>
+                </div>
+
+                {user && user.interests && user.interests.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-mono font-bold text-[#52514E] block">
+                      Minat Penjurusan
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {user.interests.slice(0, 4).map((interest) => (
+                        <span
+                          key={interest}
+                          className="px-2 py-0.5 rounded-md bg-[#FAF7F2] border border-[#141413]/15 text-[11px] font-semibold text-[#141413]"
+                        >
+                          {interest}
+                        </span>
+                      ))}
+                      {user.interests.length > 4 && (
+                        <span className="px-2 py-0.5 rounded-md bg-[#F0ECE1] text-[11px] font-mono font-bold text-[#52514E]">
+                          +{user.interests.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Compact 2x2 Key Metrics (Editorial Neo-Pop: thin border, no heavy shadow) */}
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-[#141413]/15">
+                <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/15 space-y-0.5">
+                  <span className="text-[10px] font-mono font-bold text-[#52514E] uppercase block">
+                    Catatan
+                  </span>
+                  <span className="font-display font-black text-xl sm:text-2xl text-[#141413] block">
+                    {isStorageReady ? stats.totalNotesCount : "-"}
+                  </span>
+                  <span className="text-[10px] text-[#52514E] block truncate">
+                    {isStorageReady
+                      ? `${snapshot.personalNotes.length} jurnal, ${practiceNoteViews.length} praktik`
+                      : "Memuat..."}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#B8F348]/20 border border-[#141413]/15 space-y-0.5">
+                  <span className="text-[10px] font-mono font-bold text-[#141413] uppercase block">
+                    Modul &amp; AI
+                  </span>
+                  <span className="font-display font-black text-xl sm:text-2xl text-[#141413] block">
+                    {isStorageReady ? stats.completedModulesCount : "-"}
+                  </span>
+                  <span className="text-[10px] text-[#141413]/75 block truncate">
+                    {isStorageReady
+                      ? `${stats.verifiedFieldsCount} lulus uji AI`
+                      : "Memuat..."}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#3B66FF]/10 border border-[#141413]/15 space-y-0.5">
+                  <span className="text-[10px] font-mono font-bold text-[#3B66FF] uppercase block">
+                    Sertifikasi
+                  </span>
+                  <span className="font-display font-black text-xl sm:text-2xl text-[#3B66FF] block">
+                    {isStorageReady ? stats.passedCertsCount : "-"}
+                  </span>
+                  <span className="text-[10px] text-[#52514E] block truncate">
+                    Unit kompetensi
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#FFBE2E]/20 border border-[#141413]/15 space-y-0.5">
+                  <span className="text-[10px] font-mono font-bold text-[#141413] uppercase block">
+                    Skor Survey
+                  </span>
+                  <span className="font-display font-black text-xl sm:text-2xl text-[#141413] block">
+                    {isStorageReady ? stats.surveyScore : "-"}
+                  </span>
+                  <span className="text-[10px] text-[#141413]/75 block truncate">
+                    {snapshot.surveyResult ? "Evaluasi akhir" : "Belum tes"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sidebar Actions */}
+              <div className="pt-3 border-t border-[#141413]/15 space-y-2">
                 <button
                   type="button"
                   onClick={handlePrintTestReportPdf}
-                  className="neo-btn min-h-[42px] px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-mono font-bold text-xs cursor-pointer"
+                  className="neo-btn w-full min-h-[42px] px-4 rounded-xl bg-[#141413] hover:bg-[#2C2C2A] text-[#B8F348] border-2 border-[#141413] font-display font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Unduh Rekap PDF &darr;
+                  <span>Unduh Laporan PDF</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadTestReportHtml}
-                  className="neo-btn min-h-[42px] px-3.5 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
-                >
-                  Unduh Hasil (.html) &darr;
-                </button>
-                <button
-                  type="button"
-                  onClick={handleExportMarkdown}
-                  className="neo-btn min-h-[42px] px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
-                >
-                  Unduh Rekap (.md) &darr;
-                </button>
+
                 {!user && !authLoading && (
                   <Link
                     href="/login"
-                    className="neo-btn min-h-[42px] inline-flex items-center px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-display font-bold text-xs"
+                    className="neo-btn w-full min-h-[42px] inline-flex items-center justify-center px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] font-display font-bold text-xs"
                   >
                     Masuk untuk Sinkron Akun
                   </Link>
                 )}
               </div>
-            </div>
+            </aside>
 
-            {/* 4 Key Study Metrics */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
-                <span className="text-[11px] font-mono font-bold text-[#52514E] uppercase block">
-                  Catatan Belajar
-                </span>
-                <span className="font-display font-black text-2xl sm:text-3xl text-[#141413]">
-                  {isStorageReady ? stats.totalNotesCount : "-"}
-                </span>
+            {/* Right Main Workspace */}
+            <div className="lg:col-span-8 space-y-5 min-w-0">
+              {/* 3-Tab Profile Navigation */}
+              <div
+                role="tablist"
+                aria-label="Navigasi Profil Pembelajaran"
+                className="p-1.5 rounded-2xl bg-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] grid grid-cols-1 sm:grid-cols-3 gap-1.5"
+              >
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`min-h-[44px] px-3.5 py-2 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-[#141413] text-[#B8F348]"
+                          : "bg-transparent text-[#141413] hover:bg-[#FAF7F2]"
+                      }`}
+                    >
+                      <span className="truncate">{tab.label}</span>
+                      <span
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold shrink-0 ${
+                          isActive
+                            ? "bg-[#B8F348] text-[#141413]"
+                            : "bg-[#FAF7F2] text-[#52514E] border border-[#141413]/20"
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#B8F348]/25 border-2 border-[#141413]">
-                <span className="text-[11px] font-mono font-bold text-[#141413] uppercase block">
-                  Modul Selesai
-                </span>
-                <span className="font-display font-black text-2xl sm:text-3xl text-[#141413]">
-                  {isStorageReady ? stats.completedModulesCount : "-"}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#3B66FF]/10 border-2 border-[#141413]">
-                <span className="text-[11px] font-mono font-bold text-[#3B66FF] uppercase block">
-                  Sertifikasi Lulus
-                </span>
-                <span className="font-display font-black text-2xl sm:text-3xl text-[#3B66FF]">
-                  {isStorageReady ? stats.passedCertsCount : "-"}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#FFBE2E]/25 border-2 border-[#141413]">
-                <span className="text-[11px] font-mono font-bold text-[#141413] uppercase block">
-                  Skor Survey Dasar
-                </span>
-                <span className="font-display font-black text-2xl sm:text-3xl text-[#141413]">
-                  {isStorageReady ? stats.surveyScore : "-"}
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* 3-Tab Profile Navigation */}
-          <div
-            role="tablist"
-            aria-label="Navigasi Profil Pembelajaran"
-            className="grid grid-cols-1 sm:grid-cols-3 gap-2.5"
-          >
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`min-h-[48px] px-4 py-2.5 rounded-xl border-2 border-[#141413] font-display font-bold text-xs sm:text-sm flex items-center justify-between gap-2 transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-[#141413] text-[#B8F348] shadow-[3px_3px_0px_#3B66FF]"
-                      : "bg-white text-[#141413] hover:bg-[#FAF7F2]"
-                  }`}
+              {/* Active Tab Content */}
+              {!isStorageReady ? (
+                <div
+                  aria-busy="true"
+                  aria-label="Memuat data profil"
+                  className="neo-card rounded-2xl bg-white p-6 border-2 border-[#141413] space-y-5 animate-pulse"
                 >
-                  <span className="truncate">{tab.label}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-lg text-xs font-mono font-bold shrink-0 ${
-                      isActive
-                        ? "bg-[#B8F348] text-[#141413]"
-                        : "bg-[#FAF7F2] text-[#52514E] border border-[#141413]/30"
-                    }`}
+                  <div className="h-6 w-52 rounded-lg bg-[#F0ECE1]" />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="h-10 rounded-xl bg-[#FAF7F2]" />
+                    <div className="h-10 rounded-xl bg-[#FAF7F2]" />
+                    <div className="h-10 rounded-xl bg-[#FAF7F2]" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="h-36 rounded-2xl bg-[#FAF7F2]" />
+                    <div className="h-36 rounded-2xl bg-[#FAF7F2]" />
+                  </div>
+                </div>
+              ) : (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18 }}
                   >
-                    {tab.badge}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    {activeTab === "catatan" && (
+                      <NotesSection
+                        snapshot={snapshot}
+                        practiceNoteViews={practiceNoteViews}
+                        onSavePersonalNote={handleSavePersonalNote}
+                        onDeletePersonalNote={handleDeletePersonalNote}
+                        onSavePracticeNote={handleSavePracticeNote}
+                      />
+                    )}
 
-          {/* Active Tab Content */}
-          {!isStorageReady ? (
-            <div className="neo-card rounded-2xl bg-white p-10 border-2 border-[#141413] text-center font-mono font-bold text-xs text-[#52514E]">
-              Memuat profil dan catatan pembelajaran Anda...
+                    {activeTab === "progres" && (
+                      <ProgressSection
+                        snapshot={snapshot}
+                        savedFieldIds={savedFieldIds}
+                        onDownloadSurveyPdf={handlePrintTestReportPdf}
+                      />
+                    )}
+
+                    {activeTab === "akun" && (
+                      <AccountSettingsSection
+                        user={user}
+                        authLoading={authLoading}
+                        isSavingAccount={isSavingAccount}
+                        isSyncingServer={isSyncingServer}
+                        lastSyncedAt={lastSyncedAt}
+                        onUpdateAccount={handleUpdateAccount}
+                        onManualSyncServer={handleManualSync}
+                        onPrintTestPdf={handlePrintTestReportPdf}
+                        onLogout={logout}
+                        origin={origin}
+                        isDetectingLocation={isDetectingLocation}
+                        isGeocodingLocation={isGeocodingLocation}
+                        locationNote={locationNote}
+                        onChangeManualKabupaten={setManualKabupaten}
+                        onSubmitManualAddress={setManualAddress}
+                        onDetectLocation={detectLocation}
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              )}
             </div>
-          ) : (
-            <>
-              {activeTab === "catatan" && (
-                <NotesSection
-                  snapshot={snapshot}
-                  practiceNoteViews={practiceNoteViews}
-                  onSavePersonalNote={handleSavePersonalNote}
-                  onDeletePersonalNote={handleDeletePersonalNote}
-                  onSavePracticeNote={handleSavePracticeNote}
-                />
-              )}
-
-              {activeTab === "progres" && <ProgressSection snapshot={snapshot} />}
-
-              {activeTab === "akun" && (
-                <AccountSettingsSection
-                  user={user}
-                  authLoading={authLoading}
-                  isSavingAccount={isSavingAccount}
-                  isSyncingServer={isSyncingServer}
-                  lastSyncedAt={lastSyncedAt}
-                  onUpdateAccount={handleUpdateAccount}
-                  onManualSyncServer={handleManualSync}
-                  onExportMarkdown={handleExportMarkdown}
-                  onDownloadTestHtml={handleDownloadTestReportHtml}
-                  onPrintTestPdf={handlePrintTestReportPdf}
-                  onLogout={logout}
-                  origin={origin}
-                  isDetectingLocation={isDetectingLocation}
-                  isGeocodingLocation={isGeocodingLocation}
-                  locationNote={locationNote}
-                  onChangeManualKabupaten={setManualKabupaten}
-                  onSubmitManualAddress={setManualAddress}
-                  onDetectLocation={detectLocation}
-                />
-              )}
-            </>
+          </div>
           )}
         </div>
       </main>

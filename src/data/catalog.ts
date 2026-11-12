@@ -101,8 +101,10 @@ const BALI_AREA_COORDS: { kabupaten?: string; keywords: string[]; coords: GeoPoi
   { kabupaten: "Kota Denpasar", keywords: ["sumerta kelod", "drupadi"], coords: { lat: -8.6681, lng: 115.2312 } },
   { kabupaten: "Kota Denpasar", keywords: ["dangin puri klod", "puputan renon"], coords: { lat: -8.6725, lng: 115.2361 } },
   { kabupaten: "Kota Denpasar", keywords: ["tanjung bungkak", "hayam wuruk", "terompong", "pandu"], coords: { lat: -8.6644, lng: 115.2371 } },
-  { kabupaten: "Kota Denpasar", keywords: ["panjer", "tukad batanghari", "tukad pakerisan", "tukad yeh aya", "tukad barito", "tukad citarum", "tukad gerinding", "cut nyak dien"], coords: { lat: -8.6869, lng: 115.2279 } },
-  { kabupaten: "Kota Denpasar", keywords: ["renon", "tukad badung", "tukad balian", "tukad yeh ho"], coords: { lat: -8.6936, lng: 115.2368 } },
+  { kabupaten: "Kota Denpasar", keywords: ["panjer", "tukad penataran", "tukad batanghari", "tukad pakerisan", "tukad yeh aya", "tukad barito", "tukad citarum", "tukad gerinding", "cut nyak dien"], coords: { lat: -8.6852, lng: 115.2269 } },
+  { kabupaten: "Kota Denpasar", keywords: ["tukad balian"], coords: { lat: -8.6889, lng: 115.2389 } },
+  { kabupaten: "Kota Denpasar", keywords: ["tukad yeh ho"], coords: { lat: -8.6845, lng: 115.2335 } },
+  { kabupaten: "Kota Denpasar", keywords: ["renon", "tukad badung"], coords: { lat: -8.6936, lng: 115.2368 } },
   { kabupaten: "Kota Denpasar", keywords: ["sesetan", "pegok", "piranha"], coords: { lat: -8.7042, lng: 115.2179 } },
   { kabupaten: "Kota Denpasar", keywords: ["sidakarya", "bedugul", "sanitasi", "jl. pendidikan"], coords: { lat: -8.7048, lng: 115.2373 } },
   { kabupaten: "Kota Denpasar", keywords: ["sanur", "tirtanadi", "tukad nyali"], coords: { lat: -8.6989, lng: 115.2564 } },
@@ -198,8 +200,9 @@ export function haversineKm(from: GeoPoint, to: GeoPoint): number {
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(from.lat * rad) * Math.cos(to.lat * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const km = 6371 * c;
-  return Math.max(0.2, Math.round(km * 10) / 10);
+  // Faktor koreksi jalan raya (~1.28x garis lurus) agar estimasi lebih realistis
+  const km = 6371 * c * 1.28;
+  return Math.max(0.3, Math.round(km * 10) / 10);
 }
 
 export function resolveInstitutionCoords(kabupaten: string, address?: string): GeoPoint {

@@ -15,8 +15,6 @@ interface AccountSettingsSectionProps {
   lastSyncedAt: string | null;
   onUpdateAccount: (payload: { name: string; interests: string[] }) => Promise<void>;
   onManualSyncServer: () => Promise<void>;
-  onExportMarkdown: () => void;
-  onDownloadTestHtml?: () => void;
   onPrintTestPdf?: () => void;
   onLogout: () => Promise<void>;
   origin: UserLocationOrigin;
@@ -36,8 +34,6 @@ export default function AccountSettingsSection({
   lastSyncedAt,
   onUpdateAccount,
   onManualSyncServer,
-  onExportMarkdown,
-  onDownloadTestHtml,
   onPrintTestPdf,
   onLogout,
   origin,
@@ -270,107 +266,93 @@ export default function AccountSettingsSection({
         )}
       </section>
 
-      {/* Bali Domicile Control */}
-      <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
-        <div className="pb-3 border-b-2 border-[#141413]">
-          <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase">
-            Preferensi Wilayah Bali
-          </span>
-          <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413]">
-            Acuan Alamat &amp; Domisili Kabupaten
-          </h2>
-          <p className="text-xs text-[#52514E] font-medium mt-0.5">
-            Digunakan untuk menghitung estimasi jarak kampus dan SMK di Radar Peta Bali, Katalog, dan Survey Keminatan.
-          </p>
-        </div>
-
-        <LocationOriginControl
-          id="profil-location-control"
-          label="Alamat Rumah / Kecamatan Anda di Bali"
-          origin={origin}
-          isDetecting={isDetectingLocation}
-          isGeocoding={isGeocodingLocation}
-          locationNote={locationNote}
-          onChangeManualKabupaten={onChangeManualKabupaten}
-          onSubmitManualAddress={onSubmitManualAddress}
-          onDetectLocation={onDetectLocation}
-        />
-      </section>
-
-      {/* Export & Server Sync Actions */}
-      <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
-        <div className="pb-3 border-b-2 border-[#141413]">
-          <span className="text-xs font-mono font-bold text-[#FF5E4D] uppercase">
-            Portofolio &amp; Cadangan Data
-          </span>
-          <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413]">
-            Ekspor Catatan Belajar &amp; Sinkronisasi
-          </h2>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
-          <div className="space-y-1">
-            <h3 className="font-display font-bold text-sm sm:text-base text-[#141413]">
-              Unduh Rekapan Lengkap Aktivitas &amp; Hasil Belajar
-            </h3>
-            <p className="text-xs text-[#52514E]">
-              Simpan rekapan menyeluruh dari Kuesioner Eksplorasi Minat, Survey Keminatan Dasar, penyelesaian modul materi, quiz latihan sertifikasi, verifikasi kemampuan AI, jurnal catatan pribadi, serta bidang favorit menjadi dokumen PDF, HTML, atau Markdown.
+      <div className="space-y-6">
+        {/* Bali Domicile Control */}
+        <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
+          <div className="pb-3 border-b-2 border-[#141413]">
+            <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase">
+              Preferensi Wilayah Bali
+            </span>
+            <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413]">
+              Acuan Alamat &amp; Domisili Kabupaten
+            </h2>
+            <p className="text-xs text-[#52514E] font-medium mt-0.5">
+              Digunakan untuk menghitung estimasi jarak kampus dan SMK di Radar Peta Bali, Katalog, dan Survey Keminatan.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {onPrintTestPdf && (
-              <button
-                type="button"
-                onClick={onPrintTestPdf}
-                className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
-              >
-                Unduh Rekap PDF &darr;
-              </button>
-            )}
-            {onDownloadTestHtml && (
-              <button
-                type="button"
-                onClick={onDownloadTestHtml}
-                className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
-              >
-                Unduh Hasil (.html) &darr;
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onExportMarkdown}
-              className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-[#3B66FF] hover:bg-[#2F55DF] text-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
-            >
-              Unduh Rekap (.md) &darr;
-            </button>
-          </div>
-        </div>
+          <LocationOriginControl
+            id="profil-location-control"
+            label="Alamat Rumah / Kecamatan Anda di Bali"
+            origin={origin}
+            isDetecting={isDetectingLocation}
+            isGeocoding={isGeocodingLocation}
+            locationNote={locationNote}
+            onChangeManualKabupaten={onChangeManualKabupaten}
+            onSubmitManualAddress={onSubmitManualAddress}
+            onDetectLocation={onDetectLocation}
+          />
+        </section>
 
-        {user && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#B8F348]/15 border-2 border-[#141413]">
+        {/* Export & Server Sync Actions */}
+        <section className="neo-card rounded-2xl bg-white p-5 sm:p-6 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-4">
+          <div className="pb-3 border-b-2 border-[#141413]">
+            <span className="text-xs font-mono font-bold text-[#FF5E4D] uppercase">
+              Portofolio &amp; Cadangan Data
+            </span>
+            <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413]">
+              Ekspor Catatan Belajar &amp; Sinkronisasi
+            </h2>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] space-y-3">
             <div className="space-y-1">
               <h3 className="font-display font-bold text-sm sm:text-base text-[#141413]">
-                Sinkronisasi Akun Server
+                Unduh Laporan Hasil Tes &amp; Catatan
               </h3>
               <p className="text-xs text-[#52514E]">
-                {lastSyncedAt
-                  ? `Terakhir tersinkron ke akun pada ${lastSyncedAt}.`
-                  : "Catatan dan progres Anda otomatis disinkronkan saat login."}
+                Simpan seluruh jurnal belajar, jawaban tugas praktik modul, dan daftar kelulusan sertifikasi untuk didiskusikan dengan Guru BK atau orang tua.
               </p>
             </div>
 
-            <button
-              type="button"
-              disabled={isSyncingServer}
-              onClick={() => void onManualSyncServer()}
-              className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-white hover:bg-[#B8F348] disabled:opacity-60 text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-mono font-bold text-xs cursor-pointer shrink-0"
-            >
-              {isSyncingServer ? "Menyinkronkan..." : "Sinkronkan Sekarang"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {onPrintTestPdf && (
+                <button
+                  type="button"
+                  onClick={onPrintTestPdf}
+                  className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-[#141413] hover:bg-[#2C2C2A] text-[#B8F348] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs cursor-pointer"
+                >
+                  Unduh Laporan PDF
+                </button>
+              )}
+            </div>
           </div>
-        )}
-      </section>
+
+          {user && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#B8F348]/15 border-2 border-[#141413]">
+              <div className="space-y-1">
+                <h3 className="font-display font-bold text-sm sm:text-base text-[#141413]">
+                  Sinkronisasi Akun Server
+                </h3>
+                <p className="text-xs text-[#52514E]">
+                  {lastSyncedAt
+                    ? `Terakhir tersinkron ke akun pada ${lastSyncedAt}.`
+                    : "Catatan dan progres Anda otomatis disinkronkan saat login."}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={isSyncingServer}
+                onClick={() => void onManualSyncServer()}
+                className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-white hover:bg-[#B8F348] disabled:opacity-60 text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-mono font-bold text-xs cursor-pointer shrink-0"
+              >
+                {isSyncingServer ? "Menyinkronkan..." : "Sinkronkan Sekarang"}
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

@@ -8,17 +8,24 @@ import type { FullLearningSnapshot } from "@/lib/learningProfile";
 import { getCachedUser } from "@/lib/useAuth";
 import {
   buildSurveyWorkspaceReportHtml,
-  downloadHtmlFile,
+  openPrintableReport,
 } from "@/lib/test-report-download";
 
 interface ProgressSectionProps {
   snapshot: FullLearningSnapshot;
+  savedFieldIds?: string[];
+  onDownloadSurveyPdf?: () => void;
 }
 
-export default function ProgressSection({ snapshot }: ProgressSectionProps) {
+export default function ProgressSection({
+  snapshot,
+  savedFieldIds = [],
+  onDownloadSurveyPdf,
+}: ProgressSectionProps) {
   const activeFieldEntries = Object.values(snapshot.progressByField).filter(
     (prog) => Boolean(MENTOR_CURRICULUM_BY_FIELD[prog.fieldId])
   );
+  const savedFields = FIELDS.filter((f) => savedFieldIds.includes(f.id));
 
   const surveyCurr = snapshot.surveyResult
     ? MENTOR_CURRICULUM_BY_FIELD[snapshot.surveyResult.fieldId]
@@ -43,6 +50,10 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
               <button
                 type="button"
                 onClick={() => {
+                  if (onDownloadSurveyPdf) {
+                    onDownloadSurveyPdf();
+                    return;
+                  }
                   const cachedUser = getCachedUser();
                   const prog = snapshot.progressByField[snapshot.surveyResult!.fieldId] || {
                     fieldId: snapshot.surveyResult!.fieldId,
@@ -77,14 +88,14 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
                     userName: cachedUser?.name,
                     userIdentifier: cachedUser?.identifier,
                   });
-                  downloadHtmlFile(
-                    `kertamarga-hasil-survey-${snapshot.surveyResult!.fieldId}-${new Date().toISOString().slice(0, 10)}.html`,
-                    html
+                  openPrintableReport(
+                    html,
+                    `kertamarga-hasil-survey-${snapshot.surveyResult!.fieldId}-${new Date().toISOString().slice(0, 10)}.html`
                   );
                 }}
                 className="neo-btn inline-flex items-center justify-center min-h-[42px] px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
               >
-                Unduh Hasil Survey (.html) &darr;
+                Unduh Hasil Survey (PDF)
               </button>
             )}
             <Link
@@ -183,7 +194,7 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
         </div>
 
         {activeFieldEntries.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-[#FAF7F2] border-2 border-dashed border-[#141413]/40 text-center space-y-2.5">
+          <div className="p-6 rounded-2xl bg-[#FAF7F2] border border-dashed border-[#141413]/30 text-center space-y-2.5">
             <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
               Belum ada progres modul atau tes sertifikasi yang tercatat.
             </p>
@@ -214,7 +225,7 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
               return (
                 <div
                   key={prog.fieldId}
-                  className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] space-y-4"
+                  className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#141413]/20 hover:border-[#141413] transition-colors space-y-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
@@ -339,6 +350,46 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
           </div>
         )}
 
+        {/* Saved Bookmarks */}
+        {savedFields.length > 0 && (
+          <div className="pt-2 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-display font-bold text-sm sm:text-base text-[#141413]">
+                Bidang Tersimpan / Bookmark ({savedFields.length})
+              </h3>
+              <Link
+                href="/peta-bidang"
+                className="text-xs font-mono font-bold text-[#3B66FF] hover:underline"
+              >
+                Kelola di Peta Bidang &rarr;
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {savedFields.map((field) => (
+                <div
+                  key={`saved-${field.id}`}
+                  className="p-3.5 rounded-xl bg-[#FFBE2E]/20 border-2 border-[#141413] flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <span className="font-display font-bold text-xs sm:text-sm text-[#141413] block truncate">
+                      {field.name}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#52514E]">
+                      {GROUP_CONFIG[field.group]?.label || field.group}
+                    </span>
+                  </div>
+                  <Link
+                    href={`/peta-bidang/${encodeURIComponent(field.id)}`}
+                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#B8F348] border border-[#141413] text-[11px] font-mono font-bold text-[#141413] shrink-0"
+                  >
+                    Detail &rarr;
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Quick Launch Across All 11 Fields */}
         <div className="pt-2 space-y-3">
           <h3 className="font-display font-bold text-sm sm:text-base text-[#141413]">
@@ -347,6 +398,7 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {FIELDS.map((field) => {
               const hasActivity = Boolean(snapshot.progressByField[field.id]);
+              const isBookmarked = savedFieldIds.includes(field.id);
               return (
                 <Link
                   key={field.id}
@@ -358,9 +410,16 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
                   }`}
                 >
                   <div className="min-w-0">
-                    <span className="font-display font-bold text-xs sm:text-sm text-[#141413] block truncate">
-                      {field.name}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-display font-bold text-xs sm:text-sm text-[#141413] block truncate">
+                        {field.name}
+                      </span>
+                      {isBookmarked && (
+                        <span className="px-1.5 py-0.5 rounded bg-[#FFBE2E] border border-[#141413] text-[9px] font-mono font-bold text-[#141413] shrink-0">
+                          Disimpan
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] font-mono text-[#52514E]">
                       {GROUP_CONFIG[field.group]?.label || field.group}
                     </span>

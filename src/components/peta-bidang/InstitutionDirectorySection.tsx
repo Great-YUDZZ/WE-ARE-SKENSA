@@ -170,7 +170,7 @@ function InstitutionCard({
             <path d="M12 21s-6-5.33-6-10a6 6 0 1 1 12 0c0 4.67-6 10-6 10Z" />
             <circle cx="12" cy="11" r="2.2" />
           </svg>
-          <span>Buka Peta</span>
+          <span>Rute Maps</span>
         </a>
       </div>
     </article>

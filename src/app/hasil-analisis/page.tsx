@@ -7,6 +7,9 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import KertaMargaLogo from "@/components/KertaMargaLogo";
 import LoginModal from "@/components/LoginModal";
+import PdfExportGateModal, {
+  type PdfGateReason,
+} from "@/components/PdfExportGateModal";
 import { GROUP_CONFIG, FieldGroup } from "@/data/fields";
 import {
   MENTOR_CURRICULUM_BY_FIELD,
@@ -19,7 +22,6 @@ import type { MentorAgentResponse } from "@/app/api/mentor-agent/route";
 import { getCachedUser } from "@/lib/useAuth";
 import {
   buildSurveyWorkspaceReportHtml,
-  downloadHtmlFile,
   openPrintableReport,
 } from "@/lib/test-report-download";
 import {
@@ -80,6 +82,8 @@ function HasilAnalisisContent() {
   const [isCheckingSurvey, setIsCheckingSurvey] = useState<boolean>(true);
   const [hasSurveyResult, setHasSurveyResult] = useState<boolean>(false);
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+  const [pdfGateReason, setPdfGateReason] = useState<PdfGateReason>(null);
+  const [pdfNotice, setPdfNotice] = useState<string | null>(null);
   const [baseScore, setBaseScore] = useState<number>(62);
   const [dominantGroup, setDominantGroup] = useState<FieldGroup>("manusia");
   const [isGroupMismatch, setIsGroupMismatch] = useState<boolean>(false);
@@ -534,15 +538,15 @@ function HasilAnalisisContent() {
     });
   };
 
-  const handleDownloadWorkspaceReport = () => {
-    const html = createWorkspaceReportHtml();
-    downloadHtmlFile(
-      `kertamarga-hasil-survey-${targetFieldId}-${new Date().toISOString().slice(0, 10)}.html`,
-      html
-    );
-  };
-
   const handlePrintWorkspaceReport = () => {
+    if (isPreviewMode || !hasSurveyResult) {
+      setPdfGateReason("no-test");
+      return;
+    }
+    if (!getCachedUser()) {
+      setPdfGateReason("need-login");
+      return;
+    }
     const html = createWorkspaceReportHtml();
     openPrintableReport(
       html,
@@ -883,6 +887,22 @@ function HasilAnalisisContent() {
 
   return (
     <div className="min-h-screen flex flex-col neopop-canvas-subtle overflow-x-clip">
+      <PdfExportGateModal
+        reason={pdfGateReason}
+        onClose={() => setPdfGateReason(null)}
+        onDeclineLogin={() => {
+          setPdfNotice("Tanpa login, file PDF tidak dapat diunduh.");
+          window.setTimeout(() => setPdfNotice(null), 3500);
+        }}
+      />
+      {pdfNotice && (
+        <div
+          role="status"
+          className="fixed top-24 right-4 sm:right-8 z-50 px-4 py-2.5 rounded-2xl bg-[#141413] text-white border-2 border-[#141413] shadow-[4px_4px_0px_#FFBE2E] text-xs font-display font-bold"
+        >
+          {pdfNotice}
+        </div>
+      )}
       <Navbar
         onOpenLogin={() => {
           setAuthMode("login");
@@ -950,7 +970,6 @@ function HasilAnalisisContent() {
                 completedModuleCount={completedModules.length}
                 isVerificationUnlocked={verificationEligibility.eligible}
                 verificationResult={fieldVerification}
-                onDownloadReport={handleDownloadWorkspaceReport}
                 onPrintReport={handlePrintWorkspaceReport}
               />
 

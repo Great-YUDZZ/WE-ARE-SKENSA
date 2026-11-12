@@ -1,7 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import PdfExportGateModal, {
+  type PdfGateReason,
+} from "@/components/PdfExportGateModal";
 import type {
   FieldCurriculum,
   TargetCourse,
@@ -15,7 +18,6 @@ import type {
 import { getCachedUser } from "@/lib/useAuth";
 import {
   buildVerificationReportHtml,
-  downloadHtmlFile,
   openPrintableReport,
 } from "@/lib/test-report-download";
 
@@ -62,6 +64,8 @@ export default function VerificationTab({
   onGoToModules,
   onGoToCertification,
 }: VerificationTabProps) {
+  const [pdfGateReason, setPdfGateReason] = useState<PdfGateReason>(null);
+  const [guestNote, setGuestNote] = useState<string | null>(null);
   const answeredMcqCount = activeExam
     ? activeExam.mcqs.filter((q) => mcqAnswers[q.id] !== undefined).length
     : 0;
@@ -72,6 +76,21 @@ export default function VerificationTab({
 
   return (
     <div className="neo-card rounded-2xl bg-white p-5 sm:p-7 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-6">
+      <PdfExportGateModal
+        reason={pdfGateReason}
+        onClose={() => setPdfGateReason(null)}
+        onDeclineLogin={() =>
+          setGuestNote("Tanpa login, file PDF tidak dapat diunduh.")
+        }
+      />
+      {guestNote && (
+        <div
+          role="status"
+          className="p-3 rounded-xl bg-[#FFBE2E]/25 border border-[#141413] text-xs font-bold text-[#141413]"
+        >
+          {guestNote}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b-2 border-[#141413]">
         <div>
@@ -268,25 +287,10 @@ export default function VerificationTab({
                   type="button"
                   onClick={() => {
                     const cachedUser = getCachedUser();
-                    const html = buildVerificationReportHtml({
-                      curriculum,
-                      targetCourse,
-                      saved: savedVerification,
-                      userName: cachedUser?.name,
-                    });
-                    downloadHtmlFile(
-                      `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`,
-                      html
-                    );
-                  }}
-                  className="neo-btn px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
-                >
-                  Unduh Hasil Verifikasi (.html) &darr;
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cachedUser = getCachedUser();
+                    if (!cachedUser) {
+                      setPdfGateReason("need-login");
+                      return;
+                    }
                     const html = buildVerificationReportHtml({
                       curriculum,
                       targetCourse,
@@ -298,9 +302,9 @@ export default function VerificationTab({
                       `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`
                     );
                   }}
-                  className="neo-btn px-4 py-2 rounded-xl bg-white border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
+                  className="neo-btn px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
                 >
-                  Cetak PDF
+                  Unduh Hasil Verifikasi (PDF)
                 </button>
                 <Link
                   href="/profil"
@@ -659,27 +663,10 @@ export default function VerificationTab({
                   type="button"
                   onClick={() => {
                     const cachedUser = getCachedUser();
-                    const html = buildVerificationReportHtml({
-                      curriculum,
-                      targetCourse,
-                      evaluation: evaluationResult,
-                      saved: savedVerification,
-                      userName: cachedUser?.name,
-                    });
-                    downloadHtmlFile(
-                      `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`,
-                      html
-                    );
-                  }}
-                  className="neo-btn min-h-[44px] px-5 py-2.5 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
-                >
-                  Unduh Hasil Verifikasi (.html) &darr;
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cachedUser = getCachedUser();
+                    if (!cachedUser) {
+                      setPdfGateReason("need-login");
+                      return;
+                    }
                     const html = buildVerificationReportHtml({
                       curriculum,
                       targetCourse,
@@ -692,9 +679,9 @@ export default function VerificationTab({
                       `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`
                     );
                   }}
-                  className="neo-btn min-h-[44px] px-4 py-2.5 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-mono font-bold text-xs cursor-pointer"
+                  className="neo-btn min-h-[44px] px-5 py-2.5 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
                 >
-                  Cetak PDF
+                  Unduh Hasil Verifikasi (PDF)
                 </button>
 
                 <button
