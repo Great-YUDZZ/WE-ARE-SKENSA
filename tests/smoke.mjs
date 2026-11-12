@@ -652,6 +652,191 @@ async function main() {
     assert(rateLimited, "Rate limit 15 req/menit pada /api/navigator-chat tidak memicu HTTP 429");
   });
 
+  await runCheck("Dinamis Quiz & Verifikasi Kemampuan (/api/skill-verification)", async () => {
+    const testHeaders = {
+      "Content-Type": "application/json",
+      "X-Forwarded-For": "203.0.113.215",
+    };
+
+    // 1. Dynamic Quiz menghasilkan soal valid dan berubah antar seed/exclude
+    const q1Res = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: testHeaders,
+      body: JSON.stringify({
+        action: "generate_quiz",
+        fieldId: "tkj",
+        targetCourseId: "tkj-mtcna",
+        attemptSeed: 101,
+      }),
+    });
+    assert(q1Res.status === 200, `Quiz 1 status diharapkan 200, diterima ${q1Res.status}`);
+    const q1Data = await q1Res.json();
+    assert(
+      Array.isArray(q1Data.drills) && q1Data.drills.length === 6,
+      `Jumlah soal quiz TKJ diharapkan 6, diterima ${q1Data.drills?.length}`
+    );
+    assert(
+      q1Data.drills.every(
+        (d) =>
+          Array.isArray(d.options) &&
+          d.options.length === 4 &&
+          typeof d.correctIndex === "number" &&
+          d.correctIndex >= 0 &&
+          d.correctIndex <= 3
+      ),
+      "Struktur opsi quiz dinamis tidak valid"
+    );
+
+    const q2Res = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: testHeaders,
+      body: JSON.stringify({
+        action: "generate_quiz",
+        fieldId: "tkj",
+        targetCourseId: "tkj-mtcna",
+        attemptSeed: 202,
+        excludeQuestions: q1Data.drills.map((d) => d.question),
+      }),
+    });
+    assert(q2Res.status === 200, `Quiz 2 status ${q2Res.status}`);
+    const q2Data = await q2Res.json();
+    const sameQuestionCount = q2Data.drills.filter((d2) =>
+      q1Data.drills.some((d1) => d1.question === d2.question)
+    ).length;
+    assert(
+      sameQuestionCount < q2Data.drills.length,
+      "Soal quiz dinamis seharusnya berubah antar percobaan"
+    );
+
+    // 2. Verifikasi kemampuan menolak bila modul atau quiz belum selesai semua
+    const lockedRes = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: testHeaders,
+      body: JSON.stringify({
+        action: "generate_verification",
+        fieldId: "tkj",
+        completedModules: ["mod-tkj-1"],
+        passedCertIds: ["cert-tkj-mtcna-1"],
+      }),
+    });
+    assert(
+      lockedRes.status === 400,
+      `Verifikasi saat modul belum tuntas wajib ditolak 400, diterima ${lockedRes.status}`
+    );
+
+    // 3. Verifikasi kemampuan terbuka saat seluruh modul & quiz TKJ tuntas
+    const genVerRes = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: testHeaders,
+      body: JSON.stringify({
+        action: "generate_verification",
+        fieldId: "tkj",
+        targetCourseId: "tkj-mtcna",
+        attemptSeed: 303,
+        completedModules: [
+          "mod-tkj-1",
+          "mod-tkj-2",
+          "mod-tkj-3",
+          "mod-tkj-4",
+          "mod-tkj-5",
+          "mod-tkj-6",
+          "mod-tkj-7",
+          "mod-tkj-8",
+        ],
+        passedCertIds: [
+          "cert-tkj-mtcna-1",
+          "cert-tkj-mtcna-2",
+          "cert-tkj-mtcna-3",
+          "cert-tkj-ccna-1",
+          "cert-tkj-ccna-2",
+          "cert-tkj-sys-1",
+        ],
+        practiceNotes: {
+          "mod-tkj-1": "Sudah menghitung subnet VLSM /25 dan /26 serta uji gateway router.",
+        },
+      }),
+    });
+    assert(genVerRes.status === 200, `Generate verification status ${genVerRes.status}`);
+    const genVerData = await genVerRes.json();
+    assert(
+      Array.isArray(genVerData.mcqs) && genVerData.mcqs.length === 4,
+      "Verifikasi wajib menghasilkan 4 soal pilihan ganda"
+    );
+    assert(
+      genVerData.mcqs.every((m) => m.correctIndex === undefined),
+      "correctIndex tidak boleh bocor ke klien sebelum evaluasi"
+    );
+    assert(
+      typeof genVerData.verificationToken === "string" &&
+        genVerData.verificationToken.length > 20 &&
+        genVerData.openPrompt &&
+        typeof genVerData.openPrompt.question === "string",
+      "Token verifikasi atau prompt uraian studi kasus tidak lengkap"
+    );
+
+    // 4. Evaluasi jawaban dan tolak token yang dimanipulasi
+    const badTokenRes = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: testHeaders,
+      body: JSON.stringify({
+        action: "evaluate_verification",
+        fieldId: "tkj",
+        verificationToken: "tampered.jwt.token.value.1234567890",
+        mcqAnswers: {},
+        openAnswer: "Langkah konfigurasi jaringan dimulai dari subnetting dan firewall.",
+      }),
+    });
+    assert(
+      badTokenRes.status === 400,
+      `Token verifikasi palsu wajib ditolak 400, diterima ${badTokenRes.status}`
+    );
+
+    const mcqAnswers = {};
+    for (const q of genVerData.mcqs) {
+      mcqAnswers[q.id] = 0;
+    }
+    const evalRes = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: testHeaders,
+      body: JSON.stringify({
+        action: "evaluate_verification",
+        fieldId: "tkj",
+        verificationToken: genVerData.verificationToken,
+        mcqAnswers,
+        openAnswer:
+          "Langkah pertama melakukan analisis kebutuhan host subnet VLSM dan VLAN 802.1Q, kemudian menerapkan konfigurasi RouterOS firewall NAT serta validasi konektivitas menggunakan ping dan monitoring PCQ QoS.",
+      }),
+    });
+    if (evalRes.status !== 200) {
+      const errTxt = await evalRes.text();
+      assert(false, `Evaluate verification status ${evalRes.status}: ${errTxt}`);
+    }
+    const evalData = await evalRes.json();
+    assert(
+      typeof evalData.score === "number" &&
+        evalData.score >= 0 &&
+        evalData.score <= 100 &&
+        Array.isArray(evalData.reviews) &&
+        evalData.reviews.length === 4 &&
+        (evalData.status === "passed" || evalData.status === "needs_review"),
+      "Respon evaluasi verifikasi kemampuan tidak lengkap"
+    );
+
+    // 5. Foreign origin wajib ditolak 403
+    const evilVerRes = await fetch(`${BASE_URL}/api/skill-verification`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://evil.example",
+      },
+      body: JSON.stringify({
+        action: "generate_quiz",
+        fieldId: "tkj",
+      }),
+    });
+    assert(evilVerRes.status === 403, `POST origin asing wajib 403, diterima ${evilVerRes.status}`);
+  });
+
   await runCheck("Keamanan F-09 (GET /robots.txt, /sitemap.xml, /.well-known/security.txt)", async () => {
     for (const metaPath of ["/robots.txt", "/sitemap.xml", "/.well-known/security.txt"]) {
       const res = await fetch(`${BASE_URL}${metaPath}`);

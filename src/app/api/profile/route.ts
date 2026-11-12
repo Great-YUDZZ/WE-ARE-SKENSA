@@ -34,11 +34,25 @@ const PersonalNoteSchema = z.object({
   updatedAt: z.string().max(60),
 });
 
+const FieldVerificationSchema = z.object({
+  status: z.enum(["passed", "needs_review"]),
+  score: z.number().min(0).max(100),
+  correctCount: z.number().min(0).max(50),
+  totalQuestions: z.number().min(1).max(50),
+  attemptCount: z.number().min(1).max(200),
+  verifiedAt: z.string().max(60),
+  summary: z.string().max(1000),
+  strengths: z.array(z.string().max(300)).max(5),
+  improvements: z.array(z.string().max(300)).max(5),
+  sourceMode: z.string().max(60),
+});
+
 const FieldProgressSchema = z.object({
   fieldId: z.string().min(1).max(40),
   completedModules: z.array(z.string().max(80)).max(50),
   passedCertIds: z.array(z.string().max(80)).max(50),
   practiceNotes: z.record(z.string().max(80), z.string().max(4000)),
+  verification: FieldVerificationSchema.optional(),
   updatedAt: z.string().max(60).optional(),
 });
 

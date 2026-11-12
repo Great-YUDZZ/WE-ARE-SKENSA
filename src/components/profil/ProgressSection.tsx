@@ -172,6 +172,19 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
+                      {prog.verification && (
+                        <span
+                          className={`px-3 py-1 rounded-xl border border-[#141413] font-mono font-bold text-xs ${
+                            prog.verification.status === "passed"
+                              ? "bg-[#3B66FF] text-white"
+                              : "bg-[#FFBE2E] text-[#141413]"
+                          }`}
+                        >
+                          {prog.verification.status === "passed"
+                            ? `Terverifikasi AI (${prog.verification.score}%)`
+                            : `Evaluasi AI (${prog.verification.score}%)`}
+                        </span>
+                      )}
                       <span className="px-3 py-1 rounded-xl bg-[#B8F348] border border-[#141413] font-mono font-bold text-xs text-[#141413]">
                         Total Bonus: +{modBoost + certBoost}%
                       </span>
@@ -215,6 +228,30 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
                       </span>
                     </div>
                   </div>
+
+                  {prog.verification && (
+                    <div
+                      className={`p-3.5 rounded-xl border-2 border-[#141413] text-xs space-y-1.5 ${
+                        prog.verification.status === "passed"
+                          ? "bg-[#3B66FF]/10"
+                          : "bg-[#FFBE2E]/20"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 font-mono font-bold text-[#141413]">
+                        <span>
+                          Verifikasi Pemahaman Kemampuan ({prog.verification.status === "passed" ? "Lulus Terverifikasi" : "Perlu Pendalaman"})
+                        </span>
+                        <span>
+                          Skor: {prog.verification.score}% ({prog.verification.correctCount}/{prog.verification.totalQuestions}) &bull; Percobaan #{prog.verification.attemptCount}
+                        </span>
+                      </div>
+                      {prog.verification.summary && (
+                        <p className="text-[#141413] leading-relaxed">
+                          {prog.verification.summary}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Completed Modules & Passed Certs Pills */}
                   {(doneMods > 0 || doneCerts > 0) && (

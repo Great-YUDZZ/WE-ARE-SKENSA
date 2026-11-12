@@ -22,9 +22,20 @@ import {
   mergeLearningSnapshots,
   readFieldProgressFromStorage,
   readFullLearningSnapshot,
+  readPersonalNotesFromStorage,
   writeFieldProgressToStorage,
+  type FieldVerificationResult,
   type FullLearningSnapshot,
 } from "@/lib/learningProfile";
+import {
+  buildDeterministicDynamicQuiz,
+  checkVerificationEligibility,
+  shuffleQuizDrills,
+  type DynamicQuizQuestion,
+  type DynamicQuizResponse,
+  type EvaluatedVerificationResponse,
+  type GeneratedVerificationResponse,
+} from "@/lib/dynamic-assessment";
 import WorkspaceHeader, {
   WorkspaceTabId,
 } from "@/components/hasil-analisis/WorkspaceHeader";
@@ -32,6 +43,7 @@ import StudyPlanTab from "@/components/hasil-analisis/StudyPlanTab";
 import ModulesTab from "@/components/hasil-analisis/ModulesTab";
 import PustakaPdfTab from "@/components/hasil-analisis/PustakaPdfTab";
 import CertificationTab from "@/components/hasil-analisis/CertificationTab";
+import VerificationTab from "@/components/hasil-analisis/VerificationTab";
 import MentorDrawer, {
   MentorChatTurn,
 } from "@/components/hasil-analisis/MentorDrawer";
@@ -304,6 +316,40 @@ function HasilAnalisisContent() {
   >({});
   const [submittedCertIds, setSubmittedCertIds] = useState<string[]>([]);
   const [passedCertIds, setPassedCertIds] = useState<string[]>([]);
+  const [fieldVerification, setFieldVerification] = useState<
+    FieldVerificationResult | undefined
+  >(undefined);
+
+  // Dynamic Quiz State
+  const [dynamicQuizDrills, setDynamicQuizDrills] = useState<DynamicQuizQuestion[]>(
+    () => curriculum.certificationDrills
+  );
+  const [quizVariationNumber, setQuizVariationNumber] = useState<number>(1);
+  const [quizSourceMode, setQuizSourceMode] = useState<string>("curriculum-dynamic");
+  const [isQuizGenerating, setIsQuizGenerating] = useState<boolean>(false);
+  const [quizCooldownSec, setQuizCooldownSec] = useState<number>(0);
+  const [quizError, setQuizError] = useState<string | null>(null);
+
+  // Competency Verification State
+  const [activeVerificationExam, setActiveVerificationExam] =
+    useState<GeneratedVerificationResponse | null>(null);
+  const [verMcqAnswers, setVerMcqAnswers] = useState<Record<string, number>>({});
+  const [verOpenAnswer, setVerOpenAnswer] = useState<string>("");
+  const [isVerGenerating, setIsVerGenerating] = useState<boolean>(false);
+  const [isVerEvaluating, setIsVerEvaluating] = useState<boolean>(false);
+  const [verCooldownSec, setVerCooldownSec] = useState<number>(0);
+  const [verError, setVerError] = useState<string | null>(null);
+  const [verEvalResult, setVerEvalResult] =
+    useState<EvaluatedVerificationResponse | null>(null);
+
+  useEffect(() => {
+    if (quizCooldownSec <= 0 && verCooldownSec <= 0) return;
+    const timer = window.setInterval(() => {
+      setQuizCooldownSec((prev) => (prev > 0 ? prev - 1 : 0));
+      setVerCooldownSec((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [quizCooldownSec, verCooldownSec]);
 
   const targetFieldRef = useRef(targetFieldId);
   targetFieldRef.current = targetFieldId;
@@ -314,7 +360,24 @@ function HasilAnalisisContent() {
     setCompletedModules(prog.completedModules);
     setPassedCertIds(prog.passedCertIds);
     setModulePracticeNotes(prog.practiceNotes);
+    setFieldVerification(prog.verification);
     setHydratedFieldId(targetFieldId);
+
+    const curr =
+      MENTOR_CURRICULUM_BY_FIELD[targetFieldId] || MENTOR_CURRICULUM_BY_FIELD.tkj;
+    const mountSeed = Math.floor(Date.now() % 90000) + Math.floor(Math.random() * 500) + 17;
+    setDynamicQuizDrills(buildDeterministicDynamicQuiz(curr, mountSeed, []));
+    setSelectedCertAnswers({});
+    setSubmittedCertIds([]);
+    setQuizVariationNumber(1);
+    setQuizSourceMode("curriculum-dynamic");
+    setQuizError(null);
+
+    setActiveVerificationExam(null);
+    setVerMcqAnswers({});
+    setVerOpenAnswer("");
+    setVerEvalResult(null);
+    setVerError(null);
   }, [targetFieldId]);
 
   useEffect(() => {
@@ -340,6 +403,7 @@ function HasilAnalisisContent() {
             setCompletedModules(currentProg.completedModules);
             setPassedCertIds(currentProg.passedCertIds);
             setModulePracticeNotes(currentProg.practiceNotes);
+            setFieldVerification(currentProg.verification);
           }
         }
         serverSyncReadyRef.current = true;
@@ -360,6 +424,7 @@ function HasilAnalisisContent() {
       completedModules,
       passedCertIds,
       practiceNotes: modulePracticeNotes,
+      verification: fieldVerification,
     });
 
     if (!getCachedUser() || !serverSyncReadyRef.current) return;
@@ -386,6 +451,7 @@ function HasilAnalisisContent() {
     completedModules,
     passedCertIds,
     modulePracticeNotes,
+    fieldVerification,
   ]);
 
   // Mentor Drawer State
@@ -421,7 +487,7 @@ function HasilAnalisisContent() {
     return mod.courseId === selectedModuleFilter;
   });
 
-  const filteredCertDrills = curriculum.certificationDrills.filter((drill) => {
+  const filteredCertDrills = dynamicQuizDrills.filter((drill) => {
     if (selectedCertFilter === "ALL") return true;
     if (selectedCertFilter === "TARGET_COURSE") {
       return !drill.courseId || drill.courseId === targetCourse.id;
@@ -431,6 +497,173 @@ function HasilAnalisisContent() {
       drill.certName === selectedCertFilter
     );
   });
+
+  const verificationEligibility = checkVerificationEligibility(
+    curriculum,
+    completedModules,
+    passedCertIds,
+    modulePracticeNotes
+  );
+
+  const handleRegenerateQuiz = async (isInitialAuto = false) => {
+    if (isQuizGenerating || (!isInitialAuto && quizCooldownSec > 0)) return;
+    if (!isInitialAuto) {
+      setSelectedCertAnswers({});
+      setSubmittedCertIds([]);
+    }
+    setQuizError(null);
+    setIsQuizGenerating(true);
+
+    const nextSeed =
+      Math.floor(Date.now() % 90000) +
+      Math.floor(Math.random() * 900) +
+      quizVariationNumber * 17;
+
+    try {
+      // Jeda mikro client-side sebelum memanggil API untuk mencegah burst klik cepat
+      if (!isInitialAuto) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+      const res = await fetch("/api/skill-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generate_quiz",
+          fieldId: targetFieldId,
+          targetCourseId: targetCourse.id,
+          attemptSeed: nextSeed,
+          excludeQuestions: dynamicQuizDrills.map((d) => d.question).slice(0, 12),
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`Status ${res.status}`);
+      }
+      const data = (await res.json()) as DynamicQuizResponse;
+      if (Array.isArray(data.drills) && data.drills.length > 0) {
+        setDynamicQuizDrills(data.drills);
+        setQuizSourceMode(data.sourceMode || "curriculum-dynamic");
+        setQuizVariationNumber((prev) => (isInitialAuto ? prev : prev + 1));
+      }
+    } catch {
+      // Tetap rotasi secara lokal agar soal tidak pernah statis meskipun jaringan terputus
+      const localShuffled = shuffleQuizDrills(curriculum.certificationDrills, nextSeed);
+      setDynamicQuizDrills(localShuffled);
+      setQuizSourceMode("curriculum-shuffle");
+      if (!isInitialAuto) {
+        setQuizError(
+          "Koneksi server sibuk; soal diacak otomatis dari bank kurikulum lokal."
+        );
+      }
+    } finally {
+      setIsQuizGenerating(false);
+      if (!isInitialAuto) {
+        setQuizCooldownSec(8);
+      }
+    }
+  };
+
+  const handleGenerateVerificationExam = async () => {
+    if (isVerGenerating || verCooldownSec > 0 || !verificationEligibility.eligible) {
+      return;
+    }
+    setVerError(null);
+    setVerEvalResult(null);
+    setVerMcqAnswers({});
+    setVerOpenAnswer("");
+    setIsVerGenerating(true);
+
+    const nextSeed =
+      Math.floor(Date.now() % 90000) + Math.floor(Math.random() * 999) + 31;
+    const fieldPersonalNotes = readPersonalNotesFromStorage()
+      .filter((n) => n.fieldId === targetFieldId || n.fieldId === "umum")
+      .slice(0, 4)
+      .map((n) => `${n.title}: ${n.content}`);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      const res = await fetch("/api/skill-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generate_verification",
+          fieldId: targetFieldId,
+          targetCourseId: targetCourse.id,
+          attemptSeed: nextSeed,
+          completedModules,
+          passedCertIds,
+          practiceNotes: modulePracticeNotes,
+          personalNotesText: fieldPersonalNotes,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || `Server merespons status ${res.status}`);
+      }
+      setActiveVerificationExam(data as GeneratedVerificationResponse);
+    } catch (err) {
+      setVerError(
+        err instanceof Error
+          ? err.message
+          : "Gagal menyusun soal verifikasi kemampuan. Silakan coba lagi."
+      );
+    } finally {
+      setIsVerGenerating(false);
+      setVerCooldownSec(8);
+    }
+  };
+
+  const handleSubmitVerificationEvaluation = async () => {
+    if (!activeVerificationExam || isVerEvaluating) return;
+    setVerError(null);
+    setIsVerEvaluating(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      const res = await fetch("/api/skill-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "evaluate_verification",
+          fieldId: targetFieldId,
+          verificationToken: activeVerificationExam.verificationToken,
+          mcqAnswers: verMcqAnswers,
+          openAnswer: verOpenAnswer,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || `Server merespons status ${res.status}`);
+      }
+
+      const evaluated = data as EvaluatedVerificationResponse;
+      setVerEvalResult(evaluated);
+      setActiveVerificationExam(null);
+
+      setFieldVerification((prev) => ({
+        status: evaluated.status,
+        score: evaluated.score,
+        correctCount: evaluated.correctCount,
+        totalQuestions: evaluated.totalQuestions,
+        attemptCount: (prev?.attemptCount || 0) + 1,
+        verifiedAt: evaluated.verifiedAt,
+        summary: evaluated.summary,
+        strengths: evaluated.strengths,
+        improvements: evaluated.improvements,
+        sourceMode: evaluated.sourceMode,
+      }));
+    } catch (err) {
+      setVerError(
+        err instanceof Error
+          ? err.message
+          : "Gagal mengevaluasi jawaban verifikasi kemampuan."
+      );
+    } finally {
+      setIsVerEvaluating(false);
+      setVerCooldownSec(8);
+    }
+  };
 
   const certTrackOptions =
     curriculum.availableCertTracks && curriculum.availableCertTracks.length > 0
@@ -522,9 +755,15 @@ function HasilAnalisisContent() {
     }
   };
 
+  const agentCooldownUntilRef = useRef<number>(0);
+
   const handleSendAgentMessage = async (customPrompt?: string) => {
     const messageToSend = (customPrompt ?? chatInput).trim();
     if (!messageToSend || isAgentLoading) return;
+    if (Date.now() < agentCooldownUntilRef.current) {
+      setAgentError("Mohon beri jeda 3 detik antar pesan agar koneksi AI tetap stabil.");
+      return;
+    }
 
     const studentTurn: MentorChatTurn = {
       id: "user-" + Date.now(),
@@ -537,8 +776,10 @@ function HasilAnalisisContent() {
     setAgentError(null);
     setLastFailedAgentPrompt(null);
     setIsAgentLoading(true);
+    agentCooldownUntilRef.current = Date.now() + 3000;
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 350));
       const res = await fetch("/api/mentor-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -661,7 +902,31 @@ function HasilAnalisisContent() {
                 onChangeTab={setActiveTab}
                 pustakaCount={pustakaDocs.length}
                 passedCertCount={passedCertIds.length}
+                completedModuleCount={completedModules.length}
+                isVerificationUnlocked={verificationEligibility.eligible}
+                verificationResult={fieldVerification}
               />
+
+              {verificationEligibility.eligible &&
+                activeTab !== "verifikasi" &&
+                fieldVerification?.status !== "passed" && (
+                  <div className="p-4 rounded-2xl bg-[#3B66FF] text-white border-2 border-[#141413] shadow-[4px_4px_0px_#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="text-xs sm:text-sm font-medium">
+                      <span className="font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#B8F348] text-[#141413] border border-[#141413] mr-2">
+                        Verifikasi Terbuka
+                      </span>
+                      Semua modul materi dan unit quiz sertifikasi pada bidang{" "}
+                      <strong>{curriculum.fieldName}</strong> telah Anda selesaikan. Uji pemahaman akhir Anda sekarang.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("verifikasi")}
+                      className="neo-btn inline-flex items-center justify-center min-h-[42px] px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] font-display font-bold text-xs shrink-0 cursor-pointer"
+                    >
+                      Buka Verifikasi Kemampuan &rarr;
+                    </button>
+                  </div>
+                )}
 
               <motion.div
                 key={activeTab}
@@ -755,15 +1020,62 @@ function HasilAnalisisContent() {
                     onChangeFilter={setSelectedCertFilter}
                     certTrackOptions={certTrackOptions}
                     selectedCertAnswers={selectedCertAnswers}
-                    onSelectAnswer={(drillId, optIdx) =>
+                    onSelectAnswer={(drillId, optIdx) => {
                       setSelectedCertAnswers((prev) => ({
                         ...prev,
                         [drillId]: optIdx,
-                      }))
-                    }
+                      }));
+                      setSubmittedCertIds((prev) =>
+                        prev.filter((id) => id !== drillId)
+                      );
+                    }}
                     submittedCertIds={submittedCertIds}
                     passedCertIds={passedCertIds}
                     onCheckAnswer={handleCheckCertAnswer}
+                    quizVariationNumber={quizVariationNumber}
+                    quizSourceMode={quizSourceMode}
+                    isQuizGenerating={isQuizGenerating}
+                    quizCooldownSec={quizCooldownSec}
+                    quizError={quizError}
+                    onRegenerateQuiz={() => void handleRegenerateQuiz(false)}
+                    isVerificationUnlocked={verificationEligibility.eligible}
+                    onGoToVerification={() => setActiveTab("verifikasi")}
+                  />
+                )}
+
+                {activeTab === "verifikasi" && (
+                  <VerificationTab
+                    curriculum={curriculum}
+                    targetCourse={targetCourse}
+                    eligibility={verificationEligibility}
+                    savedVerification={fieldVerification}
+                    activeExam={activeVerificationExam}
+                    mcqAnswers={verMcqAnswers}
+                    openAnswer={verOpenAnswer}
+                    isGenerating={isVerGenerating}
+                    isEvaluating={isVerEvaluating}
+                    verCooldownSec={verCooldownSec}
+                    error={verError}
+                    evaluationResult={verEvalResult}
+                    onGenerateExam={() => void handleGenerateVerificationExam()}
+                    onSelectMcqAnswer={(qId, optIdx) =>
+                      setVerMcqAnswers((prev) => ({
+                        ...prev,
+                        [qId]: optIdx,
+                      }))
+                    }
+                    onChangeOpenAnswer={setVerOpenAnswer}
+                    onSubmitEvaluation={() =>
+                      void handleSubmitVerificationEvaluation()
+                    }
+                    onResetExam={() => {
+                      setActiveVerificationExam(null);
+                      setVerMcqAnswers({});
+                      setVerOpenAnswer("");
+                      setVerError(null);
+                    }}
+                    onGoToModules={() => setActiveTab("materi")}
+                    onGoToCertification={() => setActiveTab("sertifikasi")}
                   />
                 )}
               </motion.div>

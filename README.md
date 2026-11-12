@@ -1,103 +1,108 @@
 # KertaMarga Bali
 
-Platform Navigasi Penjurusan dan Karier Terpadu Berbasis AI untuk Siswa SMP, SMA, dan SMK se-Bali.
-Karya Inovasi Tim Siswa SMK Negeri 1 Denpasar pada Bali DigiFest 2026: AI Web Innovation Challenge (*Build with AI, Solve for Bali*).
+Platform Navigasi Penjurusan, Kesiapan Kompetensi, dan Karier Terpadu Berbasis AI untuk Siswa SMP, SMA, dan SMK se-Bali.
+Karya Inovasi Tim **WE ARE SKENSA** (SMK Negeri 1 Denpasar) pada **Bali DigiFest 2026: AI Web Innovation Challenge** (*Build with AI, Solve for Bali*).
 
 ---
 
 ## Description
 
-KertaMarga Bali adalah platform web inovatif yang dirancang untuk memecahkan problematika salah jurusan (*major mismatch*) dan kesenjangan kompetensi vokasi di Provinsi Bali. Mengintegrasikan skoring deterministik berbasis data valid PDDIKTI, BAN-PT, dan standar BNSP dengan agen penalaran AI transparan, KertaMarga Bali membimbing peserta didik dari asesmen minat bakat, simulasi prioritas geografis 9 kabupaten/kota, hingga rekomendasi silabus belajar terarah menuju Indonesia Emas 2045.
+KertaMarga Bali adalah platform web inovatif yang dirancang untuk memecahkan problematika salah jurusan (*major mismatch*) dan kesenjangan kompetensi vokasi di Provinsi Bali. Mengintegrasikan skoring deterministik multi-faktor berbasis data valid PDDIKTI, BAN-PT, BAN-SM, dan skema BNSP dengan agen penalaran AI yang tangguh dan terbatas cakupan (*topic-scoped AI*), KertaMarga Bali membimbing siswa mulai dari asesmen minat bakat adaptif, pemetaan jarak geografis 284 institusi pendidikan di 9 kabupaten/kota Bali, konsultasi AI Navigator & Agen Pembimbing, hingga pengelolaan Profil & Catatan Pembelajaran pribadi.
 
 ---
 
 ## Problem & Target User
 
 ### Masalah Nyata
-1. **Tingginya Angka Salah Jurusan**: Lebih dari 60% lulusan pendidikan menengah mengalami kebingungan dalam menentukan program studi dan karier lanjutan yang selaras dengan potensi diri serta kebutuhan industri daerah.
-2. **Disparitas Akses Informasi Antarwilayah di Bali**: Konsentrasi institusi pendidikan tinggi yang terpusat di Denpasar dan Badung membuat siswa di kabupaten lain (seperti Jembrana, Buleleng, Karangasem) kesulitan memetakan jarak tempuh, perkiraan biaya hidup, dan relevansi keahlian lokal.
-3. **Ketiadaan Mentor Akademik Adaptif**: Guru Bimbingan Konseling (BK) di sekolah memiliki rasio beban siswa yang sangat tinggi, sehingga pembimbingan kurikulum secara personal dan bertahap sulit dilakukan secara konsisten.
+1. **Tingginya Angka Salah Jurusan**: Banyak lulusan SMP, SMA, dan SMK mengalami kebingungan menentukan sekolah lanjutan, program studi, dan karier yang selaras dengan potensi diri serta kebutuhan industri daerah Bali.
+2. **Disparitas Informasi Pendidikan Antarwilayah di Bali**: Konsentrasi kampus dan sekolah vokasi yang beragam di 9 kabupaten/kota Bali membuat siswa kesulitan membandingkan akreditasi resmi, kecocokan bidang, jarak tempuh dari rumah, serta estimasi biaya kuliah.
+3. **Ketiadaan Mentor Akademik & Dokumentasi Belajar Terstruktur**: Rasio beban Guru Bimbingan Konseling (BK) yang tinggi membuat pendampingan kurikulum bertahap, simulasi sertifikasi BNSP, dan pencatatan progres belajar mandiri siswa sulit dipantau secara personal.
 
 ### Target Pengguna
-* **Siswa SMP**: Memilih kelanjutan studi ke SMA atau program keahlian SMK di Bali yang tepat.
-* **Siswa SMA/SMK**: Menyiapkan kesiapan kurikulum, portofolio, dan sertifikasi profesi untuk masuk perguruan tinggi vokasi/akademik atau pasar kerja.
-* **Guru BK & Orang Tua**: Memperoleh rujukan data berbasis standar resmi PDDIKTI dan BNSP tanpa bias subjektif.
+* **Siswa SMP**: Memetakan minat awal dan memilih kelanjutan studi SMK/jurusan keahlian di Bali sesuai bakat dan jarak dari rumah.
+* **Siswa SMA/SMK**: Menganalisis kesiapan mata kuliah target, menutup selisih skor (*readiness gap*) lewat 33 modul belajar dan simulasi sertifikasi BNSP, serta merencanakan pendaftaran perguruan tinggi.
+* **Guru BK & Orang Tua**: Memperoleh rujukan data terstruktur berbasis standar PDDIKTI, BAN-PT, dan BNSP serta mendampingi catatan belajar siswa.
 
 ---
 
 ## Key Features
 
-1. **Tes Keminatan Multi-Dimensi (Holland RIASEC Adapted)**
-   * Kuesioner interaktif terkalibrasi kearifan lokal Bali untuk memetakan kecenderungan minat, tipe kerja, dan orientasi berpikir siswa.
-2. **Peta Interaktif Institusi Se-Bali**
-   * Integrasi visualisasi lokasi kampus dan sekolah vokasi di 9 kabupaten/kota Bali dengan rincian status akreditasi BAN-PT/BAN-SM.
-3. **Simulator Prioritas Tiga Faktor**
-   * Perhitungan bobot dinamis yang menyeimbangkan antara faktor Kecocokan Minat, Jarak Tempuh/Geografis, dan Rentang Biaya Pendidikan.
-4. **Agen Pembimbing AI & Sertifikasi Kompetensi (Mentor Agent)**
-   * Asisten penalaran akademik cerdas yang menganalisis selisih nilai kesiapan siswa, memberikan rekomendasi modul belajar berurutan, dan memandu simulasi soal sertifikasi BNSP.
-5. **Pustaka Modul Terbuka & Masterclass**
-   * Akses silabus dan dokumen modul standar kompetensi industri yang dapat diunduh langsung untuk pembelajaran mandiri.
-6. **Autentikasi Aman & Mode Tamu Anonim**
-   * Akses fleksibel dengan perlindungan privasi data siswa: tersedia mode login terdaftar (Siswa/Guru) serta mode Tamu Anonim tanpa pengumpulan data pribadi.
+1. **Asesmen Minat & Simulator Prioritas Tiga Faktor (`/eksplorasi` & `/tes-keminatan`)**
+   * Kuesioner adaptif multi-dimensi dengan bobot dinamis (Kecocokan Minat, Jarak Tempuh GPS/Alamat/Kabupaten, dan Rentang Biaya) serta filter jenjang cerdas (SMP diarahkan ke SMK relevan, SMA/SMK ke Perguruan Tinggi).
+2. **Direktori & Radar Peta Pendidikan Se-Bali (`/katalog` & `#peta-kampus`)**
+   * Direktori 284 entitas pendidikan Bali (61 Perguruan Tinggi, 108 SMK, 115 SMA) di 9 kabupaten/kota dengan status akreditasi BAN-PT/BAN-SM, jarak Haversine dari lokasi pengguna, serta pratinjau Google Maps interaktif.
+3. **Peta Bidang Keilmuan, Quiz Dinamis & Verifikasi Kemampuan (`/peta-bidang` & `/hasil-analisis`)**
+   * Eksplorasi 11 bidang keilmuan strategis Bali lengkap dengan modul materi & PDF pembelajaran (`public/pustaka-modul/`), **Tes Sertifikasi Dinamis** yang selalu berganti skenario dan urutan jawaban per percobaan, fitur **Verifikasi Kemampuan AI** yang terbuka setelah seluruh modul & quiz selesai (`POST /api/skill-verification`), kolom catatan praktik, serta **Agen Pembimbing AI** slide-over drawer.
+4. **AI Navigator Konsultasi Jurusan (`/ai-navigator`)**
+   * Dialog interaktif berbasis AI yang terhubung ke pencocokan institusi real-time sesuai domisili kabupaten dan jenjang target, dilengkapi **AI Scope Guard 2-Lapis** (`src/lib/ai-scope-guard.ts`) agar AI hanya menjawab topik pendidikan/karier Bali sesuai tujuan website.
+5. **Portal Profil & Catatan Pembelajaran (`/profil`)**
+   * Halaman terpadu bagi pengguna terdaftar untuk mengedit profil minat, membuat/mengelola catatan belajar pribadi (per kategori & bidang), meninjau catatan praktik modul serta skor asesmen, dan menyinkronkan progres antar perangkat (`/api/profile`).
+6. **Autentikasi Aman, Perlindungan API & Mode Tamu Anonim (`/login`, `/daftar`)**
+   * Akses penuh Mode Tamu Anonim tanpa login wajib, registrasi/login terlindungi bcrypt + JWT `httpOnly` + validasi kata sandi kuat + lockout brute-force + verifikasi peran Guru BK berbasis NIP 18 digit, serta header keamanan HTTP/CSP & rate limiting per-IP.
 
 ---
 
 ## Tech Stack
 
 * **Frontend Framework**: Next.js 15 (App Router) + React 19 + TypeScript 5.7
-* **Styling & Design System**: Tailwind CSS 3.4 dengan semantic token AetherCraft Protocol (tanpa full-screen blur/slop, kontras tinggi)
-* **Animasi & Peta**: Framer Motion + Leaflet
-* **Backend & API**: Next.js App Router API Routes (Node.js Runtime)
-* **Database & ORM**: Drizzle ORM + MySQL / MariaDB (`mysql2`) dengan persistent JSON fallback store (`data/users.json` / `/tmp`) untuk keandalan demo
-* **Deployment & Hosting**: Vercel Production (HTTPS otomatis, 24/7 uptime)
+* **Styling & Design System**: Tailwind CSS 3.4 dengan desain Neo-Pop Tactile berkontras tinggi (font `Outfit`, `Inter`, `JetBrains Mono`)
+* **Animasi & Peta**: GSAP + `@gsap/react`, Framer Motion, Leaflet, dan Google Maps Embed API
+* **Backend & API**: Next.js App Router API Routes (Node.js Runtime) dengan validasi skema ketat `Zod` dan proteksi `src/lib/api-security.ts`
+* **Database & Storage**: Drizzle ORM + MySQL / MariaDB (`mysql2`) dengan fallback penyimpanan JSON persisten (`data/users.json`, `data/learning-profiles.json` lokal / `/tmp/kertamarga-data` di serverless)
+* **Deployment & Hosting**: Vercel Production (Region `sin1` Singapura, HTTPS otomatis, 24/7 uptime)
 
 ---
 
 ## AI Implementation
 
 ### Model, Gateway, dan Metode
-Sistem mengimplementasikan arsitektur *Multi-Tier Resilient AI*:
-1. **Tier 1 (Primary Router)**: 9Router AI Gateway yang kompatibel dengan protokol OpenAI `/v1/chat/completions` (`src/lib/router-client.ts`) lengkap dengan circuit breaker cooldown dan LRU cache.
-2. **Tier 2 (Direct Fallback)**: Integrasi langsung ke Google Gemini REST API (`generativelanguage.googleapis.com`) menggunakan `GEMINI_API_KEY` server-side dengan output JSON terstruktur.
-3. **Tier 3 (Deterministic Verification)**: *Deterministic Rule-Based Mentor Engine* dan `src/lib/scoring.ts` berbasis basis pengetahuan kurikulum BNSP serta data PDDIKTI/BAN-PT. Jika seluruh koneksi jaringan AI eksternal terputus, sistem tetap 100% berfungsi memberikan panduan akurat tanpa pernah mengalami crash. *(Detail model AI final disinkronkan bersama pembaruan tim sebelum tag `v2.0-final`.)*
+Sistem mengimplementasikan arsitektur *Multi-Tier Resilient AI* yang dibungkus **AI Scope Guard 2-Lapis**:
+1. **Pre-LLM Topic & Security Guard (`src/lib/ai-scope-guard.ts` + Zod)**: Memvalidasi role (`user`/`assistant` saja), panjang/ukuran payload, serta menyaring pertanyaan di luar cakupan website maupun upaya *prompt injection* sebelum pemanggilan model AI.
+2. **Tier 1 (Primary Gateway)**: 9Router OpenAI-compatible Gateway (`src/lib/router-client.ts`) yang merutekan permintaan ke `ag/gemini-3-flash`, `ag/gemini-3-flash-agent`, `ag/gemini-3.8-flash-low`, dan `openrouter/openrouter/free` lengkap dengan circuit breaker cooldown, jitter, dan in-memory LRU cache.
+3. **Tier 2 (Direct LLM Fallback)**: Integrasi langsung ke Google Gemini REST API (`generativelanguage.googleapis.com`) menggunakan model `gemini-3.5-flash-lite` (`GEMINI_MODEL`) dengan fallback berantai ke `gemini-flash-lite-latest` dan `gemini-3.5-flash` dalam mode output JSON terstruktur.
+4. **Tier 3 (Deterministic Knowledge Fallback)**: *Deterministic Rule-Based Mentor Engine* dan `src/lib/scoring.ts` berbasis kurasi kurikulum 11 bidang & standar BNSP, menjamin sistem tetap 100% responsif tanpa error meski API eksternal mengalami *timeout* atau batas kuota.
 
 ### Alur Input dan Output AI
-* **Input**: Pesan kontekstual siswa, identifikasi bidang keahlian, skor kesiapan awal (%), target ambang kelulusan mata kuliah (%), daftar ID modul belajar yang telah diselesaikan, dan riwayat lulus latihan sertifikasi.
-* **Output**: Payload JSON tervalidasi yang mencakup ringkasan diagnosis gap akademik, pesan bimbingan personal, tipe tindakan prioritas (materi/sertifikasi), rekomendasi judul modul, poin konsep kunci (*key takeaways*), dan catatan motivasi terukur.
+* **Input**: Riwayat pesan tervalidasi (`user`/`assistant`), domisili kabupaten Bali, jenjang target (`semua`/`smk`/`kuliah`), bidang studi aktif, skor kesiapan awal (%), target skor mata kuliah (%), progres modul selesai, dan sertifikasi lulus.
+* **Output**: JSON tervalidasi skema (`inScope`, `reply` / `replyMessage`, `matchedFieldId`, `diagnosisSummary`, `recommendedActionType`, `recommendedItemTitle`, `keyTakeaways`, `encouragementNote`) beserta *disclaimer* edukatif pada antarmuka.
 
 ### Alasan Penggunaan AI
-AI difungsikan sebagai fasilitator penalaran personal yang adaptif terhadap ribuan kombinasi kondisi capaian siswa, bukan sebagai penentu vonis mutlak kelulusan.
+AI digunakan secara terukur sebagai asisten penalaran kontekstual yang mengaitkan ribuan kombinasi skor kesiapan, domisili kabupaten Bali, dan silabus modul menjadi bimbingan bertahap, sementara akreditasi, jarak Haversine, dan daftar institusi tetap diambil dari dataset terkurasi agar tidak terjadi halusinasi data fakta.
 
 ---
 
 ## Architecture / Data Flow
 
 ```
-[ Pengguna / Siswa ]
-        │
-        ▼ (HTTPS)
-[ Antarmuka Web (Next.js 15 / React 19 / Tailwind) ]
-        │
-        ├──> [ Asesmen Minat ] ──> [ Skoring Deterministik (RIASEC + Bobot) ]
-        │
-        └──> [ Konsultasi Mentor ]
-                     │
-                     ▼
-             [ API Route: /api/mentor-agent ]
-                     │
-         ┌───────────┴────────────────────────┐
-         │ (Kondisi 1: Router Aktif)          │ (Kondisi 2 / Fallback Jaringan)
-         ▼                                    ▼
-   [ 9Router Gateway ]               [ Deterministic Mentor Engine ]
-   (OpenAI-Compatible)               (Basis Pengetahuan Kurikulum & BNSP)
-         │                                    │
-         ▼                                    │
-   [ Gemini 3.8 / LLM ]                       │
-         │                                    │
-         └───────────┬────────────────────────┘
-                     │
-                     ▼ (Output JSON Terstruktur)
-         [ Diagnosis Akademik & Rekomendasi Modul ]
+[ User (Siswa / Guru BK / Juri) ]
+        |
+        v (HTTPS + CSP + Origin Guard + Rate Limiter)
+[ Frontend (Next.js 15 / React 19 / Tailwind CSS) ]
+        |
+        +--> [ /eksplorasi & /tes-keminatan ] --> [ POST /api/assessment/analyze ]
+        |                                               |
+        |                                               v
+        |                                  [ Deterministic RIASEC + Haversine Engine ]
+        |
+        +--> [ /profil & /hasil-analisis ] <---> [ GET/PUT/PATCH /api/profile ]
+        |                                               |
+        |                                               v
+        |                                  [ Database / Storage: Drizzle MySQL / JSON Store ]
+        |
+        +--> [ /ai-navigator & Mentor Drawer ] --> [ POST /api/navigator-chat & /api/mentor-agent ]
+                                                        |
+                                                        v
+                                           [ Zod Validation + 2-Layer AI Scope Guard ]
+                                                        |
+                        +-------------------------------+-------------------------------+
+                        | (In-Scope & Upstream Aktif)                                   | (Fallback Deterministik / Out-of-Scope)
+                        v                                                               v
+          [ 9Router Gateway -> Gemini REST API ]                       [ Deterministic Curriculum Engine / Scope Refusal ]
+                        |                                                               |
+                        +-------------------------------+-------------------------------+
+                                                        |
+                                                        v (Validated JSON Result + Field Matcher)
+                                       [ Result: Bimbingan, Rekomendasi Modul, & Kartu Institusi ]
 ```
 
 ---
@@ -127,7 +132,7 @@ AI difungsikan sebagai fasilitator penalaran personal yang adaptif terhadap ribu
    ```bash
    cp .env.example .env.local
    ```
-   *Catatan: Konfigurasi database dan API key bersifat opsional. Jika dikosongkan, aplikasi otomatis menggunakan mode demo in-memory dan penalaran deterministik.*
+   *Catatan: Pengisian `DB_*` dan API key bersifat opsional saat uji coba lokal. Tanpa MySQL, sistem otomatis memakai fallback JSON store; tanpa API key AI, sistem tetap beroperasi melalui Deterministic Curriculum Engine.*
 
 4. **Jalankan Server Development**:
    ```bash
@@ -141,7 +146,8 @@ AI difungsikan sebagai fasilitator penalaran personal yang adaptif terhadap ribu
    npm run build
    npm run start
    ```
-6. **Jalankan Automated Smoke Test** (pada terminal baru saat server aktif di `http://127.0.0.1:3000`):
+
+6. **Jalankan Automated Smoke & Security Test** (pada terminal baru saat server aktif di `http://127.0.0.1:3000`):
    ```bash
    npm run smoke
    ```
@@ -151,38 +157,38 @@ AI difungsikan sebagai fasilitator penalaran personal yang adaptif terhadap ribu
 ## Dokumentasi Tahap 2 (Final Submission)
 
 * [Catatan Improvement Tahap 1 ke Tahap 2 & AI Disclosure Final](docs/TAHAP2_IMPROVEMENTS_AND_DISCLOSURE.md)
+* [Panduan Verifikasi Teknis & Q&A Tim](docs/TECHNICAL_VERIFICATION_QA.md)
 
 ---
 
 ## Deployment URL
 
 * **URL Produksi Resmi**: [https://kertamarga-bali.vercel.app](https://kertamarga-bali.vercel.app)
-* **Status**: Aktif 24/7 di Vercel Production dengan dukungan enkripsi SSL/TLS HTTPS.
+* **Region Hosting**: Vercel Singapore (`sin1`) dengan enkripsi SSL/TLS HTTPS 24/7.
 
 ---
 
 ## Demo Account
 
-Aplikasi dirancang agar juri dapat langsung melakukan pengujian tanpa proses registrasi yang rumit:
+Aplikasi dirancang agar juri dapat menguji seluruh alur utama tanpa hambatan:
 
-1. **Mode Tamu (Direkomendasikan untuk Juri)**:
-   * Buka aplikasi pada URL di atas.
-   * Klik tombol **Coba Mode Tamu Anonim (Langsung Tes)** pada modal eksplorasi atau langsung buka `/eksplorasi`, `/ai-navigator`, dan `/hasil-analisis`.
-   * Juri langsung mendapatkan akses penuh ke seluruh fitur asesmen, peta, dan mentor AI tanpa perlu kata sandi.
+1. **Mode Tamu Anonim (Direkomendasikan untuk Uji Cepat Juri)**:
+   * Buka `https://kertamarga-bali.vercel.app`.
+   * Langsung jalankan `/eksplorasi`, `/tes-keminatan`, `/ai-navigator`, `/katalog`, dan `/hasil-analisis` tanpa perlu login.
+2. **Mode Akun Terdaftar (Uji Fitur Profil, Catatan Belajar, & Autentikasi)**:
+   * Klik tombol **Masuk** atau buka `/daftar` untuk membuat akun siswa baru (kata sandi minimal 8 karakter kombinasi huruf dan angka).
+   * Setelah masuk, buka menu **Profil & Catatan** (`/profil`) atau klik lencana akun di pojok kanan atas Navbar untuk mencatat progres belajar dan refleksi studi.
+   * Kredensial akun demo khusus juri (bila diperlukan terpisah) dikirimkan melalui formulir resmi panitia dan tidak disimpan di repositori publik.
 
-2. **Mode Akun Terdaftar (Uji Fitur Autentikasi)**:
-   * **Daftar Akun Baru**: Buka menu **Buat Akun** (`/daftar`) untuk membuat akun siswa atau guru BK secara langsung.
-   * **Akun Demo Khusus Juri**: Jika disediakan akun demo terpisah, seed akun dimuat melalui environment variable `DEMO_SEED_USERS_JSON` pada server, dan kredensial dikirimkan melalui kanal resmi panitia (bukan di repositori publik).
-   * Sistem registrasi menyimpan hash password secara aman menggunakan algoritma bcrypt (cost factor 10) dan cookie sesi JWT `httpOnly`.
-
-*(Sesuai aturan keamanan lomba, tidak ada kredensial atau password sensitif yang disimpan pada repositori publik ini).*
+*(Selaras dengan aturan keamanan Bali DigiFest 2026, tidak ada API key, token, atau password sensitif yang ditanam di repositori ini).*
 
 ---
 
 ## Known Limitations
 
-1. **Cakupan Katalog Institusi**: Saat ini difokuskan pada 15 institusi percontohan di 9 kabupaten/kota Bali dan 10 bidang keahlian vokasi prioritas daerah. Penambahan data kampus swasta lainnya akan terus diperluas pada tahap rilis lanjutan.
-2. **Sifat Rekomendasi AI**: Rekomendasi yang dihasilkan bersifat analitik dan edukatif untuk memetakan kesiapan kurikulum, bukan pengganti mutlak konseling psikologi klinis tatap muka.
+1. **Penyimpanan Fallback Serverless Tanpa DB Eksternal**: Jika `DB_HOST` tidak dihubungkan ke instance MySQL/MariaDB persisten, penyimpanan akun dan profil di lingkungan serverless Vercel menggunakan fallback file sementara (`/tmp/kertamarga-data`) ditambah sinkronisasi `localStorage` pada browser pengguna.
+2. **Cakupan Data Geografis & Institusi**: Katalog saat ini memetakan 284 entitas pendidikan Bali (61 PT, 108 SMK, 115 SMA) beserta 15 sorotan program keilmuan dalam 11 klaster bidang strategis. Pembaruan kuota/biaya semester mengikuti rilis berkala institusi masing-masing.
+3. **Sifat Rekomendasi AI**: Seluruh saran AI bersifat pendampingan edukatif untuk orientasi studi dan tidak menggantikan konseling resmi Guru BK atau kebijakan seleksi institusi pendidikan.
 
 ---
 
@@ -190,14 +196,15 @@ Aplikasi dirancang agar juri dapat langsung melakukan pengujian tanpa proses reg
 
 * **Data Institusi & Program Studi**: Pangkalan Data Pendidikan Tinggi (PDDIKTI) Kemendikbudristek RI, Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT), dan BAN-SM.
 * **Standar Kompetensi & Sertifikasi**: Skema Baku Sertifikasi Profesi dari Badan Nasional Sertifikasi Profesi (BNSP).
-* **Pemetaan Lokasi**: Google Maps Platform Embed API.
-* **Pustaka Open Source**: Next.js, React, TypeScript, Tailwind CSS, Framer Motion, Lucide React, Drizzle ORM, Zod, Jose, Bcryptjs, Leaflet.
+* **Pemetaan Lokasi & Geocoding**: Google Maps Embed API, Nominatim OpenStreetMap Geocoding, `ipwho.is`, dan Leaflet.
+* **Tipografi & Ikon**: Google Fonts (`Outfit`, `Inter`, `JetBrains Mono`) dan `lucide-react`.
+* **Pustaka Open Source**: Next.js, React, TypeScript, Tailwind CSS, GSAP, `@gsap/react`, Framer Motion, Drizzle ORM, `mysql2`, Zod, Jose, Bcryptjs, `clsx`, `tailwind-merge`.
 
 ---
 
 ## Team Members
 
-Karya ini dikembangkan oleh Tim Siswa **SMK Negeri 1 Denpasar (SKENSA)**:
+Karya ini dikembangkan oleh Tim **WE ARE SKENSA** — **SMK Negeri 1 Denpasar**:
 
 1. **Sabbil Abdillah Ferdyansyah** - *Team Leader & AI*
 2. **I Made Yuda Pramana** - *Fullstack*
@@ -207,24 +214,22 @@ Karya ini dikembangkan oleh Tim Siswa **SMK Negeri 1 Denpasar (SKENSA)**:
 
 ## Lampiran: AI & Technology Disclosure
 
-Formulir pengungkapan teknologi resmi sesuai ketentuan Bali DigiFest 2026:
+Formulir pengungkapan teknologi resmi sesuai Lampiran C Panduan Bali DigiFest 2026:
 
 | Komponen | Isi Peserta |
 | :--- | :--- |
 | **Nama Produk** | KertaMarga Bali (AI Career & Educational Navigator) |
 | **Framework / Frontend** | Next.js 15 (App Router), React 19, TypeScript 5.7, Tailwind CSS 3.4 |
-| **Backend / Runtime** | Next.js App Router API Routes (Node.js Runtime) |
-| **Database / Storage** | Drizzle ORM, MySQL / MariaDB (`mysql2`), Persistent JSON Fallback (`data/users.json` / `/tmp`), In-Memory Cache |
-| **Hosting / Deployment** | Vercel Production |
-| **AI Model / API / Method** | Multi-tier pipeline: 9Router Gateway (`src/lib/router-client.ts`), Google Gemini REST API (`gemini-3.5-flash-lite` / fallback chain), Skoring Deterministik (`src/lib/scoring.ts`) & Deterministic Rule Engine |
-| **Peran AI dalam Produk** | Mendiagnosis selisih kesiapan akademik siswa dan merekomendasikan urutan modul/sertifikasi BNSP (`/api/mentor-agent`), serta konsultasi interaktif penjurusan Bali (`/api/navigator-chat`) |
-| **Dataset / Data Source** | Data resmi PDDIKTI, data akreditasi BAN-PT & BAN-SM, skema sertifikasi BNSP, data geografis 9 kabupaten/kota Bali |
-| **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `clsx`, `tailwind-merge` |
-| **Template / Boilerplate** | Tidak menggunakan template jadi; dibangun dari awal (*scratch*) menggunakan `create-next-app` dasar |
-| **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring komponen, penulisan tipe data TypeScript, pengujian smoke test, dan perancangan arsitektur fail-safe) |
-| **Pre-existing Components** | Tidak ada (proyek orisinal yang dibangun dari awal khusus untuk kompetisi ini) |
-| **Third-party Assets / Credits** | Peta Leaflet, Icon Lucide, Font Google Outfit dan Inter, modul pustaka belajar pada `public/pustaka-modul/` |
-
----
+| **Backend / Runtime** | Next.js App Router API Routes (Node.js Runtime) dengan `Zod` & `src/lib/api-security.ts` |
+| **Database / Storage** | Drizzle ORM + MySQL / MariaDB (`mysql2`), Persistent JSON Fallback (`data/users.json`, `data/learning-profiles.json` / `/tmp/kertamarga-data`), Browser `localStorage` Sync |
+| **Hosting / Deployment** | Vercel Production (Region `sin1` Singapura, HTTPS) |
+| **AI Model / API / Method** | Multi-tier pipeline: 9Router Gateway (`ag/gemini-3-flash`, `ag/gemini-3-flash-agent`, `ag/gemini-3.8-flash-low`, `openrouter/openrouter/free`), Google Gemini REST API (`gemini-3.5-flash-lite`, `gemini-flash-lite-latest`, `gemini-3.5-flash`), AI Scope Guard 2-Lapis (`src/lib/ai-scope-guard.ts`), serta Skoring Deterministik (`src/lib/scoring.ts`) & Deterministic Rule Engine |
+| **Peran AI dalam Produk** | Menganalisis selisih kesiapan akademik siswa dan merekomendasikan modul/sertifikasi BNSP (`/api/mentor-agent`), serta melayani konsultasi penjurusan dan institusi Bali yang dibatasi cakupan tujuan website (`/api/navigator-chat`) |
+| **Dataset / Data Source** | Data resmi PDDIKTI, data akreditasi BAN-PT & BAN-SM, standar sertifikasi BNSP, serta direktori 284 entitas pendidikan Bali + koordinat geografis 9 kabupaten/kota Bali |
+| **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `gsap`, `@gsap/react`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `@types/leaflet`, `clsx`, `tailwind-merge`, `typescript`, `tailwindcss`, `postcss`, `autoprefixer` |
+| **Template / Boilerplate** | Tidak menggunakan template jadi; struktur dasar dibuat dari `create-next-app` dan dirancang khusus untuk KertaMarga Bali |
+| **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring komponen, audit keamanan & type safety TypeScript, penyusunan automated smoke test, dan perancangan arsitektur fail-safe) |
+| **Pre-existing Components** | Tidak ada komponen komersial pra-kompetisi; seluruh produk dikembangkan khusus untuk Bali DigiFest 2026 |
+| **Third-party Assets / Credits** | Google Maps Embed API, Leaflet, Nominatim OpenStreetMap, `ipwho.is`, Google Fonts (`Outfit`, `Inter`, `JetBrains Mono`), Lucide Icons, dan materi pustaka modul pada `public/pustaka-modul/` |
 
 *Pernyataan: Kami menyatakan bahwa informasi di atas benar dan lengkap. Kami bertanggung jawab atas penggunaan teknologi, source code, data, library, API, model AI, dan aset yang digunakan pada produk.*

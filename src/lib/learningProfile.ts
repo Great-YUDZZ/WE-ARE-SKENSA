@@ -31,11 +31,25 @@ export interface PersonalLearningNote {
   updatedAt: string;
 }
 
+export interface FieldVerificationResult {
+  status: "passed" | "needs_review";
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  attemptCount: number;
+  verifiedAt: string;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  sourceMode: string;
+}
+
 export interface FieldStudyProgressSnapshot {
   fieldId: string;
   completedModules: string[];
   passedCertIds: string[];
   practiceNotes: Record<string, string>;
+  verification?: FieldVerificationResult;
   updatedAt?: string;
 }
 
@@ -89,6 +103,40 @@ function sanitizeNotesRecord(val: unknown): Record<string, string> {
   return result;
 }
 
+function sanitizeVerificationResult(val: unknown): FieldVerificationResult | undefined {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return undefined;
+  const v = val as Partial<FieldVerificationResult>;
+  if (v.status !== "passed" && v.status !== "needs_review") return undefined;
+  if (typeof v.score !== "number" || Number.isNaN(v.score)) return undefined;
+  return {
+    status: v.status,
+    score: Math.max(0, Math.min(100, Math.round(v.score))),
+    correctCount:
+      typeof v.correctCount === "number" && !Number.isNaN(v.correctCount)
+        ? Math.max(0, Math.round(v.correctCount))
+        : 0,
+    totalQuestions:
+      typeof v.totalQuestions === "number" && !Number.isNaN(v.totalQuestions)
+        ? Math.max(1, Math.round(v.totalQuestions))
+        : 5,
+    attemptCount:
+      typeof v.attemptCount === "number" && !Number.isNaN(v.attemptCount)
+        ? Math.max(1, Math.round(v.attemptCount))
+        : 1,
+    verifiedAt:
+      typeof v.verifiedAt === "string" && v.verifiedAt
+        ? v.verifiedAt
+        : new Date().toISOString(),
+    summary: typeof v.summary === "string" ? v.summary.slice(0, 1000) : "",
+    strengths: sanitizeStringArray(v.strengths).slice(0, 5),
+    improvements: sanitizeStringArray(v.improvements).slice(0, 5),
+    sourceMode:
+      typeof v.sourceMode === "string" && v.sourceMode
+        ? v.sourceMode.slice(0, 60)
+        : "ai-verified",
+  };
+}
+
 export function readFieldProgressFromStorage(fieldId: string): FieldStudyProgressSnapshot {
   const empty: FieldStudyProgressSnapshot = {
     fieldId,
@@ -106,6 +154,7 @@ export function readFieldProgressFromStorage(fieldId: string): FieldStudyProgres
       completedModules: sanitizeStringArray(parsed.completedModules),
       passedCertIds: sanitizeStringArray(parsed.passedCertIds),
       practiceNotes: sanitizeNotesRecord(parsed.practiceNotes),
+      verification: sanitizeVerificationResult(parsed.verification),
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : undefined,
     };
   } catch {
@@ -122,6 +171,7 @@ export function writeFieldProgressToStorage(
     completedModules: sanitizeStringArray(progress.completedModules),
     passedCertIds: sanitizeStringArray(progress.passedCertIds),
     practiceNotes: sanitizeNotesRecord(progress.practiceNotes),
+    verification: sanitizeVerificationResult(progress.verification),
     updatedAt: new Date().toISOString(),
   };
   if (typeof window !== "undefined") {
@@ -153,6 +203,7 @@ export function updateModulePracticeNoteInStorage(
     completedModules: current.completedModules,
     passedCertIds: current.passedCertIds,
     practiceNotes: nextNotes,
+    verification: current.verification,
   });
 }
 
@@ -242,7 +293,8 @@ export function readFullLearningSnapshot(): FullLearningSnapshot {
     if (
       prog.completedModules.length > 0 ||
       prog.passedCertIds.length > 0 ||
-      Object.keys(prog.practiceNotes).length > 0
+      Object.keys(prog.practiceNotes).length > 0 ||
+      Boolean(prog.verification)
     ) {
       progressByField[fieldId] = prog;
     }
@@ -318,16 +370,30 @@ export function mergeLearningSnapshots(
       }
     }
 
+    const localVer = sanitizeVerificationResult(l?.verification);
+    const remoteVer = sanitizeVerificationResult(r?.verification);
+    let verification: FieldVerificationResult | undefined;
+    if (localVer && remoteVer) {
+      verification =
+        (localVer.verifiedAt || "") >= (remoteVer.verifiedAt || "")
+          ? localVer
+          : remoteVer;
+    } else {
+      verification = localVer || remoteVer;
+    }
+
     if (
       completedModules.length > 0 ||
       passedCertIds.length > 0 ||
-      Object.keys(practiceNotes).length > 0
+      Object.keys(practiceNotes).length > 0 ||
+      Boolean(verification)
     ) {
       mergedProgress[fid] = {
         fieldId: fid,
         completedModules,
         passedCertIds,
         practiceNotes,
+        verification,
         updatedAt: l?.updatedAt || r?.updatedAt || new Date().toISOString(),
       };
     }
@@ -448,8 +514,11 @@ export function exportLearningReportMarkdown(
     activeFields.forEach((prog) => {
       const curr = MENTOR_CURRICULUM_BY_FIELD[prog.fieldId];
       if (!curr) return;
+      const verSuffix = prog.verification
+        ? ` | Verifikasi Kemampuan: ${prog.verification.status === "passed" ? "Lulus" : "Perlu Tinjauan"} (${prog.verification.score}%)`
+        : "";
       lines.push(
-        `- **${curr.fieldName}**: ${prog.completedModules.length}/${curr.learningModules.length} modul selesai, ${prog.passedCertIds.length}/${curr.certificationDrills.length} sertifikasi kompeten`
+        `- **${curr.fieldName}**: ${prog.completedModules.length}/${curr.learningModules.length} modul selesai, ${prog.passedCertIds.length}/${curr.certificationDrills.length} sertifikasi kompeten${verSuffix}`
       );
     });
   }

@@ -126,9 +126,23 @@ function AiNavigatorContent() {
     }
   }, [messages, isTyping]);
 
+  const [cooldownSec, setCooldownSec] = useState<number>(0);
+
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const timer = window.setInterval(() => {
+      setCooldownSec((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownSec]);
+
   const sendMessage = async (text: string) => {
     const clean = text.trim();
     if (!clean || isTyping) return;
+    if (cooldownSec > 0) {
+      triggerToast(`Jeda proteksi API aktif (${cooldownSec}d). Silakan tunggu sebentar.`);
+      return;
+    }
     const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: clean };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
@@ -137,8 +151,10 @@ function AiNavigatorContent() {
     setChatError(null);
     setLastFailedPrompt(null);
     setIsTyping(true);
+    setCooldownSec(3);
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 350));
       const res = await fetch("/api/navigator-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -413,15 +429,22 @@ function AiNavigatorContent() {
               />
               <button
                 type="submit"
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() || isTyping || cooldownSec > 0}
                 aria-label="Kirim pertanyaan"
-                className="h-13 w-13 shrink-0 rounded-2xl bg-[#FF5E4D] hover:bg-[#ff4b38] disabled:opacity-40 text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all flex items-center justify-center font-bold cursor-pointer"
+                className="h-13 w-13 shrink-0 rounded-2xl bg-[#FF5E4D] hover:bg-[#ff4b38] disabled:opacity-40 text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all flex items-center justify-center font-bold cursor-pointer disabled:cursor-not-allowed"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
+                {cooldownSec > 0 ? (
+                  <span className="font-mono text-xs font-black">{cooldownSec}d</span>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                )}
               </button>
             </div>
+            <p className="mt-2 text-[11px] font-mono text-[#52514E]">
+              Catatan: Rekomendasi AI bersifat pendampingan edukatif untuk orientasi studi dan tidak menggantikan konseling resmi Guru BK maupun syarat penerimaan resmi institusi.
+            </p>
           </form>
         </div>
 

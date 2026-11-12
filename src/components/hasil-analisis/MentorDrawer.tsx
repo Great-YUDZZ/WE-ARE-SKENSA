@@ -243,22 +243,27 @@ export default function MentorDrawer({
                   e.preventDefault();
                   onSendMessage();
                 }}
-                className="p-4 bg-white border-t-2 border-[#141413] flex gap-2"
+                className="p-4 bg-white border-t-2 border-[#141413] space-y-2"
               >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => onChangeInput(e.target.value)}
-                  placeholder={`Tanya soal ${targetCourse.code} atau sertifikasi...`}
-                  className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs sm:text-sm text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF]"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !chatInput.trim()}
-                  className="neo-btn min-h-[44px] px-4 rounded-xl bg-[#FFBE2E] hover:bg-[#f2b329] disabled:opacity-50 text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-black text-xs sm:text-sm cursor-pointer shrink-0"
-                >
-                  Kirim
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => onChangeInput(e.target.value)}
+                    placeholder={`Tanya soal ${targetCourse.code} atau sertifikasi...`}
+                    className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs sm:text-sm text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading || !chatInput.trim()}
+                    className="neo-btn min-h-[44px] px-4 rounded-xl bg-[#FFBE2E] hover:bg-[#f2b329] disabled:opacity-50 text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-black text-xs sm:text-sm cursor-pointer shrink-0"
+                  >
+                    Kirim
+                  </button>
+                </div>
+                <p className="text-[10px] font-mono text-[#52514E] leading-snug">
+                  Catatan: Bimbingan AI bersifat pendampingan belajar edukatif dan tidak menggantikan keputusan akademik resmi sekolah/kampus atau konselor BK.
+                </p>
               </form>
             </motion.aside>
           </div>

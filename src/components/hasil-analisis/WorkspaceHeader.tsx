@@ -5,8 +5,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { FIELDS, GROUP_CONFIG, FieldGroup } from "@/data/fields";
 import type { FieldCurriculum, TargetCourse } from "@/data/mentorCurriculum";
+import type { FieldVerificationResult } from "@/lib/learningProfile";
 
-export type WorkspaceTabId = "rencana" | "materi" | "pustaka" | "sertifikasi";
+export type WorkspaceTabId =
+  | "rencana"
+  | "materi"
+  | "pustaka"
+  | "sertifikasi"
+  | "verifikasi";
 
 interface WorkspaceHeaderProps {
   targetFieldId: string;
@@ -26,6 +32,9 @@ interface WorkspaceHeaderProps {
   onChangeTab: (tab: WorkspaceTabId) => void;
   pustakaCount: number;
   passedCertCount: number;
+  completedModuleCount: number;
+  isVerificationUnlocked: boolean;
+  verificationResult?: FieldVerificationResult;
 }
 
 export default function WorkspaceHeader({
@@ -46,6 +55,9 @@ export default function WorkspaceHeader({
   onChangeTab,
   pustakaCount,
   passedCertCount,
+  completedModuleCount,
+  isVerificationUnlocked,
+  verificationResult,
 }: WorkspaceHeaderProps) {
   const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
     {
@@ -56,7 +68,7 @@ export default function WorkspaceHeader({
     {
       id: "materi",
       label: "Modul & Materi",
-      badge: `${curriculum.learningModules.length} Modul`,
+      badge: `${completedModuleCount}/${curriculum.learningModules.length}`,
     },
     {
       id: "pustaka",
@@ -67,6 +79,16 @@ export default function WorkspaceHeader({
       id: "sertifikasi",
       label: "Tes Sertifikasi",
       badge: `${passedCertCount}/${curriculum.certificationDrills.length}`,
+    },
+    {
+      id: "verifikasi",
+      label: "Verifikasi Kemampuan",
+      badge:
+        verificationResult?.status === "passed"
+          ? `Lulus ${verificationResult.score}%`
+          : isVerificationUnlocked
+          ? "Siap Diuji"
+          : "Terkunci",
     },
   ];
 
@@ -225,11 +247,11 @@ export default function WorkspaceHeader({
         </div>
       </div>
 
-      {/* Clean 4-Tab Workspace Navigation */}
+      {/* Clean 5-Tab Workspace Navigation */}
       <div
         role="tablist"
         aria-label="Navigasi Workspace Modul dan Sertifikasi"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-2.5"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5"
       >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
