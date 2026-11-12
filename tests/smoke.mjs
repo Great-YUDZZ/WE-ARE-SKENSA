@@ -200,6 +200,33 @@ async function main() {
     assert(typeof data.reply === "string" && data.reply.trim().length > 20, "Balasan navigator terlalu pendek");
   });
 
+  await runCheck("POST /api/navigator-chat (Mode Kuesioner Dinamis & Prediksi)", async () => {
+    const res = await fetch(`${BASE_URL}/api/navigator-chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "user", content: "Saya suka desain grafis dan membuat video animasi di Bali." },
+          { role: "assistant", content: "Gaya belajar seperti apa yang kamu sukai?" },
+          { role: "user", content: "Praktik langsung di lab komputer dan memimpin proyek kreatif tim." },
+          { role: "assistant", content: "Target jenjang apa yang kamu minati?" },
+          { role: "user", content: "Sarjana S1 di universitas atau institut seni di Bali." },
+        ],
+        userKabupaten: "Kota Denpasar",
+        targetLevel: "kuliah",
+        mode: "diagnostic",
+      }),
+    });
+    assert(res.status === 200, `Status ${res.status}`);
+    const data = await res.json();
+    assert(typeof data.reply === "string" && data.reply.trim().length > 20, "Balasan kuesioner dinamis terlalu pendek");
+    assert(Boolean(data.diagnostic), "Objek diagnostic tidak ditemukan pada mode diagnostic");
+    assert(data.diagnostic?.status === "completed" || data.diagnostic?.status === "in_progress", "Status diagnostic tidak valid");
+    if (data.diagnostic?.status === "completed") {
+      assert(Boolean(data.diagnostic.prediction?.fieldId), "Field prediction.fieldId tidak ditemukan saat completed");
+    }
+  });
+
   await runCheck("POST /api/mentor-agent", async () => {
     const res = await fetch(`${BASE_URL}/api/mentor-agent`, {
       method: "POST",

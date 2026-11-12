@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { FIELDS } from "@/data/fields";
 import { hasKeywordMatch } from "@/lib/ai-matcher";
 import { evaluateAiScope, getOutOfScopeRefusal } from "@/lib/ai-scope-guard";
 import {
@@ -32,9 +33,10 @@ const NavigatorChatSchema = z
         })
       )
       .min(1)
-      .max(12),
+      .max(16),
     userKabupaten: z.string().trim().min(1).max(60).optional(),
     targetLevel: z.enum(["semua", "smk", "kuliah"]).optional(),
+    mode: z.enum(["standard", "diagnostic"]).optional(),
   })
   .strict();
 
@@ -42,11 +44,29 @@ export async function OPTIONS(req: NextRequest) {
   return handleCorsPreflight(req, "POST, OPTIONS");
 }
 
+export interface DiagnosticPrediction {
+  fieldId: string;
+  fieldName: string;
+  confidenceScore: number;
+  analysisSummary: string;
+  secondaryFieldId?: string;
+  secondaryFieldName?: string;
+}
+
+export interface DiagnosticState {
+  status: "in_progress" | "completed";
+  step: number;
+  totalSteps: number;
+  quickOptions?: string[];
+  prediction?: DiagnosticPrediction;
+}
+
 export interface NavigatorChatResponse {
   reply: string;
   matchedFieldId: string | null;
   sourceMode: "9router-live" | "gemini-live" | "deterministic-qa" | "scope-guard";
   outOfScope?: boolean;
+  diagnostic?: DiagnosticState;
 }
 
 function normalizeNavigatorPayload(
@@ -74,11 +94,76 @@ function normalizeNavigatorPayload(
     return null;
   }
 
+  let diagnostic: DiagnosticState | undefined;
+  if (parsed.diagnostic && typeof parsed.diagnostic === "object") {
+    const rawDiag = parsed.diagnostic as Record<string, unknown>;
+    const status = rawDiag.status === "completed" ? "completed" : "in_progress";
+    const step =
+      typeof rawDiag.step === "number"
+        ? Math.max(1, Math.min(6, Math.round(rawDiag.step)))
+        : 1;
+    const totalSteps =
+      typeof rawDiag.totalSteps === "number"
+        ? Math.max(2, Math.min(6, Math.round(rawDiag.totalSteps)))
+        : 4;
+    const quickOptions = Array.isArray(rawDiag.quickOptions)
+      ? rawDiag.quickOptions
+          .filter(
+            (opt): opt is string =>
+              typeof opt === "string" && opt.trim().length > 0
+          )
+          .slice(0, 5)
+          .map((opt) => sanitizeNoEmojiNoEmDash(opt))
+      : undefined;
+
+    let prediction: DiagnosticPrediction | undefined;
+    if (rawDiag.prediction && typeof rawDiag.prediction === "object") {
+      const rawPred = rawDiag.prediction as Record<string, unknown>;
+      const predFieldId = normalizeFieldId(rawPred.fieldId);
+      if (predFieldId) {
+        const secFieldId = normalizeFieldId(rawPred.secondaryFieldId);
+        prediction = {
+          fieldId: predFieldId,
+          fieldName:
+            typeof rawPred.fieldName === "string" && rawPred.fieldName.trim()
+              ? sanitizeNoEmojiNoEmDash(rawPred.fieldName)
+              : predFieldId.toUpperCase(),
+          confidenceScore:
+            typeof rawPred.confidenceScore === "number"
+              ? Math.max(50, Math.min(99, Math.round(rawPred.confidenceScore)))
+              : 88,
+          analysisSummary:
+            typeof rawPred.analysisSummary === "string" &&
+            rawPred.analysisSummary.trim()
+              ? sanitizeNoEmojiNoEmDash(rawPred.analysisSummary).slice(0, 500)
+              : "Berdasarkan analisis percakapan preferensi dan gaya belajar Anda.",
+          secondaryFieldId: secFieldId || undefined,
+          secondaryFieldName:
+            typeof rawPred.secondaryFieldName === "string" &&
+            rawPred.secondaryFieldName.trim()
+              ? sanitizeNoEmojiNoEmDash(rawPred.secondaryFieldName)
+              : secFieldId
+              ? secFieldId.toUpperCase()
+              : undefined,
+        };
+      }
+    }
+
+    diagnostic = {
+      status,
+      step,
+      totalSteps,
+      quickOptions,
+      prediction,
+    };
+  }
+
   return {
     reply,
     matchedFieldId: normalizeFieldId(parsed.matchedFieldId),
     outOfScope: false,
     sourceMode,
+    diagnostic,
   };
 }
 
@@ -273,6 +358,167 @@ Silakan ceritakan cita-citamu atau sebutkan jurusan/bidang studi yang sedang kam
   };
 }
 
+function getDeterministicDiagnosticReply(
+  messages: { role: string; content: string }[],
+  userKabupaten: string,
+  targetLevel: string
+): { reply: string; matchedFieldId: string | null; diagnostic: DiagnosticState } {
+  const userMessages = messages.filter((m) => m.role === "user");
+  const count = userMessages.length;
+  const allUserText = userMessages.map((m) => m.content.toLowerCase()).join(" ");
+
+  const hasAny = (kws: string[]) => kws.some((kw) => hasKeywordMatch(allUserText, kw));
+
+  if (count <= 1) {
+    return {
+      matchedFieldId: null,
+      reply: `Halo! Saya Navigator KertaMarga. Di mode Kuesioner Interaktif ini, kita akan menentukan jurusan dan kampus/SMK di Bali yang paling cocok melalui 4 langkah dialog dinamis.
+
+Pertanyaan 1/4: Aktivitas apa yang paling membuatmu bersemangat dan lupa waktu dalam keseharian?
+Silakan pilih salah satu opsi cepat di bawah atau ceritakan bebas dengan kata-katamu sendiri:`,
+      diagnostic: {
+        status: "in_progress",
+        step: 1,
+        totalSteps: 4,
+        quickOptions: [
+          "A) Utak-atik kode & logika komputer",
+          "B) Desain visual, video & seni kreatif",
+          "C) Bisnis, jualan & strategi pemasaran",
+          "D) Alam, laut, lingkungan & pertanian Bali",
+          "E) Berkomunikasi, kesehatan & mengajar",
+        ],
+      },
+    };
+  }
+
+  if (count === 2) {
+    return {
+      matchedFieldId: null,
+      reply: `Catatan minat awalmu sudah mulai terbaca dengan baik.
+
+Pertanyaan 2/4: Gaya belajar dan lingkungan berkarya seperti apa yang paling kamu sukai untuk berkembang maksimal?`,
+      diagnostic: {
+        status: "in_progress",
+        step: 2,
+        totalSteps: 4,
+        quickOptions: [
+          "1) Praktik langsung di laboratorium atau bengkel",
+          "2) Memecahkan tantangan logika secara analitis",
+          "3) Kolaborasi tim memimpin proyek kreatif",
+          "4) Terjun langsung ke lapangan atau alam terbuka Bali",
+        ],
+      },
+    };
+  }
+
+  if (count === 3) {
+    return {
+      matchedFieldId: null,
+      reply: `Profil preferensimu semakin terpetakan secara tajam.
+
+Pertanyaan 3/4: Rencana jenjang pendidikan apa yang menjadi target prioritasmu berikutnya di Bali (domisili acuan: ${userKabupaten}, jenjang: ${targetLevel})?`,
+      diagnostic: {
+        status: "in_progress",
+        step: 3,
+        totalSteps: 4,
+        quickOptions: [
+          "A) SMK Vokasi (Siap kerja & sertifikasi BNSP)",
+          "B) Diploma 4 (D4) Sarjana Terapan di Politeknik",
+          "C) Sarjana S1 Akademik di Universitas",
+          "D) Fleksibel menyesuaikan prospek karier",
+        ],
+      },
+    };
+  }
+
+  // Count >= 4: evaluasi kecocokan 11 bidang studi Bali
+  type FieldScore = { id: string; score: number };
+  const scores: FieldScore[] = [
+    {
+      id: "tkj",
+      score: hasAny(["tkj", "jaringan", "cisco", "mikrotik", "server", "cloud", "siber", "router", "telekomunikasi"]) ? 4 : 0,
+    },
+    {
+      id: "informatika",
+      score: hasAny(["kode", "coding", "software", "aplikasi", "komputer", "rpl", "web", "program", "it"]) ? 4 : 0,
+    },
+    {
+      id: "dkv",
+      score: hasAny(["desain", "gambar", "visual", "animasi", "video", "kreatif", "seni", "grafis", "multimedia"]) ? 4 : 0,
+    },
+    {
+      id: "arsitektur",
+      score: hasAny(["bangunan", "arsitektur", "ruang", "villa", "interior", "sketsa", "cad", "denah"]) ? 4 : 0,
+    },
+    {
+      id: "bisnis",
+      score: hasAny(["bisnis", "jualan", "usaha", "pemasaran", "umkm", "dagang", "marketing", "uang"]) ? 4 : 0,
+    },
+    {
+      id: "pariwisata",
+      score: hasAny(["pariwisata", "hotel", "wisata", "kuliner", "hospitality", "ekowisata", "boga"]) ? 4 : 0,
+    },
+    {
+      id: "kesehatan",
+      score: hasAny(["kesehatan", "medis", "perawat", "obat", "klinik", "rumah sakit", "pasien"]) ? 4 : 0,
+    },
+    {
+      id: "pendidikan",
+      score: hasAny(["mengajar", "guru", "pendidikan", "konseling", "bk", "anak", "edukasi"]) ? 4 : 0,
+    },
+    {
+      id: "pertanian",
+      score: hasAny(["tani", "pertanian", "organik", "subak", "kebun", "tanaman", "pangan"]) ? 4 : 0,
+    },
+    {
+      id: "lingkungan",
+      score: hasAny(["laut", "lingkungan", "pesisir", "alam", "karang", "konservasi", "sampah"]) ? 4 : 0,
+    },
+    {
+      id: "budaya",
+      score: hasAny(["budaya", "tari", "gamelan", "karawitan", "adat", "kokar", "tabuh"]) ? 4 : 0,
+    },
+  ];
+
+  scores.sort((a, b) => b.score - a.score);
+  const bestFieldId = scores[0].score > 0 ? scores[0].id : "informatika";
+  const secFieldId = scores[1].score > 0 ? scores[1].id : "dkv";
+
+  const bestMeta = FIELDS.find((f) => f.id === bestFieldId) || FIELDS[0];
+  const secMeta = FIELDS.find((f) => f.id === secFieldId);
+
+  const confidenceScore = Math.min(96, Math.max(84, 84 + scores[0].score * 3));
+  const smkInst = bestMeta.institutions.find((i) => i.level.includes("SMK"))?.name || "SMK Kejuruan Terkait di Bali";
+  const ptInst = bestMeta.institutions.find((i) => !i.level.includes("SMK"))?.name || "Perguruan Tinggi Relevan di Bali";
+
+  return {
+    matchedFieldId: bestFieldId,
+    reply: `Berdasarkan seluruh alur dialog dan jawaban kuesioner percakapan yang telah kita lakukan, AI Navigator memprediksi bidang studi yang paling sesuai dengan profilmu adalah ${bestMeta.name} dengan tingkat keyakinan ${confidenceScore}%.
+
+Rangkuman Analisis AI:
+Aktivitas yang kamu gemari, cara belajar yang paling nyaman bagimu, serta tujuan karier yang kamu sampaikan memiliki sinyal keselarasan tertinggi dengan kompetensi ${bestMeta.name}. Pilihan alternatif pendukung yang dapat kamu pertimbangkan adalah ${secMeta?.name || "bidang terapan serumpun"}.
+
+Rekomendasi Institusi Pendidikan di Bali:
+- Rujukan Jalur SMK: ${smkInst}
+- Rujukan Jalur Kuliah / Sarjana: ${ptInst}
+
+Kamu dapat langsung membuka silabus kurikulum lengkap, mempelajari modul latihan mandiri di Workspace, atau menyimpan hasil asesmen percakapan ini ke profil belajarmu.`,
+    diagnostic: {
+      status: "completed",
+      step: 4,
+      totalSteps: 4,
+      prediction: {
+        fieldId: bestFieldId,
+        fieldName: bestMeta.name,
+        confidenceScore,
+        analysisSummary: `Kombinasi minat aktivitas, cara belajar, dan target jenjangmu sangat selaras dengan ekosistem keilmuan dan karier ${bestMeta.name}.`,
+        secondaryFieldId: secFieldId,
+        secondaryFieldName: secMeta?.name,
+      },
+    },
+  };
+}
+
 function finalizeNavigatorResponse<T>(
   req: NextRequest,
   body: T,
@@ -342,6 +588,8 @@ export async function POST(req: NextRequest) {
     const messages = validated.data.messages;
     const userKabupaten = validated.data.userKabupaten || "Kota Denpasar";
     const targetLevel = validated.data.targetLevel || "semua";
+    const mode = validated.data.mode || "standard";
+    const isDiagnostic = mode === "diagnostic";
 
     const lastUserMessage =
       [...messages].reverse().find((m) => m.role === "user")?.content || "";
@@ -377,7 +625,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemInstruction = `Anda adalah Navigator KertaMarga, Agen AI Konsultan Penjurusan, Akademik, dan Karier resmi Provinsi Bali (KertaMarga Bali).
+    const systemInstruction = isDiagnostic
+      ? `Anda adalah Navigator KertaMarga dalam Mode Kuesioner Interaktif & Prediksi Jurusan (Conversational Career Assessment) Provinsi Bali.
+Pengguna adalah siswa di Provinsi Bali yang sedang menjalani dialog tanya-jawab asesmen untuk memprediksi jurusan SMK atau Perguruan Tinggi yang paling cocok di Bali (domisili: ${userKabupaten}, preferensi jenjang: ${targetLevel}).
+
+Tujuan:
+Mendiagnosis minat aktivitas, cara belajar, dan target masa depan siswa secara dinamis dalam 3 sampai 4 langkah percakapan bertahap, lalu memprediksi jurusan terbaik beserta kampus atau SMK rujukan di Bali.
+
+Aturan Kuesioner Interaktif:
+1. Hitung langkah saat ini berdasarkan riwayat percakapan.
+2. Jika masih dalam proses eksplorasi (langkah 1 sampai 3):
+   - Berikan respon hangat terhadap jawaban siswa sebelumnya, lalu ajukan 1 pertanyaan lanjutan yang dinamis dan relevan.
+   - Sediakan 3 sampai 5 opsi jawaban ringkas dalam properti "quickOptions" agar siswa bisa memilih cepat atau mengetik bebas.
+   - Sertakan objek diagnostic: { "status": "in_progress", "step": <nomor_langkah>, "totalSteps": 4, "quickOptions": ["...", "..."] }
+3. Jika sudah mencapai langkah 3 atau 4 dengan sinyal minat yang memadai:
+   - Tentukan jurusan paling cocok dari 11 ID bidang resmi KertaMarga Bali: "tkj", "informatika", "dkv", "arsitektur", "kesehatan", "pendidikan", "budaya", "pertanian", "lingkungan", "bisnis", "pariwisata".
+   - Berikan ulasan prediktif yang mendalam dan memotivasi pada teks "reply".
+   - Cantumkan rujukan SMK dan Perguruan Tinggi terdekat di Bali untuk jurusan tersebut.
+   - Set "matchedFieldId": "<id_bidang_terpilih>"
+   - Set "diagnostic": {
+       "status": "completed",
+       "step": 4,
+       "totalSteps": 4,
+       "prediction": {
+         "fieldId": "<id_bidang>",
+         "fieldName": "<nama lengkap bidang>",
+         "confidenceScore": <angka 80-98>,
+         "analysisSummary": "<penjelasan singkat kecocokan>",
+         "secondaryFieldId": "<id alternatif>",
+         "secondaryFieldName": "<nama alternatif>"
+       }
+     }
+4. DILARANG menggunakan simbol emoji apapun.
+5. DILARANG menggunakan tanda pisah panjang em-dash (-). Gunakan tanda hubung (-) biasa atau koma.
+6. WAJIB membalas HANYA berupa satu objek JSON murni tanpa pembungkus markdown:
+{
+  "inScope": true,
+  "reply": "Teks penjelasan ramah dan pertanyaan atau hasil prediksi",
+  "matchedFieldId": "dkv",
+  "diagnostic": { "status": "in_progress", "step": 1, "totalSteps": 4, "quickOptions": ["..."] }
+}`
+      : `Anda adalah Navigator KertaMarga, Agen AI Konsultan Penjurusan, Akademik, dan Karier resmi Provinsi Bali (KertaMarga Bali).
 Pengguna adalah siswa SMP, SMA, SMK, atau calon mahasiswa di Provinsi Bali yang sedang berkonsultasi dalam sesi tanya-jawab (Q&A) langsung. Domisili pengguna saat ini: ${userKabupaten}, preferensi jenjang: ${targetLevel}.
 
 Peran & Tanggung Jawab:
@@ -450,7 +738,22 @@ Nilai "matchedFieldId" HARUS salah satu dari 11 ID berikut atau null:
       }
     }
 
-    // 3. Fallback Deterministik Q&A (Fail-Safe Tier untuk semua 11 bidang Bali)
+    // 3. Fallback Deterministik (Fail-Safe Tier untuk semua 11 bidang Bali)
+    if (isDiagnostic) {
+      const fallbackDiag = getDeterministicDiagnosticReply(messages, userKabupaten, targetLevel);
+      return finalizeNavigatorResponse(
+        req,
+        {
+          reply: sanitizeNoEmojiNoEmDash(fallbackDiag.reply),
+          matchedFieldId: fallbackDiag.matchedFieldId,
+          sourceMode: "deterministic-qa",
+          diagnostic: fallbackDiag.diagnostic,
+        } satisfies NavigatorChatResponse,
+        200,
+        rateLimit.remaining
+      );
+    }
+
     const fallback = getDeterministicQAReply(lastUserMessage, userKabupaten, targetLevel);
     return finalizeNavigatorResponse(
       req,
