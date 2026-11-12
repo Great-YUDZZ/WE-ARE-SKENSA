@@ -12,6 +12,12 @@ import type {
   GeneratedVerificationResponse,
   VerificationEligibility,
 } from "@/lib/dynamic-assessment";
+import { getCachedUser } from "@/lib/useAuth";
+import {
+  buildVerificationReportHtml,
+  downloadHtmlFile,
+  openPrintableReport,
+} from "@/lib/test-report-download";
 
 interface VerificationTabProps {
   curriculum: FieldCurriculum;
@@ -258,6 +264,44 @@ export default function VerificationTab({
                 {savedVerification.summary}
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cachedUser = getCachedUser();
+                    const html = buildVerificationReportHtml({
+                      curriculum,
+                      targetCourse,
+                      saved: savedVerification,
+                      userName: cachedUser?.name,
+                    });
+                    downloadHtmlFile(
+                      `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`,
+                      html
+                    );
+                  }}
+                  className="neo-btn px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
+                >
+                  Unduh Hasil Verifikasi (.html) &darr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cachedUser = getCachedUser();
+                    const html = buildVerificationReportHtml({
+                      curriculum,
+                      targetCourse,
+                      saved: savedVerification,
+                      userName: cachedUser?.name,
+                    });
+                    openPrintableReport(
+                      html,
+                      `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`
+                    );
+                  }}
+                  className="neo-btn px-4 py-2 rounded-xl bg-white border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
+                >
+                  Cetak PDF
+                </button>
                 <Link
                   href="/profil"
                   className="neo-btn px-4 py-2 rounded-xl bg-white border-2 border-[#141413] text-xs font-mono font-bold text-[#141413]"
@@ -611,6 +655,48 @@ export default function VerificationTab({
               </div>
 
               <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cachedUser = getCachedUser();
+                    const html = buildVerificationReportHtml({
+                      curriculum,
+                      targetCourse,
+                      evaluation: evaluationResult,
+                      saved: savedVerification,
+                      userName: cachedUser?.name,
+                    });
+                    downloadHtmlFile(
+                      `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`,
+                      html
+                    );
+                  }}
+                  className="neo-btn min-h-[44px] px-5 py-2.5 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
+                >
+                  Unduh Hasil Verifikasi (.html) &darr;
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cachedUser = getCachedUser();
+                    const html = buildVerificationReportHtml({
+                      curriculum,
+                      targetCourse,
+                      evaluation: evaluationResult,
+                      saved: savedVerification,
+                      userName: cachedUser?.name,
+                    });
+                    openPrintableReport(
+                      html,
+                      `kertamarga-verifikasi-${curriculum.fieldId}-${new Date().toISOString().slice(0, 10)}.html`
+                    );
+                  }}
+                  className="neo-btn min-h-[44px] px-4 py-2.5 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-mono font-bold text-xs cursor-pointer"
+                >
+                  Cetak PDF
+                </button>
+
                 <button
                   type="button"
                   disabled={isGenerating || verCooldownSec > 0}

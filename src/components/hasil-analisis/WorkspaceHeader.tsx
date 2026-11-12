@@ -35,6 +35,8 @@ interface WorkspaceHeaderProps {
   completedModuleCount: number;
   isVerificationUnlocked: boolean;
   verificationResult?: FieldVerificationResult;
+  onDownloadReport?: () => void;
+  onPrintReport?: () => void;
 }
 
 export default function WorkspaceHeader({
@@ -58,6 +60,8 @@ export default function WorkspaceHeader({
   completedModuleCount,
   isVerificationUnlocked,
   verificationResult,
+  onDownloadReport,
+  onPrintReport,
 }: WorkspaceHeaderProps) {
   const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
     {
@@ -115,6 +119,24 @@ export default function WorkspaceHeader({
         </nav>
 
         <div className="flex flex-wrap items-center gap-2">
+          {onDownloadReport && (
+            <button
+              type="button"
+              onClick={onDownloadReport}
+              className="neo-btn inline-flex items-center min-h-[44px] px-4 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] hover:bg-[#FFBE2E]/40 text-xs font-mono font-bold text-[#141413] cursor-pointer"
+            >
+              Unduh Hasil Survey (.html) &darr;
+            </button>
+          )}
+          {onPrintReport && (
+            <button
+              type="button"
+              onClick={onPrintReport}
+              className="neo-btn inline-flex items-center min-h-[44px] px-3.5 rounded-xl bg-white border-2 border-[#141413] hover:bg-[#FAF7F2] text-xs font-mono font-bold text-[#141413] cursor-pointer"
+            >
+              Cetak PDF
+            </button>
+          )}
           <Link
             href="/profil"
             className="neo-btn inline-flex items-center min-h-[44px] px-4 rounded-xl bg-[#B8F348] border-2 border-[#141413] hover:bg-[#a8e635] text-xs font-mono font-bold text-[#141413]"

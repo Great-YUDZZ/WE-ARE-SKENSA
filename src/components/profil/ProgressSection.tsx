@@ -5,6 +5,11 @@ import Link from "next/link";
 import { FIELDS, GROUP_CONFIG } from "@/data/fields";
 import { MENTOR_CURRICULUM_BY_FIELD } from "@/data/mentorCurriculum";
 import type { FullLearningSnapshot } from "@/lib/learningProfile";
+import { getCachedUser } from "@/lib/useAuth";
+import {
+  buildSurveyWorkspaceReportHtml,
+  downloadHtmlFile,
+} from "@/lib/test-report-download";
 
 interface ProgressSectionProps {
   snapshot: FullLearningSnapshot;
@@ -33,12 +38,62 @@ export default function ProgressSection({ snapshot }: ProgressSectionProps) {
             </h2>
           </div>
 
-          <Link
-            href="/tes-keminatan"
-            className="neo-btn inline-flex items-center justify-center min-h-[42px] px-4 rounded-xl bg-[#FAF7F2] hover:bg-[#B8F348]/40 border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] shrink-0"
-          >
-            {snapshot.surveyResult ? "Ulangi Survey Keminatan" : "Mulai Survey Keminatan"} &rarr;
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {snapshot.surveyResult && surveyCurr && (
+              <button
+                type="button"
+                onClick={() => {
+                  const cachedUser = getCachedUser();
+                  const prog = snapshot.progressByField[snapshot.surveyResult!.fieldId] || {
+                    fieldId: snapshot.surveyResult!.fieldId,
+                    completedModules: [],
+                    passedCertIds: [],
+                    practiceNotes: {},
+                  };
+                  const modBonus = surveyCurr.learningModules
+                    .filter((m) => prog.completedModules.includes(m.id))
+                    .reduce((acc, m) => acc + m.scoreBoost, 0);
+                  const certBonus = surveyCurr.certificationDrills
+                    .filter((c) => prog.passedCertIds.includes(c.id))
+                    .reduce((acc, c) => acc + c.scoreBoost, 0);
+                  const course =
+                    surveyCurr.targetCourses.find(
+                      (c) => c.id === snapshot.surveyResult?.courseId
+                    ) || surveyCurr.targetCourses[0];
+                  const html = buildSurveyWorkspaceReportHtml({
+                    curriculum: surveyCurr,
+                    targetCourse: course,
+                    baseScore: snapshot.surveyResult!.score,
+                    moduleBonus: modBonus,
+                    certBonus,
+                    currentReadinessScore: Math.min(
+                      99,
+                      snapshot.surveyResult!.score + modBonus + certBonus
+                    ),
+                    dominantGroup: snapshot.surveyResult!.dominant,
+                    isGroupMismatch: snapshot.surveyResult!.mismatch,
+                    isPreviewMode: false,
+                    progress: prog,
+                    userName: cachedUser?.name,
+                    userIdentifier: cachedUser?.identifier,
+                  });
+                  downloadHtmlFile(
+                    `kertamarga-hasil-survey-${snapshot.surveyResult!.fieldId}-${new Date().toISOString().slice(0, 10)}.html`,
+                    html
+                  );
+                }}
+                className="neo-btn inline-flex items-center justify-center min-h-[42px] px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] border-2 border-[#141413] text-xs font-mono font-bold text-[#141413] cursor-pointer"
+              >
+                Unduh Hasil Survey (.html) &darr;
+              </button>
+            )}
+            <Link
+              href="/tes-keminatan"
+              className="neo-btn inline-flex items-center justify-center min-h-[42px] px-4 rounded-xl bg-[#FAF7F2] hover:bg-[#B8F348]/40 border-2 border-[#141413] text-xs font-mono font-bold text-[#141413]"
+            >
+              {snapshot.surveyResult ? "Ulangi Survey Keminatan" : "Mulai Survey Keminatan"} &rarr;
+            </Link>
+          </div>
         </div>
 
         {snapshot.surveyResult ? (

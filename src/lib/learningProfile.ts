@@ -4,6 +4,8 @@ import type { SafeUser } from "@/lib/schema";
 
 export const PERSONAL_NOTES_STORAGE_KEY = "kertamarga_personal_notes";
 export const SURVEY_RESULT_STORAGE_KEY = "kertamarga_survey_result";
+export const EXPLORATION_RESULT_STORAGE_KEY = "kertamarga_exploration_result";
+export const SAVED_FIELDS_STORAGE_KEY = "kertamarga_saved_fields";
 export const STUDY_PROGRESS_PREFIX = "kertamarga_study_progress_";
 
 export type PersonalNoteCategory =
@@ -53,6 +55,13 @@ export interface FieldStudyProgressSnapshot {
   updatedAt?: string;
 }
 
+export interface SurveyAnswerSummaryItem {
+  questionId: string;
+  dimension: string;
+  selectedOptionLabel: string;
+  readinessWeight: number;
+}
+
 export interface SavedSurveySnapshot {
   fieldId: string;
   courseId?: string;
@@ -60,12 +69,50 @@ export interface SavedSurveySnapshot {
   dominant: FieldGroup;
   mismatch: boolean;
   completedAt?: string;
+  answersSummary?: SurveyAnswerSummaryItem[];
+}
+
+export interface ExplorationSnapshotRecommendation {
+  rank: number;
+  fieldId: string;
+  fieldName: string;
+  categoryName: string;
+  compositeScore: number;
+  confidenceBand: string;
+  interestScore: number;
+  readinessScore: number;
+  preferenceScore: number;
+  topInstitution?: string;
+}
+
+export interface ExplorationQuizAnswerItem {
+  questionId: string;
+  prompt: string;
+  answerLabel: string;
+}
+
+export interface SavedExplorationSnapshot {
+  educationLevel: string;
+  originLabel: string;
+  weights: {
+    matchWeight: number;
+    distanceWeight: number;
+    costWeight: number;
+  };
+  totalQuestionsAnswered: number;
+  extractedSignals: string[];
+  openEndedReflection?: string;
+  answersSummary?: ExplorationQuizAnswerItem[];
+  topRecommendations: ExplorationSnapshotRecommendation[];
+  completedAt: string;
 }
 
 export interface FullLearningSnapshot {
   personalNotes: PersonalLearningNote[];
   progressByField: Record<string, FieldStudyProgressSnapshot>;
   surveyResult: SavedSurveySnapshot | null;
+  explorationResult?: SavedExplorationSnapshot | null;
+  savedFieldIds?: string[];
   updatedAt: string;
 }
 
@@ -272,6 +319,19 @@ export function readSurveyResultFromStorage(): SavedSurveySnapshot | null {
         ? parsed.dominant
         : MENTOR_CURRICULUM_BY_FIELD[validField].group;
 
+    const answersSummary = Array.isArray(parsed.answersSummary)
+      ? parsed.answersSummary
+          .filter(
+            (a): a is SurveyAnswerSummaryItem =>
+              Boolean(a) &&
+              typeof a.questionId === "string" &&
+              typeof a.dimension === "string" &&
+              typeof a.selectedOptionLabel === "string" &&
+              typeof a.readinessWeight === "number"
+          )
+          .slice(0, 10)
+      : undefined;
+
     return {
       fieldId: validField,
       courseId: typeof parsed.courseId === "string" ? parsed.courseId : undefined,
@@ -280,9 +340,159 @@ export function readSurveyResultFromStorage(): SavedSurveySnapshot | null {
       mismatch: Boolean(parsed.mismatch),
       completedAt:
         typeof parsed.completedAt === "string" ? parsed.completedAt : undefined,
+      answersSummary,
     };
   } catch {
     return null;
+  }
+}
+
+export function sanitizeExplorationSnapshot(
+  val: unknown
+): SavedExplorationSnapshot | null {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return null;
+  const parsed = val as Partial<SavedExplorationSnapshot>;
+  if (!Array.isArray(parsed.topRecommendations) || parsed.topRecommendations.length === 0) {
+    return null;
+  }
+  const topRecommendations: ExplorationSnapshotRecommendation[] = parsed.topRecommendations
+    .filter(
+      (r): r is ExplorationSnapshotRecommendation =>
+        Boolean(r) &&
+        typeof r.fieldId === "string" &&
+        typeof r.fieldName === "string" &&
+        typeof r.compositeScore === "number"
+    )
+    .slice(0, 5)
+    .map((r, idx) => ({
+      rank: typeof r.rank === "number" ? r.rank : idx + 1,
+      fieldId: r.fieldId,
+      fieldName: r.fieldName.slice(0, 160),
+      categoryName: typeof r.categoryName === "string" ? r.categoryName.slice(0, 120) : "",
+      compositeScore: Math.max(0, Math.min(100, Math.round(r.compositeScore))),
+      confidenceBand:
+        typeof r.confidenceBand === "string" ? r.confidenceBand.slice(0, 80) : "Cocok",
+      interestScore:
+        typeof r.interestScore === "number" ? Math.round(r.interestScore) : 0,
+      readinessScore:
+        typeof r.readinessScore === "number" ? Math.round(r.readinessScore) : 0,
+      preferenceScore:
+        typeof r.preferenceScore === "number" ? Math.round(r.preferenceScore) : 0,
+      topInstitution:
+        typeof r.topInstitution === "string" ? r.topInstitution.slice(0, 200) : undefined,
+    }));
+
+  if (topRecommendations.length === 0) return null;
+
+  const answersSummary = Array.isArray(parsed.answersSummary)
+    ? parsed.answersSummary
+        .filter(
+          (a): a is ExplorationQuizAnswerItem =>
+            Boolean(a) &&
+            typeof a.questionId === "string" &&
+            typeof a.prompt === "string" &&
+            typeof a.answerLabel === "string"
+        )
+        .slice(0, 20)
+        .map((a) => ({
+          questionId: a.questionId.slice(0, 60),
+          prompt: a.prompt.slice(0, 240),
+          answerLabel: a.answerLabel.slice(0, 200),
+        }))
+    : undefined;
+
+  return {
+    educationLevel:
+      typeof parsed.educationLevel === "string" && parsed.educationLevel
+        ? parsed.educationLevel.slice(0, 40)
+        : "SMA",
+    originLabel:
+      typeof parsed.originLabel === "string" && parsed.originLabel
+        ? parsed.originLabel.slice(0, 160)
+        : "Kota Denpasar",
+    weights: {
+      matchWeight:
+        typeof parsed.weights?.matchWeight === "number"
+          ? Math.round(parsed.weights.matchWeight)
+          : 80,
+      distanceWeight:
+        typeof parsed.weights?.distanceWeight === "number"
+          ? Math.round(parsed.weights.distanceWeight)
+          : 50,
+      costWeight:
+        typeof parsed.weights?.costWeight === "number"
+          ? Math.round(parsed.weights.costWeight)
+          : 65,
+    },
+    totalQuestionsAnswered:
+      typeof parsed.totalQuestionsAnswered === "number"
+        ? Math.max(0, Math.round(parsed.totalQuestionsAnswered))
+        : answersSummary?.length || 0,
+    extractedSignals: sanitizeStringArray(parsed.extractedSignals).slice(0, 15),
+    openEndedReflection:
+      typeof parsed.openEndedReflection === "string" &&
+      parsed.openEndedReflection.trim().length > 0
+        ? parsed.openEndedReflection.trim().slice(0, 600)
+        : undefined,
+    answersSummary,
+    topRecommendations,
+    completedAt:
+      typeof parsed.completedAt === "string" && parsed.completedAt
+        ? parsed.completedAt
+        : new Date().toISOString(),
+  };
+}
+
+export function readExplorationResultFromStorage(): SavedExplorationSnapshot | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(EXPLORATION_RESULT_STORAGE_KEY);
+    if (!raw) return null;
+    return sanitizeExplorationSnapshot(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export function saveExplorationResultToStorage(
+  exploration: SavedExplorationSnapshot
+): SavedExplorationSnapshot | null {
+  const clean = sanitizeExplorationSnapshot(exploration);
+  if (!clean) return null;
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(
+        EXPLORATION_RESULT_STORAGE_KEY,
+        JSON.stringify(clean)
+      );
+    } catch {
+      // Abaikan kegagalan kuota penyimpanan browser
+    }
+  }
+  return clean;
+}
+
+export function readSavedFieldIdsFromStorage(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SAVED_FIELDS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return sanitizeStringArray(parsed);
+  } catch {
+    return [];
+  }
+}
+
+export function writeSavedFieldIdsToStorage(ids: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      SAVED_FIELDS_STORAGE_KEY,
+      JSON.stringify(sanitizeStringArray(ids))
+    );
+  } catch {
+    // Abaikan kegagalan kuota penyimpanan browser
   }
 }
 
@@ -303,6 +513,8 @@ export function readFullLearningSnapshot(): FullLearningSnapshot {
     personalNotes: readPersonalNotesFromStorage(),
     progressByField,
     surveyResult: readSurveyResultFromStorage(),
+    explorationResult: readExplorationResultFromStorage(),
+    savedFieldIds: readSavedFieldIdsFromStorage(),
     updatedAt: new Date().toISOString(),
   };
 }
@@ -327,6 +539,25 @@ export function applyFullLearningSnapshotToStorage(snapshot: FullLearningSnapsho
     } catch {
       // Abaikan kesalahan penyimpanan
     }
+  }
+  if (snapshot.explorationResult) {
+    const cleanExp = sanitizeExplorationSnapshot(snapshot.explorationResult);
+    if (cleanExp) {
+      try {
+        window.localStorage.setItem(
+          EXPLORATION_RESULT_STORAGE_KEY,
+          JSON.stringify(cleanExp)
+        );
+      } catch {
+        // Abaikan kesalahan penyimpanan
+      }
+    }
+  }
+  if (Array.isArray(snapshot.savedFieldIds) && snapshot.savedFieldIds.length > 0) {
+    const mergedSaved = Array.from(
+      new Set([...readSavedFieldIdsFromStorage(), ...snapshot.savedFieldIds])
+    );
+    writeSavedFieldIdsToStorage(mergedSaved);
   }
 }
 
@@ -401,12 +632,30 @@ export function mergeLearningSnapshots(
 
   const surveyResult = local.surveyResult || remote.surveyResult || null;
 
+  const localExp = sanitizeExplorationSnapshot(local.explorationResult);
+  const remoteExp = sanitizeExplorationSnapshot(remote.explorationResult);
+  let explorationResult: SavedExplorationSnapshot | null = null;
+  if (localExp && remoteExp) {
+    explorationResult =
+      (localExp.completedAt || "") >= (remoteExp.completedAt || "")
+        ? localExp
+        : remoteExp;
+  } else {
+    explorationResult = localExp || remoteExp || null;
+  }
+
+  const savedFieldIds = Array.from(
+    new Set([...(remote.savedFieldIds || []), ...(local.savedFieldIds || [])])
+  );
+
   return {
     personalNotes: Array.from(notesMap.values()).sort((a, b) =>
       (b.updatedAt || "").localeCompare(a.updatedAt || "")
     ),
     progressByField: mergedProgress,
     surveyResult,
+    explorationResult,
+    savedFieldIds,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -467,6 +716,17 @@ export function exportLearningReportMarkdown(
   }
   lines.push(`Acuan Lokasi Bali: ${originLabel}`);
   lines.push("");
+
+  if (snapshot.explorationResult) {
+    const exp = snapshot.explorationResult;
+    lines.push("## 0. Hasil Kuesioner Eksplorasi Minat Terakhir");
+    lines.push(`- Jenjang Saat Ini: ${exp.educationLevel} | Lokasi: ${exp.originLabel}`);
+    lines.push(`- Pertanyaan Terjawab: ${exp.totalQuestionsAnswered}`);
+    exp.topRecommendations.forEach((rec) => {
+      lines.push(`  - Peringkat #${rec.rank}: ${rec.fieldName} (Skor Komposit: ${rec.compositeScore}/100 - ${rec.confidenceBand})`);
+    });
+    lines.push("");
+  }
 
   if (snapshot.surveyResult) {
     const curr = MENTOR_CURRICULUM_BY_FIELD[snapshot.surveyResult.fieldId];

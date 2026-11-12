@@ -10,9 +10,20 @@ import { formatOriginLabel } from "@/data/catalog";
 import { BASE_QUESTIONS, ADAPTIVE_BRANCH_QUESTIONS, AssessmentQuestion } from "@/data/questions";
 import { type AssessmentAnalysisResult } from "@/lib/scoring";
 import { useBaliLocation } from "@/lib/useBaliLocation";
+import { useAuth } from "@/lib/useAuth";
+import {
+  buildExplorationReportHtml,
+  downloadHtmlFile,
+  openPrintableReport,
+} from "@/lib/test-report-download";
+import {
+  saveExplorationResultToStorage,
+  type ExplorationQuizAnswerItem,
+} from "@/lib/learningProfile";
 
 export default function EksplorasiPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
@@ -121,7 +132,52 @@ export default function EksplorasiPage() {
         throw new Error(data?.error || "Gagal menghitung rekomendasi dari server.");
       }
 
-      setAnalysisResult(data as AssessmentAnalysisResult);
+      const typedResult = data as AssessmentAnalysisResult;
+      setAnalysisResult(typedResult);
+
+      const allQuestions: AssessmentQuestion[] = [
+        ...BASE_QUESTIONS,
+        ...Object.values(ADAPTIVE_BRANCH_QUESTIONS),
+      ];
+      const answersSummary: ExplorationQuizAnswerItem[] = [];
+      for (const q of allQuestions) {
+        const chosenOptId = answers[q.id];
+        if (!chosenOptId) continue;
+        const chosenOpt = q.options.find((o) => o.id === chosenOptId);
+        if (chosenOpt) {
+          answersSummary.push({
+            questionId: q.id,
+            prompt: q.title,
+            answerLabel: chosenOpt.text,
+          });
+        }
+      }
+
+      saveExplorationResultToStorage({
+        educationLevel,
+        originLabel: formatOriginLabel(origin),
+        weights: w,
+        totalQuestionsAnswered: typedResult.totalQuestionsAnswered,
+        extractedSignals: typedResult.extractedSignals || [],
+        openEndedReflection: openEndedText.trim() || undefined,
+        answersSummary,
+        topRecommendations: typedResult.topRecommendations.slice(0, 3).map((rec) => ({
+          rank: rec.rank,
+          fieldId: rec.field.id,
+          fieldName: rec.field.name,
+          categoryName: rec.field.categoryName,
+          compositeScore: rec.compositeScore,
+          confidenceBand: rec.confidenceBand,
+          interestScore: rec.breakdown.interestScore,
+          readinessScore: rec.breakdown.readinessScore,
+          preferenceScore: rec.breakdown.preferenceScore,
+          topInstitution: rec.matchedInstitutions?.[0]
+            ? `${rec.matchedInstitutions[0].institutionName} (${rec.matchedInstitutions[0].kabupaten}, ~${rec.matchedInstitutions[0].estimatedDistanceKm} km)`
+            : undefined,
+        })),
+        completedAt: new Date().toISOString(),
+      });
+
       triggerToast("Hasil rekomendasi objektif berhasil dihitung!");
     } catch (err) {
       const message =
@@ -567,6 +623,50 @@ export default function EksplorasiPage() {
                   <p className="text-sm sm:text-base text-[#52514E] leading-relaxed">
                     Sistem menganalisis {analysisResult.totalQuestionsAnswered} jawabanmu dengan memisahkan faktor <strong>Minat</strong>, <strong>Kesiapan Saat Ini</strong>, dan <strong>Preferensi Belajar</strong>. Pilihlah bidang yang paling menarik untuk membaca panduan detailnya.
                   </p>
+
+                  <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const html = buildExplorationReportHtml({
+                          result: analysisResult,
+                          educationLevel,
+                          originLabel: formatOriginLabel(origin),
+                          weights: { matchWeight, distanceWeight, costWeight },
+                          userName: user?.name,
+                          userIdentifier: user?.identifier,
+                        });
+                        downloadHtmlFile(
+                          `kertamarga-hasil-eksplorasi-${new Date().toISOString().slice(0, 10)}.html`,
+                          html
+                        );
+                        triggerToast("Laporan hasil tes eksplorasi berhasil diunduh.");
+                      }}
+                      className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
+                    >
+                      Unduh Hasil Tes (.html) &darr;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const html = buildExplorationReportHtml({
+                          result: analysisResult,
+                          educationLevel,
+                          originLabel: formatOriginLabel(origin),
+                          weights: { matchWeight, distanceWeight, costWeight },
+                          userName: user?.name,
+                          userIdentifier: user?.identifier,
+                        });
+                        openPrintableReport(
+                          html,
+                          `kertamarga-hasil-eksplorasi-${new Date().toISOString().slice(0, 10)}.html`
+                        );
+                      }}
+                      className="neo-btn min-h-[42px] px-4 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+                    >
+                      Cetak / Simpan PDF
+                    </button>
+                  </div>
 
                   {/* Sinyal Ekstraksi dari Refleksi */}
                   {analysisResult.extractedSignals.length > 0 && (

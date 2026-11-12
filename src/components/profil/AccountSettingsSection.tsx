@@ -16,6 +16,8 @@ interface AccountSettingsSectionProps {
   onUpdateAccount: (payload: { name: string; interests: string[] }) => Promise<void>;
   onManualSyncServer: () => Promise<void>;
   onExportMarkdown: () => void;
+  onDownloadTestHtml?: () => void;
+  onPrintTestPdf?: () => void;
   onLogout: () => Promise<void>;
   origin: UserLocationOrigin;
   isDetectingLocation: boolean;
@@ -35,6 +37,8 @@ export default function AccountSettingsSection({
   onUpdateAccount,
   onManualSyncServer,
   onExportMarkdown,
+  onDownloadTestHtml,
+  onPrintTestPdf,
   onLogout,
   origin,
   isDetectingLocation,
@@ -307,20 +311,40 @@ export default function AccountSettingsSection({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
           <div className="space-y-1">
             <h3 className="font-display font-bold text-sm sm:text-base text-[#141413]">
-              Unduh Rekap Catatan &amp; Progres Belajar (.md)
+              Unduh Rekapan Lengkap Aktivitas &amp; Hasil Belajar
             </h3>
             <p className="text-xs text-[#52514E]">
-              Simpan seluruh jurnal belajar, jawaban tugas praktik modul, dan daftar kelulusan sertifikasi menjadi satu dokumen Markdown untuk didiskusikan dengan Guru BK atau orang tua.
+              Simpan rekapan menyeluruh dari Kuesioner Eksplorasi Minat, Survey Keminatan Dasar, penyelesaian modul materi, quiz latihan sertifikasi, verifikasi kemampuan AI, jurnal catatan pribadi, serta bidang favorit menjadi dokumen PDF, HTML, atau Markdown.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onExportMarkdown}
-            className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-[#3B66FF] hover:bg-[#2F55DF] text-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer shrink-0"
-          >
-            Unduh Rekap (.md) &darr;
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {onPrintTestPdf && (
+              <button
+                type="button"
+                onClick={onPrintTestPdf}
+                className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
+              >
+                Unduh Rekap PDF &darr;
+              </button>
+            )}
+            {onDownloadTestHtml && (
+              <button
+                type="button"
+                onClick={onDownloadTestHtml}
+                className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+              >
+                Unduh Hasil (.html) &darr;
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onExportMarkdown}
+              className="neo-btn min-h-[44px] px-4 py-2 rounded-xl bg-[#3B66FF] hover:bg-[#2F55DF] text-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
+            >
+              Unduh Rekap (.md) &darr;
+            </button>
+          </div>
         </div>
 
         {user && (

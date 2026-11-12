@@ -10,6 +10,11 @@ import AccountSettingsSection from "@/components/profil/AccountSettingsSection";
 import { saveUserToStorage, useAuth } from "@/lib/useAuth";
 import { useBaliLocation } from "@/lib/useBaliLocation";
 import {
+  buildProfileTestReportHtml,
+  downloadHtmlFile,
+  openPrintableReport,
+} from "@/lib/test-report-download";
+import {
   applyFullLearningSnapshotToStorage,
   collectModulePracticeNoteViews,
   exportLearningReportMarkdown,
@@ -140,7 +145,9 @@ export default function ProfilPage() {
         const localHadData =
           localSnap.personalNotes.length > 0 ||
           Object.keys(localSnap.progressByField).length > 0 ||
-          Boolean(localSnap.surveyResult);
+          Boolean(localSnap.surveyResult) ||
+          Boolean(localSnap.explorationResult) ||
+          (localSnap.savedFieldIds?.length || 0) > 0;
         if (localHadData) {
           void pushSnapshotToServer(merged, false);
         }
@@ -294,6 +301,42 @@ export default function ProfilPage() {
     showStatus("Rekap catatan belajar berhasil diunduh (.md).");
   };
 
+  const handleDownloadTestReportHtml = () => {
+    const latestSnap = readFullLearningSnapshot();
+    const originLabel =
+      origin.areaLabel || origin.addressQuery || origin.kabupaten || "Kota Denpasar";
+    const html = buildProfileTestReportHtml({
+      snapshot: latestSnap,
+      user,
+      originLabel,
+    });
+    downloadHtmlFile(
+      `kertamarga-rekap-keseluruhan-${new Date().toISOString().slice(0, 10)}.html`,
+      html
+    );
+    showStatus("Rekap hasil keseluruhan website berhasil diunduh (.html).");
+  };
+
+  const handlePrintTestReportPdf = () => {
+    const latestSnap = readFullLearningSnapshot();
+    const originLabel =
+      origin.areaLabel || origin.addressQuery || origin.kabupaten || "Kota Denpasar";
+    const html = buildProfileTestReportHtml({
+      snapshot: latestSnap,
+      user,
+      originLabel,
+    });
+    const opened = openPrintableReport(
+      html,
+      `kertamarga-rekap-keseluruhan-${new Date().toISOString().slice(0, 10)}.html`
+    );
+    if (opened) {
+      showStatus("Membuka dialog Simpan sebagai PDF untuk rekapan keseluruhan website.");
+    } else {
+      showStatus("Popup diblokir; rekapan lengkap diunduh sebagai HTML siap cetak PDF.");
+    }
+  };
+
   const tabs: { id: ProfileTabId; label: string; badge: string }[] = [
     {
       id: "catatan",
@@ -398,8 +441,22 @@ export default function ProfilPage() {
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                   type="button"
+                  onClick={handlePrintTestReportPdf}
+                  className="neo-btn min-h-[42px] px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[2px_2px_0px_#141413] font-mono font-bold text-xs cursor-pointer"
+                >
+                  Unduh Rekap PDF &darr;
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadTestReportHtml}
+                  className="neo-btn min-h-[42px] px-3.5 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+                >
+                  Unduh Hasil (.html) &darr;
+                </button>
+                <button
+                  type="button"
                   onClick={handleExportMarkdown}
-                  className="neo-btn min-h-[42px] px-4 rounded-xl bg-[#FAF7F2] hover:bg-[#B8F348] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+                  className="neo-btn min-h-[42px] px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
                 >
                   Unduh Rekap (.md) &darr;
                 </button>
@@ -519,6 +576,8 @@ export default function ProfilPage() {
                   onUpdateAccount={handleUpdateAccount}
                   onManualSyncServer={handleManualSync}
                   onExportMarkdown={handleExportMarkdown}
+                  onDownloadTestHtml={handleDownloadTestReportHtml}
+                  onPrintTestPdf={handlePrintTestReportPdf}
                   onLogout={logout}
                   origin={origin}
                   isDetectingLocation={isDetectingLocation}

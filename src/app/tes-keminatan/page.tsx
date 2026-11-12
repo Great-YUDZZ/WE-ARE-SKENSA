@@ -109,6 +109,19 @@ function TesKeminatanContent() {
     const isGroupMismatch = dominantGroup !== curriculum.group;
     const baseScore = isGroupMismatch ? Math.max(40, avg - 6) : avg;
 
+    const answersSummary = INTEREST_TEST_QUESTIONS.map((q) => {
+      const idx = activeAnswers[q.id];
+      const opt = idx !== undefined ? q.options[idx] : undefined;
+      return opt
+        ? {
+            questionId: q.id,
+            dimension: q.question,
+            selectedOptionLabel: opt.label,
+            readinessWeight: opt.readinessWeight,
+          }
+        : null;
+    }).filter((item): item is NonNullable<typeof item> => Boolean(item));
+
     try {
       window.localStorage.setItem(
         "kertamarga_survey_result",
@@ -119,6 +132,7 @@ function TesKeminatanContent() {
           dominant: dominantGroup,
           mismatch: isGroupMismatch,
           completedAt: new Date().toISOString(),
+          answersSummary,
         })
       );
     } catch {

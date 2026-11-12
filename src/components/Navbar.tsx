@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import KertaMargaLogo from "@/components/KertaMargaLogo";
 
@@ -17,70 +18,95 @@ export default function Navbar({
   onOpenRegister,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
   const { user, logout } = useAuth();
   // Modal lama dipertahankan sebagai fallback agar page lama tetap kompatibel
   void onOpenLogin;
   void onOpenRegister;
   void onOpenTest;
 
+  const isRouteActive = (href: string) => {
+    if (href === "/#peta-kampus") return false;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const navLinkClass = (href: string) =>
+    `px-2 xl:px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+      isRouteActive(href)
+        ? "bg-[#B8F348] border border-[#141413] text-[#141413]"
+        : "hover:bg-[#F0ECE1] text-[#141413]"
+    }`;
+
   return (
-    <header className="w-full sticky top-0 z-40 px-3 sm:px-5 lg:px-5 2xl:px-8 pt-3 sm:pt-4 pointer-events-none">
+    <header className="w-full sticky top-0 z-40 px-3 sm:px-5 pt-3 sm:pt-4 pointer-events-none">
       <div className="max-w-7xl mx-auto pointer-events-auto">
         {/* Unified Single Navbar Card */}
-        <div className="bg-white border-2 border-[#141413] rounded-2xl shadow-[0_5px_0_#141413] px-3.5 sm:px-4 2xl:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 xl:gap-2.5 2xl:gap-4 transition-all">
+        <div className="bg-white border-2 border-[#141413] rounded-2xl shadow-[0_5px_0_#141413] px-3.5 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between gap-2 xl:gap-3 transition-all">
           {/* Brand Logo + Sticker Tag */}
           <Link
             href="/"
-            className="flex items-center gap-2 2xl:gap-2.5 group focus:outline-none rounded-xl p-0.5 2xl:p-1 transition-all shrink-0"
+            className="flex items-center gap-2 group focus:outline-none rounded-xl p-0.5 transition-all shrink-0"
           >
             <KertaMargaLogo
               variant="compact"
-              className="w-9 h-9 2xl:w-10 2xl:h-10 shrink-0 drop-shadow-[2px_2px_0px_#141413] group-hover:rotate-12 transition-transform duration-300"
+              className="w-9 h-9 shrink-0 drop-shadow-[2px_2px_0px_#141413] group-hover:rotate-12 transition-transform duration-300"
             />
-            <span className="font-display font-extrabold text-base xl:text-lg 2xl:text-xl text-[#141413] tracking-tight">
+            <span className="font-display font-extrabold text-base xl:text-lg text-[#141413] tracking-tight">
               KertaMarga
             </span>
           </Link>
 
           {/* Center Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 text-xs 2xl:text-sm font-bold text-[#141413]">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5 text-xs xl:text-[13px] font-bold text-[#141413] shrink-0">
             <Link
               href="/peta-bidang"
-              className="px-2 2xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
+              className={navLinkClass("/peta-bidang")}
             >
               Peta Bidang
             </Link>
             <Link
               href="/katalog"
-              className="px-2 2xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
+              title="Katalog Kampus & Sekolah Bali"
+              className={navLinkClass("/katalog")}
             >
-              <span className="hidden xl:inline">Katalog Kampus</span>
-              <span className="xl:hidden inline">Katalog</span>
+              Katalog
             </Link>
             <Link
               href="/#peta-kampus"
-              className="px-2 2xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
+              className={navLinkClass("/#peta-kampus")}
             >
               <span className="hidden xl:inline">Radar Bali</span>
               <span className="xl:hidden inline">Radar</span>
             </Link>
             <Link
-              href="/hasil-analisis"
-              className="px-2 2xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
+              href="/tes-keminatan"
+              className={navLinkClass("/tes-keminatan")}
             >
-              <span className="hidden xl:inline">Modul &amp; Sertifikasi</span>
+              <span className="hidden xl:inline">Survey Minat</span>
+              <span className="xl:hidden inline">Survey</span>
+            </Link>
+            <Link
+              href="/hasil-analisis"
+              title="Modul & Sertifikasi Kompetensi"
+              className={navLinkClass("/hasil-analisis")}
+            >
+              <span className="hidden xl:inline">Modul &amp; Uji</span>
               <span className="xl:hidden inline">Modul</span>
             </Link>
             <Link
               href="/profil"
-              className="px-2 2xl:px-3 py-1.5 rounded-lg hover:bg-[#F0ECE1] transition-colors whitespace-nowrap"
+              title="Profil & Catatan Belajar"
+              className={navLinkClass("/profil")}
             >
-              <span className="hidden xl:inline">Profil &amp; Catatan</span>
-              <span className="xl:hidden inline">Profil</span>
+              Profil
             </Link>
             <Link
               href="/ai-navigator"
-              className="ml-0.5 2xl:ml-1 mr-0.5 2xl:mr-1 px-2.5 2xl:px-3 py-1.5 rounded-lg bg-[#3B66FF]/10 border border-[#3B66FF] text-[#3B66FF] hover:bg-[#3B66FF] hover:text-white transition-colors flex items-center gap-1.5 font-mono text-xs whitespace-nowrap shrink-0 shadow-xs"
+              className={`ml-0.5 px-2.5 py-1.5 rounded-lg border border-[#3B66FF] transition-colors flex items-center gap-1.5 font-mono text-xs whitespace-nowrap shrink-0 shadow-xs ${
+                isRouteActive("/ai-navigator")
+                  ? "bg-[#3B66FF] text-white"
+                  : "bg-[#3B66FF]/10 text-[#3B66FF] hover:bg-[#3B66FF] hover:text-white"
+              }`}
             >
               <span className="w-2 h-2 rounded-full bg-[#1AD598] border border-[#141413]" />
               <span>AI Navigator</span>
@@ -88,10 +114,10 @@ export default function Navbar({
           </nav>
 
           {/* Visual Divider between navigation and auth actions */}
-          <div className="hidden lg:block h-5 2xl:h-6 w-[2px] bg-[#141413]/15 mx-0.5 2xl:mx-1.5 shrink-0" />
+          <div className="hidden lg:block h-5 w-[2px] bg-[#141413]/15 mx-1 shrink-0" />
 
           {/* Right Action Group - Integrated inside navbar with balanced padding */}
-          <div className="flex items-center gap-1.5 sm:gap-2 2xl:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {user ? (
               <div className="flex items-center gap-1.5 xl:gap-2">
                 <Link
@@ -194,6 +220,13 @@ export default function Navbar({
               className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
             >
               Radar Peta Bali
+            </Link>
+            <Link
+              href="/tes-keminatan"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 rounded-xl font-bold text-sm text-[#141413] hover:bg-[#F0ECE1]"
+            >
+              Survey Minat
             </Link>
             <Link
               href="/hasil-analisis"

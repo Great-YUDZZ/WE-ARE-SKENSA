@@ -63,6 +63,13 @@ const FieldProgressSchema = z.object({
   updatedAt: z.string().max(60).optional(),
 });
 
+const SurveyAnswerSummarySchema = z.object({
+  questionId: z.string().min(1).max(60),
+  dimension: z.string().min(1).max(120),
+  selectedOptionLabel: z.string().min(1).max(300),
+  readinessWeight: z.number().min(0).max(100),
+});
+
 const SurveySnapshotSchema = z
   .object({
     fieldId: z.string().min(1).max(40),
@@ -71,6 +78,44 @@ const SurveySnapshotSchema = z
     dominant: z.enum(["teknologi", "manusia", "alam", "usaha"]),
     mismatch: z.boolean(),
     completedAt: z.string().max(60).optional(),
+    answersSummary: z.array(SurveyAnswerSummarySchema).max(10).optional(),
+  })
+  .nullable();
+
+const ExplorationRecommendationSchema = z.object({
+  rank: z.number().min(1).max(10),
+  fieldId: z.string().min(1).max(60),
+  fieldName: z.string().min(1).max(160),
+  categoryName: z.string().max(120),
+  compositeScore: z.number().min(0).max(100),
+  confidenceBand: z.string().max(80),
+  interestScore: z.number().min(0).max(100),
+  readinessScore: z.number().min(0).max(100),
+  preferenceScore: z.number().min(0).max(100),
+  topInstitution: z.string().max(200).optional(),
+});
+
+const ExplorationAnswerSchema = z.object({
+  questionId: z.string().min(1).max(60),
+  prompt: z.string().min(1).max(240),
+  answerLabel: z.string().min(1).max(200),
+});
+
+const ExplorationSnapshotSchema = z
+  .object({
+    educationLevel: z.string().max(40),
+    originLabel: z.string().max(160),
+    weights: z.object({
+      matchWeight: z.number().min(0).max(100),
+      distanceWeight: z.number().min(0).max(100),
+      costWeight: z.number().min(0).max(100),
+    }),
+    totalQuestionsAnswered: z.number().min(0).max(50),
+    extractedSignals: z.array(z.string().max(80)).max(15),
+    openEndedReflection: z.string().max(600).optional(),
+    answersSummary: z.array(ExplorationAnswerSchema).max(20).optional(),
+    topRecommendations: z.array(ExplorationRecommendationSchema).max(5),
+    completedAt: z.string().max(60),
   })
   .nullable();
 
@@ -78,6 +123,8 @@ const LearningSnapshotSchema = z.object({
   personalNotes: z.array(PersonalNoteSchema).max(100),
   progressByField: z.record(z.string().max(40), FieldProgressSchema),
   surveyResult: SurveySnapshotSchema.optional(),
+  explorationResult: ExplorationSnapshotSchema.optional(),
+  savedFieldIds: z.array(z.string().max(60)).max(30).optional(),
   updatedAt: z.string().max(60).optional(),
 });
 
@@ -184,6 +231,8 @@ async function handleSaveProfile(req: NextRequest) {
         personalNotes: learningProfile.personalNotes,
         progressByField: learningProfile.progressByField,
         surveyResult: learningProfile.surveyResult ?? null,
+        explorationResult: learningProfile.explorationResult ?? null,
+        savedFieldIds: learningProfile.savedFieldIds ?? [],
         updatedAt: learningProfile.updatedAt || new Date().toISOString(),
       };
       nextLearningProfile = await saveUserLearningProfile(

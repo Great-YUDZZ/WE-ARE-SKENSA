@@ -29,7 +29,7 @@ function PetaBidangSkeleton() {
   return (
     <div className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413]">
       <Navbar />
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 animate-pulse">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-16 space-y-8 animate-pulse">
         <div className="h-6 w-64 rounded-lg bg-[#F0ECE1] border border-[#141413]/20" />
         <div className="h-72 rounded-3xl bg-white border-2 border-[#141413]/30 p-8 space-y-4">
           <div className="h-6 w-40 rounded-lg bg-[#F0ECE1]" />
@@ -251,15 +251,14 @@ function PetaBidangDetailContent() {
         const chapters = gsap.utils.toArray<HTMLElement>(".chapter-reveal");
         chapters.forEach((chapter) => {
           gsap.from(chapter, {
-            y: 22,
-            opacity: 0,
-            duration: 0.55,
+            y: 14,
+            duration: 0.4,
             ease: "power2.out",
             immediateRender: false,
-            clearProps: "transform,opacity",
+            clearProps: "transform",
             scrollTrigger: {
               trigger: chapter,
-              start: "top 88%",
+              start: "top 92%",
               once: true,
             },
           });
@@ -310,7 +309,7 @@ function PetaBidangDetailContent() {
 
       <Navbar />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12 sm:space-y-16">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-16 space-y-8 sm:space-y-10">
         {/* Route Not Found Notice (Fallback Banner) */}
         {isUnknownRoute && (
           <div
@@ -330,20 +329,20 @@ function PetaBidangDetailContent() {
         )}
 
         {/* Breadcrumb & Compact Switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-white border-2 border-[#141413] rounded-2xl shadow-[3px_3px_0px_#141413] px-4 py-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white border-2 border-[#141413] rounded-2xl shadow-[3px_3px_0px_#141413] px-4 py-3">
           <nav
             aria-label="Navigasi halaman"
-            className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-[#52514E]"
+            className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#52514E] min-w-0 flex-1"
           >
-            <Link href="/" className="hover:text-[#141413] underline">
+            <Link href="/" className="hover:text-[#141413] underline shrink-0">
               Beranda
             </Link>
-            <span aria-hidden="true">/</span>
-            <Link href="/peta-bidang" className="hover:text-[#141413] underline">
+            <span aria-hidden="true" className="shrink-0">/</span>
+            <Link href="/peta-bidang" className="hover:text-[#141413] underline shrink-0">
               Peta Bidang
             </Link>
-            <span aria-hidden="true">/</span>
-            <span className="px-2.5 py-0.5 rounded-lg bg-[#B8F348] border border-[#141413] text-[#141413] font-bold">
+            <span aria-hidden="true" className="shrink-0">/</span>
+            <span className="px-2.5 py-0.5 rounded-lg bg-[#B8F348] border border-[#141413] text-[#141413] font-bold truncate">
               {field.name}
             </span>
           </nav>
@@ -365,7 +364,7 @@ function PetaBidangDetailContent() {
                   )}`
                 );
               }}
-              className="min-h-[40px] max-w-[230px] sm:max-w-[280px] px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-[#FAF7F2] text-xs sm:text-sm font-display font-bold text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF] cursor-pointer"
+              className="min-h-[40px] max-w-[240px] sm:max-w-[320px] px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-[#FAF7F2] text-xs sm:text-sm font-display font-bold text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF] cursor-pointer"
             >
               {PROGRAM_FIELDS.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -377,7 +376,7 @@ function PetaBidangDetailContent() {
         </div>
 
         {/* Hero Editorial Section */}
-        <section className="relative overflow-hidden bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] p-6 sm:p-10 space-y-6">
+        <section className="relative overflow-hidden bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] p-6 sm:p-8 space-y-5">
           <svg
             ref={heroContourRef}
             aria-hidden="true"
@@ -480,10 +479,16 @@ function PetaBidangDetailContent() {
             </div>
 
             {/* Hero Action Links */}
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Link
+                href={`/tes-keminatan?field=${encodeURIComponent(field.id)}`}
+                className="neo-btn px-5 py-2.5 rounded-xl bg-[#B8F348] text-sm sm:text-base font-display font-bold text-[#141413]"
+              >
+                Survey Minat Bidang Ini
+              </Link>
               <Link
                 href="/eksplorasi"
-                className="neo-btn px-5 py-3 rounded-xl bg-[#B8F348] text-sm sm:text-base font-display font-bold text-[#141413]"
+                className="neo-btn px-5 py-2.5 rounded-xl bg-white text-sm sm:text-base font-display font-bold text-[#141413]"
               >
                 Cek Kecocokan Minat
               </Link>
@@ -491,13 +496,13 @@ function PetaBidangDetailContent() {
                 href={`/hasil-analisis?field=${field.id}&kabupaten=${encodeURIComponent(
                   origin.kabupaten
                 )}`}
-                className="neo-btn px-5 py-3 rounded-xl bg-white text-sm sm:text-base font-display font-bold text-[#141413]"
+                className="neo-btn px-5 py-2.5 rounded-xl bg-white text-sm sm:text-base font-display font-bold text-[#141413]"
               >
                 Lihat Simulasi Skor
               </Link>
               <Link
                 href={`/ai-navigator?field=${encodeURIComponent(field.name)}`}
-                className="neo-btn px-5 py-3 rounded-xl bg-[#FAF7F2] text-sm sm:text-base font-display font-bold text-[#141413]"
+                className="neo-btn px-5 py-2.5 rounded-xl bg-[#FAF7F2] text-sm sm:text-base font-display font-bold text-[#141413]"
               >
                 Diskusi dengan Mentor AI
               </Link>

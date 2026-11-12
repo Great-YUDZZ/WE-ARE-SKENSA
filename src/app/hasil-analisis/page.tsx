@@ -18,6 +18,11 @@ import type { PustakaDokumenItem } from "@/app/api/pustaka-modul/route";
 import type { MentorAgentResponse } from "@/app/api/mentor-agent/route";
 import { getCachedUser } from "@/lib/useAuth";
 import {
+  buildSurveyWorkspaceReportHtml,
+  downloadHtmlFile,
+  openPrintableReport,
+} from "@/lib/test-report-download";
+import {
   applyFullLearningSnapshotToStorage,
   mergeLearningSnapshots,
   readFieldProgressFromStorage,
@@ -505,6 +510,46 @@ function HasilAnalisisContent() {
     modulePracticeNotes
   );
 
+  const createWorkspaceReportHtml = () => {
+    const cachedUser = getCachedUser();
+    return buildSurveyWorkspaceReportHtml({
+      curriculum,
+      targetCourse,
+      baseScore,
+      moduleBonus,
+      certBonus,
+      currentReadinessScore,
+      dominantGroup,
+      isGroupMismatch,
+      isPreviewMode,
+      progress: {
+        fieldId: targetFieldId,
+        completedModules,
+        passedCertIds,
+        practiceNotes: modulePracticeNotes,
+        verification: fieldVerification,
+      },
+      userName: cachedUser?.name,
+      userIdentifier: cachedUser?.identifier,
+    });
+  };
+
+  const handleDownloadWorkspaceReport = () => {
+    const html = createWorkspaceReportHtml();
+    downloadHtmlFile(
+      `kertamarga-hasil-survey-${targetFieldId}-${new Date().toISOString().slice(0, 10)}.html`,
+      html
+    );
+  };
+
+  const handlePrintWorkspaceReport = () => {
+    const html = createWorkspaceReportHtml();
+    openPrintableReport(
+      html,
+      `kertamarga-hasil-survey-${targetFieldId}-${new Date().toISOString().slice(0, 10)}.html`
+    );
+  };
+
   const handleRegenerateQuiz = async (isInitialAuto = false) => {
     if (isQuizGenerating || (!isInitialAuto && quizCooldownSec > 0)) return;
     if (!isInitialAuto) {
@@ -905,6 +950,8 @@ function HasilAnalisisContent() {
                 completedModuleCount={completedModules.length}
                 isVerificationUnlocked={verificationEligibility.eligible}
                 verificationResult={fieldVerification}
+                onDownloadReport={handleDownloadWorkspaceReport}
+                onPrintReport={handlePrintWorkspaceReport}
               />
 
               {verificationEligibility.eligible &&
