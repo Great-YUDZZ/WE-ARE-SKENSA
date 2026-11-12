@@ -17,7 +17,7 @@ Berdasarkan evaluasi pasca penyisihan dan *pentest* menuju penjurian final, peni
 
 3. **Integrasi End-to-End Asesmen, Filter Jenjang SMP/SMA/SMK & Kontinuitas Skor**
    - Menghubungkan wizard `/eksplorasi` dan `/tes-keminatan` langsung ke backend `POST /api/assessment/analyze` dengan pencocokan jenjang cerdas di `src/data/catalog.ts` & `src/lib/scoring.ts` (siswa SMP diarahkan ke SMK relevan, siswa SMA/SMK diarahkan ke Perguruan Tinggi).
-   - Meneruskan parameter skor nyata (`field`, `score`, `dominant`, `mismatch`) ke `/hasil-analisis`, serta memperluas `src/lib/ai-matcher.ts` mencakup seluruh 11 bidang keilmuan Bali dari 284 entitas direktori sekolah/kampus.
+   - Meneruskan parameter skor nyata (`field`, `score`, `dominant`, `mismatch`) ke `/hasil-analisis`, serta memperluas `src/lib/ai-matcher.ts` mencakup seluruh 11 bidang keilmuan Bali dari 285 entitas direktori sekolah/kampus.
 
 4. **Hardening Keamanan Menyeluruh (Remediasi Temuan Pentest F-01 s.d. F-09)**
    - Membangun modul keamanan `src/lib/api-security.ts` (rate limit sliding window `15 req/menit` per IP, pembatasan konkurensi paralel AI maks 3, pembatasan payload byte 16 KB, verifikasi Origin/Sec-Fetch-Site, serta CORS eksplisit non-wildcard + handler `OPTIONS`).
@@ -27,7 +27,7 @@ Berdasarkan evaluasi pasca penyisihan dan *pentest* menuju penjurian final, peni
 
 5. **Reliabilitas UI, 4 Boundary States & Automated Security Regression Testing**
    - Melengkapi 4 *boundary states* (Loading Skeleton, Empty State, Error Boundary dengan tombol Kirim Ulang/Coba Ulang, dan Feedback Toast) di halaman-halaman utama.
-   - Memperluas suite uji otomatis `tests/smoke.mjs` (`npm run smoke`) hingga **35 skenario pemeriksaan** yang mencakup seluruh rute halaman, API publik, siklus autentikasi & profil, AI Scope Guard, quiz dinamis & verifikasi kemampuan, serta verifikasi otomatis seluruh perbaikan keamanan F-01 s.d. F-09.
+   - Memperluas suite uji otomatis `tests/smoke.mjs` (`npm run smoke`) hingga **36 skenario pemeriksaan** yang mencakup seluruh rute halaman, API publik, siklus autentikasi & profil, AI Scope Guard, kuesioner dinamis percakapan & prediksi AI, quiz dinamis & verifikasi kemampuan, serta verifikasi otomatis seluruh perbaikan keamanan F-01 s.d. F-09.
 
 6. **Quiz Sertifikasi Dinamis & Verifikasi Kemampuan Berbasis Generate AI (`/api/skill-verification`)**
    - Mengubah mekanisme soal pada tab **Tes Sertifikasi** (`/hasil-analisis`) dari statis menjadi **dinamis** (`src/lib/dynamic-assessment.ts` + `CertificationTab.tsx`): pertanyaan, skenario studi kasus Bali, dan urutan pilihan jawaban A-D terus berotasi/di-generate baru setiap percobaan atau tombol *Acak & Buat Soal Baru*.
@@ -38,10 +38,14 @@ Berdasarkan evaluasi pasca penyisihan dan *pentest* menuju penjurian final, peni
    - Menambahkan `buildGoogleMapsDirectionsUrl` agar tombol `Rute Maps` langsung membuka rute berkendara Google Maps dari alamat rumah atau GPS pengguna tanpa ketergantungan API berbayar.
    - Merapikan panel filter `/katalog` menjadi 3 baris terstruktur, menggabungkan tab audit menjadi filter `Audit Lengkap (14)`, dan menambahkan filter `Sesuai Hasil Tes` berdasarkan bidang minat serta jenjang pendidikan terakhir.
 
-8. **Ekspor Laporan PDF A4, Gate Akses, & Penyempurnaan UX Profil/Auth (`/profil`, `/login`, `/daftar`)**
-   - Menyatukan seluruh ekspor laporan hasil tes ke format **PDF A4 profesional** (`src/lib/test-report-download.ts`) dengan filter rekomendasi sekolah/kampus otomatis sesuai jenjang (`SMP` ke SMK/SMA, `SMA/SMK` ke Perguruan Tinggi), dilengkapi `PdfExportGateModal` untuk mengarahkan pengguna yang belum mengerjakan tes atau belum login.
-   - Merombak tampilan `/profil` menjadi layout 2-kolom (sticky sidebar + workspace) dengan Loading Skeleton, transisi tab `framer-motion`, dan ringkasan bookmark bidang, serta membatasi akses `/profil` melalui klik username di `Navbar.tsx`.
-   - Memperbarui `PasswordField.tsx` dengan tombol ikon mata yang bersih pada halaman `/login` dan `/daftar`.
+8. **Ekspor Laporan PDF/HTML A4 Menyeluruh Aktivitas Belajar (`/profil`, `buildProfileTestReportHtml`)**
+   - Menyatukan seluruh rekapitulasi aktivitas website ke format **PDF dan HTML A4 profesional** (`src/lib/test-report-download.ts`): ringkasan profil siswa, hasil tes asesmen RIASEC, hasil kuesioner percakapan diagnostik AI Navigator, riwayat pengerjaan 33 modul materi (status, waktu pengerjaan, skor pemahaman), riwayat quiz sertifikasi dinamis bertaraf BNSP, catatan belajar pribadi, serta rekomendasi institusi pendidikan Bali terkurasi.
+   - Dilengkapi `PdfExportGateModal` yang memandu pengguna jika belum melakukan tes asesmen atau belum memiliki aktivitas sebelum mengekspor laporan.
+
+9. **Kuesioner Dinamis & Prediksi Jurusan via Percakapan AI (`/ai-navigator` & `/api/navigator-chat`)**
+   - Mengembangkan mode kuesioner percakapan adaptif (`mode: "diagnostic"`): AI menyusun pertanyaan minat bertahap (4 tahap: minat aktivitas, gaya lingkungan belajar/kerja, mata pelajaran favorit, dan preferensi karier) lengkap dengan quick-reply pills dinamis yang interaktif.
+   - Pada tahap akhir, AI menganalisis seluruh percakapan dan memprediksi jurusan yang paling cocok beserta tingkat keyakinan (*confidence score* %), ringkasan penalaran, dan rekomendasi langkah lanjut.
+   - Pengguna dapat langsung menyimpan hasil prediksi percakapan tersebut ke Profil Belajar pribadi dengan tombol *Simpan Prediksi ke Profil Belajar*, yang langsung terintegrasi ke `/profil` dan laporan rekap PDF/HTML.
 
 ---
 
@@ -55,12 +59,12 @@ Berdasarkan evaluasi pasca penyisihan dan *pentest* menuju penjurian final, peni
 | **Database / Storage** | Drizzle ORM + MySQL / MariaDB (`mysql2`), Persistent JSON Fallback (`data/users.json`, `data/learning-profiles.json` lokal / `/tmp/kertamarga-data`), Browser `localStorage` Sync |
 | **Hosting / Deployment** | Vercel Production (Region `sin1` Singapura, HTTPS aktif 24/7) |
 | **AI Model / API / Method** | Multi-tier pipeline: 9Router Gateway (`ag/gemini-3-flash`, `ag/gemini-3-flash-agent`, `ag/gemini-3.8-flash-low`, `openrouter/openrouter/free`), Google Gemini REST API (`gemini-3.5-flash-lite`, `gemini-flash-lite-latest`, `gemini-3.5-flash`), AI Scope Guard 2-Lapis (`src/lib/ai-scope-guard.ts`), Skoring Deterministik Multi-Dimensi (`src/lib/scoring.ts`) & Deterministic Fallback Engine |
-| **Peran AI dalam Produk** | Menganalisis kesenjangan kesiapan akademik siswa dan merekomendasikan modul/latihan sertifikasi di `/api/mentor-agent`, serta konsultasi interaktif jurusan dan institusi Bali yang dibatasi cakupan topik di `/api/navigator-chat` |
+| **Peran AI dalam Produk** | Menganalisis kesenjangan kesiapan akademik siswa dan merekomendasikan modul/latihan sertifikasi di `/api/mentor-agent`, konsultasi interaktif jurusan dan institusi Bali yang dibatasi cakupan topik di `/api/navigator-chat`, kuesioner dinamis percakapan dan prediksi jurusan dengan confidence score (`/api/navigator-chat` mode diagnostic), serta evaluasi verifikasi kemampuan komprehensif pasca modul (`/api/skill-verification`) |
 | **Dataset / Data Source** | Data program studi & akreditasi PDDIKTI, BAN-PT, BAN-SM; standar kompetensi BNSP; koordinat geografis 9 kabupaten/kota Bali (285 entitas katalog pendidikan Bali: 61 PT, 109 SMK, 115 SMA dalam 11 bidang program) |
 | **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `gsap`, `@gsap/react`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `@types/leaflet`, `clsx`, `tailwind-merge`, `typescript`, `tailwindcss`, `postcss`, `autoprefixer` |
 | **Template / Boilerplate** | Tidak memakai template jadi; struktur dasar dibuat dari `create-next-app` lalu dirancang khusus sesuai arsitektur visual KertaMarga Bali |
 | **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring modular, audit keamanan, type safety TypeScript, penyusunan automated smoke test, dan review kualitas kode) |
 | **Pre-existing Components** | Tidak ada komponen produk komersial pra-kompetisi; seluruh fitur dikembangkan khusus untuk Bali DigiFest 2026 |
-| **Third-party Assets / Credits** | Integrasi Google Maps Embed API, Geocoding Nominatim OpenStreetMap, `ipwho.is`, Leaflet, Google Fonts (`Outfit`, `Inter`, `JetBrains Mono`), Lucide Icons, serta dokumen modul belajar mandiri pada `public/pustaka-modul/` |
+| **Third-party Assets / Credits** | Google Maps Directions & Embed API, Geocoding Nominatim OpenStreetMap, `ipwho.is`, Leaflet, Google Fonts (`Outfit`, `Inter`, `JetBrains Mono`), Lucide Icons, serta dokumen modul belajar mandiri pada `public/pustaka-modul/` |
 
 Pernyataan: Kami menyatakan bahwa informasi di atas benar dan lengkap. Kami bertanggung jawab atas penggunaan teknologi, source code, data, library, API, model AI, dan aset yang digunakan pada produk.
