@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagram Arsitektur Sistem KertaMarga Bali</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F8F5EE;
+      color: #141413;
+      margin: 0;
+      padding: 24px;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .neo-box {
+      background: #FFFFFF;
+      border: 2px solid #141413;
+      box-shadow: 4px 4px 0px #141413;
+      border-radius: 16px;
+    }
+    .neo-tag {
+      border: 1.5px solid #141413;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8">
+
+  <div class="w-full max-w-6xl mx-auto space-y-6">
+
+    <!-- Header Slide -->
+    <header class="neo-box p-6 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="neo-tag px-2.5 py-0.5 bg-[#B8F348] text-xs uppercase tracking-wider">Arsitektur Teknis Tahap 2</span>
+          <span class="neo-tag px-2.5 py-0.5 bg-[#FAF7F2] text-xs">Bali DigiFest 2026</span>
+          <span class="neo-tag px-2.5 py-0.5 bg-[#3B66FF] text-white text-xs">Tag v2.0-final</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">KertaMarga Bali: Hybrid AI & Deterministik</h1>
+        <p class="text-sm text-[#52514E] mt-0.5 font-medium">Alur Komprehensif: Client UI &rarr; Security Shield &rarr; Scope Guard &rarr; Multi-Tier AI / Scoring Engine &rarr; Data Persistence</p>
+      </div>
+      <div class="shrink-0 flex items-center gap-2">
+        <div class="px-3.5 py-2 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-right">
+          <p class="text-[11px] font-bold text-[#52514E]">TIM PENGEMBANG</p>
+          <p class="text-sm font-extrabold">WE ARE SKENSA</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Architecture Grid -->
+    <main class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+      <!-- LAYER 1: CLIENT & USER JOURNEY -->
+      <section class="md:col-span-12 neo-box p-5 bg-white">
+        <div class="flex items-center justify-between border-b-2 border-[#141413]/10 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">L1</span>
+            <h2 class="text-base sm:text-lg font-extrabold">Client Layer: Antarmuka Next.js 15 (React 19 + Tactile Neo-Pop UI)</h2>
+          </div>
+          <span class="text-xs font-mono text-[#52514E] font-bold">Zero-PII Guest Mode &bull; Fully Responsive &bull; Framer Motion &bull; GSAP</span>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <p class="text-[11px] font-mono font-bold text-[#3B66FF]">/ (Beranda)</p>
+            <p class="font-bold text-xs mt-1">Simulator Bobot &amp; Peta Bali</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Peta interaktif 9 kab/kota &amp; simulasi 3 dimensi</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <p class="text-[11px] font-mono font-bold text-[#3B66FF]">/eksplorasi</p>
+            <p class="font-bold text-xs mt-1">Asesmen 3 Tahap</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Kuesioner adaptif, input GPS/alamat rumah, filter SMP</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <p class="text-[11px] font-mono font-bold text-[#3B66FF]">/katalog</p>
+            <p class="font-bold text-xs mt-1">285 Lembaga Bali</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Rute Maps Directions, jarak jalan 1.28x, filter hasil tes</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <p class="text-[11px] font-mono font-bold text-[#3B66FF]">/hasil-analisis</p>
+            <p class="font-bold text-xs mt-1">Workspace Belajar</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Modul PDF, quiz dinamis, agen pembimbing, PDF A4</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <p class="text-[11px] font-mono font-bold text-[#3B66FF]">/ai-navigator</p>
+            <p class="font-bold text-xs mt-1">AI Navigator Chat</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Konsultasi interaktif &amp; kuesioner dinamis percakapan</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <p class="text-[11px] font-mono font-bold text-[#3B66FF]">/profil &amp; /login</p>
+            <p class="font-bold text-xs mt-1">Profil &amp; Autentikasi</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Jurnal belajar, bookmark, eye toggle, JWT httpOnly</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- LAYER 2: SECURITY & DEFENSE -->
+      <section class="md:col-span-6 neo-box p-5 bg-white space-y-3">
+        <div class="flex items-center gap-2 border-b-2 border-[#141413]/10 pb-2">
+          <span class="w-7 h-7 rounded-lg bg-[#FFBE2E] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">L2</span>
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold">Security Shield &amp; Rate Limiter</h2>
+            <p class="text-[11px] font-mono text-[#52514E]">src/lib/api-security.ts &bull; Remediasi F-01 s.d. F-09</p>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#141413]/20 flex items-start gap-2">
+            <span class="neo-tag px-1.5 py-0.5 bg-[#FF5E4D] text-white text-[10px]">RATE LIMIT</span>
+            <p class="text-[#141413] font-medium leading-relaxed"><strong>Sliding Window 15 req/menit per-IP</strong> pada endpoint AI untuk mencegah eksploitasi kuota.</p>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#141413]/20 flex items-start gap-2">
+            <span class="neo-tag px-1.5 py-0.5 bg-[#3B66FF] text-white text-[10px]">CONCURRENCY</span>
+            <p class="text-[#141413] font-medium leading-relaxed"><strong>Kunci Konkurensi Maks 3</strong> proses AI simultan per IP agar server tidak hang.</p>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#141413]/20 flex items-start gap-2">
+            <span class="neo-tag px-1.5 py-0.5 bg-[#141413] text-white text-[10px]">VALIDATION</span>
+            <p class="text-[#141413] font-medium leading-relaxed"><strong>Bounded Payload 16 KB</strong>, verifikasi Sec-Fetch-Site/Origin, dan validasi skema ketat Zod.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- LAYER 3: AI SCOPE GUARD -->
+      <section class="md:col-span-6 neo-box p-5 bg-white space-y-3">
+        <div class="flex items-center gap-2 border-b-2 border-[#141413]/10 pb-2">
+          <span class="w-7 h-7 rounded-lg bg-[#3B66FF] text-white border-2 border-[#141413] flex items-center justify-center font-bold text-xs">L3</span>
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold">AI Scope Guard 2-Lapis</h2>
+            <p class="text-[11px] font-mono text-[#52514E]">src/lib/ai-scope-guard.ts &bull; Responsible AI</p>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#141413]/20 flex items-start gap-2">
+            <span class="neo-tag px-1.5 py-0.5 bg-[#FF5E4D] text-white text-[10px]">LAYER 1</span>
+            <p class="text-[#141413] font-medium leading-relaxed"><strong>Deteksi Jailbreak &amp; Role Injection</strong>: Memblokir pola abaikan instruksi, system override, dan prompt leak.</p>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#141413]/20 flex items-start gap-2">
+            <span class="neo-tag px-1.5 py-0.5 bg-[#FFBE2E] text-[#141413] text-[10px]">LAYER 2</span>
+            <p class="text-[#141413] font-medium leading-relaxed"><strong>Penyaring Topik Edukasi Bali</strong>: Menolak topik non-edukasi (resep, politik, coding umum) secara instan tanpa membuang token LLM.</p>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#141413]/20 flex items-start gap-2">
+            <span class="neo-tag px-1.5 py-0.5 bg-[#B8F348] text-[#141413] text-[10px]">CONTEXT</span>
+            <p class="text-[#141413] font-medium leading-relaxed"><strong>Dynamic Matcher Ingestion</strong>: Menyuapkan data prodi &amp; sekolah Bali yang relevan ke prompt model.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- LAYER 4: HYBRID PROCESSING ENGINES -->
+      <section class="md:col-span-12 neo-box p-5 bg-white">
+        <div class="flex items-center justify-between border-b-2 border-[#141413]/10 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-[#141413] text-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">L4</span>
+            <h2 class="text-base sm:text-lg font-extrabold">Hybrid Processing Engines: Deterministik + Multi-Tier AI Failover</h2>
+          </div>
+          <span class="text-xs font-mono text-[#52514E] font-bold">100% Uptime Guarantee &bull; Anti-Halusinasi</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Deterministic Engine -->
+          <div class="p-4 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="neo-tag px-2 py-0.5 bg-[#B8F348] text-xs font-extrabold">ENGINE A &bull; DETERMINISTIK</span>
+              <span class="text-[11px] font-mono text-[#52514E]">src/lib/scoring.ts</span>
+            </div>
+            <p class="text-xs font-bold text-[#141413]">Skoring Multi-Faktor, Jarak Rute Jalan &amp; Filter Jenjang</p>
+            <ul class="text-xs space-y-1.5 text-[#52514E]">
+              <li>&bull; <strong>Komposit 3 Dimensi</strong>: Minat (bobot dinamis), Kesiapan, dan Preferensi.</li>
+              <li>&bull; <strong>Filter Jenjang Cerdas</strong>: Siswa SMP otomatis diarahkan ke SMK/SMA, siswa SMA/SMK diarahkan ke Perguruan Tinggi.</li>
+              <li>&bull; <strong>Jarak Haversine x 1.28x</strong>: Presisi jalan riil Bali dari alamat/GPS user ke koordinat kampus.</li>
+              <li>&bull; <strong>Ekstraksi Sinyal Kata Kunci</strong>: Memetakan teks refleksi bebas tanpa risiko halusinasi.</li>
+            </ul>
+          </div>
+
+          <!-- Multi-Tier AI Pipeline -->
+          <div class="p-4 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="neo-tag px-2 py-0.5 bg-[#3B66FF] text-white text-xs font-extrabold">ENGINE B &bull; MULTI-TIER AI</span>
+              <span class="text-[11px] font-mono text-[#52514E]">src/lib/router-client.ts</span>
+            </div>
+            <p class="text-xs font-bold text-[#141413]">Resilience Pipeline &amp; Auto Fallback Berjenjang</p>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-2 rounded-lg bg-white border border-[#141413]/30">
+                <p class="font-bold text-[11px] text-[#3B66FF]">TIER 1</p>
+                <p class="font-extrabold text-[11px] mt-0.5">9Router</p>
+                <p class="text-[10px] text-[#52514E]">Gemini-3-flash + Cache 2 jam</p>
+              </div>
+              <div class="p-2 rounded-lg bg-white border border-[#141413]/30">
+                <p class="font-bold text-[11px] text-[#FFBE2E]">TIER 2</p>
+                <p class="font-extrabold text-[11px] mt-0.5">Gemini REST</p>
+                <p class="text-[10px] text-[#52514E]">Direct SDK jika router limit/down</p>
+              </div>
+              <div class="p-2 rounded-lg bg-white border border-[#141413]/30">
+                <p class="font-bold text-[11px] text-[#B8F348]">TIER 3</p>
+                <p class="font-extrabold text-[11px] mt-0.5">Rule Fallback</p>
+                <p class="text-[10px] text-[#52514E]">Output aman jika seluruh API padam</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-[#52514E] leading-relaxed">Dilengkapi <strong>429 Circuit Breaker</strong> (jeda cooldown 60 detik) &amp; jitter acak agar kuota API tetap aman selama penjurian.</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- LAYER 5: DATA PERSISTENCE & VERIFICATION -->
+      <section class="md:col-span-12 neo-box p-5 bg-white">
+        <div class="flex items-center justify-between border-b-2 border-[#141413]/10 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-[#FAF7F2] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">L5</span>
+            <h2 class="text-base sm:text-lg font-extrabold">Data Persistence &amp; Laporan A4</h2>
+          </div>
+          <span class="text-xs font-mono text-[#52514E] font-bold">PDDIKTI &bull; BAN-PT &bull; BAN-SM &bull; BNSP</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/25">
+            <p class="font-bold text-[#141413]">Katalog 285 Lembaga Bali</p>
+            <p class="text-[#52514E] text-[11px] mt-1">61 PT, 109 SMK, 115 SMA terkurasi lengkap di 9 kabupaten/kota Bali.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/25">
+            <p class="font-bold text-[#141413]">MySQL + Dual Vault Fallback</p>
+            <p class="text-[#52514E] text-[11px] mt-1">Drizzle ORM di MySQL dengan fallback local signed JSON jika database nonaktif.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/25">
+            <p class="font-bold text-[#141413]">Verifikasi Skill &amp; Quiz Dinamis</p>
+            <p class="text-[#52514E] text-[11px] mt-1">Rotasi opsi acak A-D + evaluasi esai catatan praktik terverifikasi HMAC.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/25">
+            <p class="font-bold text-[#141413]">Laporan Cetak PDF A4 Resmi</p>
+            <p class="text-[#52514E] text-[11px] mt-1">Ukuran standar cetak A4 14mm/16mm dengan gate tes &amp; login yang rapi.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Note -->
+    <footer class="text-center text-xs font-mono text-[#52514E] pt-2">
+      KertaMarga Bali &bull; Build with AI, Solve for Bali &bull; Bali DigiFest 2026 (Kategori SMA/SMK)
+    </footer>
+
+  </div>
+
+</body>
+</html>
