@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createUser, findUserByLogin, isDbReady, toSafeResponse } from "@/lib/db";
 import {
+  ACCOUNT_VAULT_COOKIE,
+  buildUpdatedVaultToken,
   hashPassword,
+  hydrateVaultUsers,
   resolveVerifiedRole,
   SESSION_COOKIE,
   signSession,
   validatePasswordStrength,
+  VAULT_MAX_AGE_SECONDS,
 } from "@/lib/auth";
 import {
   applyStandardApiHeaders,
@@ -33,6 +37,7 @@ const registerSchema = z
     agreed: z
       .boolean()
       .refine((v) => v === true, "Wajib menyetujui kebijakan privasi minim data"),
+    vaultToken: z.string().max(16384).optional(),
   })
   .refine((v) => v.password === v.passwordConfirm, {
     message: "Konfirmasi kata sandi tidak sama",
@@ -110,6 +115,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Sinkronkan akun yang tersimpan di vault cookie/token ke instance serverless aktif
+  const incomingVaultToken =
+    data.vaultToken || req.headers.get("x-kertamarga-vault") || undefined;
+  await hydrateVaultUsers(incomingVaultToken);
+
   // Gunakan pesan duplikat seragam untuk mencegah enumerasi email/identifier
   const existingByEmail = await findUserByLogin(email);
   const existingByIdentifier =
@@ -141,11 +151,13 @@ export async function POST(req: NextRequest) {
       role: roleCheck.role,
       interests: data.interests,
     });
-    const token = await signSession(user.id, user.role);
+    const token = await signSession(user.id, user.role, user);
+    const vaultToken = await buildUpdatedVaultToken(user, incomingVaultToken);
     const res = NextResponse.json(
       {
         user: toSafeResponse(user),
         storage: isDbReady() ? "mysql" : "file-storage",
+        vaultToken,
       },
       { status: 201 }
     );
@@ -155,6 +167,13 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
+    });
+    res.cookies.set(ACCOUNT_VAULT_COOKIE, vaultToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: VAULT_MAX_AGE_SECONDS,
     });
     return applyStandardApiHeaders(res, req);
   } catch (err) {

@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import type { RowDataPacket } from "mysql2/promise";
+import { getActiveMysqlPool, markMysqlFailed, markMysqlReady } from "./db";
 import type { FullLearningSnapshot } from "./learningProfile";
 import { mergeLearningSnapshots } from "./learningProfile";
 
@@ -57,8 +59,35 @@ function persistProfiles() {
   }
 }
 
-export function getUserLearningProfile(userId: number): FullLearningSnapshot {
+export async function getUserLearningProfile(
+  userId: number
+): Promise<FullLearningSnapshot> {
   const map = getProfileMap();
+  const mysqlPool = getActiveMysqlPool();
+
+  if (mysqlPool) {
+    try {
+      const [rows] = await mysqlPool.query<RowDataPacket[]>(
+        "SELECT snapshot_json FROM learning_profiles WHERE user_id = ? LIMIT 1",
+        [userId]
+      );
+      markMysqlReady();
+      const first = rows[0];
+      if (first && first.snapshot_json) {
+        const parsed: FullLearningSnapshot =
+          typeof first.snapshot_json === "string"
+            ? JSON.parse(first.snapshot_json)
+            : first.snapshot_json;
+        if (parsed && typeof parsed === "object") {
+          map.set(userId, parsed);
+          return parsed;
+        }
+      }
+    } catch {
+      markMysqlFailed();
+    }
+  }
+
   return (
     map.get(userId) || {
       personalNotes: [],
@@ -69,15 +98,15 @@ export function getUserLearningProfile(userId: number): FullLearningSnapshot {
   );
 }
 
-export function saveUserLearningProfile(
+export async function saveUserLearningProfile(
   userId: number,
   incoming: FullLearningSnapshot,
   mode: "replace" | "merge" = "merge"
-): FullLearningSnapshot {
+): Promise<FullLearningSnapshot> {
   const map = getProfileMap();
-  const existing = map.get(userId);
+  const existing = await getUserLearningProfile(userId);
   const next =
-    mode === "replace" || !existing
+    mode === "replace" || !existing || existing.updatedAt === new Date(0).toISOString()
       ? {
           ...incoming,
           updatedAt: new Date().toISOString(),
@@ -86,5 +115,19 @@ export function saveUserLearningProfile(
 
   map.set(userId, next);
   persistProfiles();
+
+  const mysqlPool = getActiveMysqlPool();
+  if (mysqlPool) {
+    try {
+      await mysqlPool.query(
+        "INSERT INTO learning_profiles (user_id, snapshot_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE snapshot_json = VALUES(snapshot_json), updated_at = CURRENT_TIMESTAMP",
+        [userId, JSON.stringify(next)]
+      );
+      markMysqlReady();
+    } catch {
+      markMysqlFailed();
+    }
+  }
+
   return next;
 }

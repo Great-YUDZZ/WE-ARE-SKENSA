@@ -4,7 +4,18 @@ import { useState, useEffect, useCallback } from "react";
 import type { SafeUser } from "./schema";
 
 const STORAGE_KEY = "kertamarga_user";
+const VAULT_STORAGE_KEY = "kertamarga_vault_token";
 const AUTH_EVENT = "kertamarga-auth-change";
+
+export function getStoredVaultToken(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem(VAULT_STORAGE_KEY);
+    return raw && raw.trim().length > 0 ? raw.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export function getCachedUser(): SafeUser | null {
   if (typeof window === "undefined") return null;
@@ -38,9 +49,15 @@ export function getCachedUser(): SafeUser | null {
   }
 }
 
-export function saveUserToStorage(user: SafeUser | null) {
+export function saveUserToStorage(
+  user: SafeUser | null,
+  vaultToken?: string | null
+) {
   if (typeof window === "undefined") return;
   try {
+    if (vaultToken && typeof vaultToken === "string" && vaultToken.trim().length > 0) {
+      localStorage.setItem(VAULT_STORAGE_KEY, vaultToken.trim());
+    }
     if (user) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     } else {

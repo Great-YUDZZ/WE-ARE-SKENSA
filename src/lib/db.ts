@@ -11,12 +11,29 @@ type DbHandle = MySql2Database;
 let pool: Pool | null = null;
 let handle: DbHandle | null = null;
 let dbReady = false;
+let mysqlFailedAt = 0;
+
+function hasMysqlConfig(): boolean {
+  if (process.env.DATABASE_URL?.trim()) return true;
+  if (process.env.DB_HOST?.trim()) return true;
+  // Di lingkungan Vercel tanpa DB_HOST / DATABASE_URL, jangan mencoba 127.0.0.1:3306
+  if (process.env.VERCEL) return false;
+  return true;
+}
+
+function shouldAttemptMysql(): boolean {
+  if (!hasMysqlConfig()) return false;
+  if (mysqlFailedAt > 0 && Date.now() - mysqlFailedAt < 60_000) {
+    return false;
+  }
+  return true;
+}
 
 function getPool(): Pool {
   if (pool) return pool;
   const url = process.env.DATABASE_URL;
   if (url) {
-    return (pool = createPool({ uri: url, connectTimeout: 2500 }));
+    return (pool = createPool({ uri: url, connectTimeout: 4500 }));
   }
   return (pool = createPool({
     host: process.env.DB_HOST ?? "127.0.0.1",
@@ -24,11 +41,24 @@ function getPool(): Pool {
     database: process.env.DB_DATABASE ?? "kertamarga_bali",
     user: process.env.DB_USERNAME ?? "kertamarga_app",
     password: process.env.DB_PASSWORD ?? "",
-    connectTimeout: 2500,
+    connectTimeout: 4500,
     waitForConnections: true,
     connectionLimit: 10,
     charset: "utf8mb4",
   }));
+}
+
+export function getActiveMysqlPool(): Pool | null {
+  if (!shouldAttemptMysql()) return null;
+  return getPool();
+}
+
+export function markMysqlReady() {
+  dbReady = true;
+}
+
+export function markMysqlFailed() {
+  mysqlFailedAt = Date.now();
 }
 
 function getHandle(): DbHandle {
@@ -172,49 +202,85 @@ function findInStoreById(id: number): UserRow | null {
   return null;
 }
 
+export function upsertUserInStore(row: UserRow): UserRow {
+  const map = initFileStore();
+  const normalized: UserRow = {
+    id: Number(row.id) || 1003,
+    name: String(row.name || "Pengguna KertaMarga").trim(),
+    identifier: String(row.identifier || row.email).trim(),
+    email: String(row.email || row.identifier).trim().toLowerCase(),
+    passwordHash: String(row.passwordHash || ""),
+    role: row.role === "guru" ? "guru" : "siswa",
+    interests: Array.isArray(row.interests) ? row.interests.map(String) : [],
+    createdAt:
+      row.createdAt instanceof Date
+        ? row.createdAt
+        : new Date(row.createdAt || Date.now()),
+    updatedAt:
+      row.updatedAt instanceof Date
+        ? row.updatedAt
+        : new Date(row.updatedAt || Date.now()),
+  };
+
+  map.set(normalized.identifier.toLowerCase(), normalized);
+  if (normalized.id >= (g.__kertamarga_seq ?? 1003)) {
+    g.__kertamarga_seq = normalized.id + 1;
+  }
+  persistStore();
+  return normalized;
+}
+
 export async function findUserByLogin(login: string): Promise<UserRow | null> {
   const value = login.trim();
-  try {
-    const rows = await getHandle()
-      .select()
-      .from(users)
-      .where(eq(users.identifier, value))
-      .limit(1);
-    if (rows[0]) {
+  if (shouldAttemptMysql()) {
+    try {
+      const rows = await getHandle()
+        .select()
+        .from(users)
+        .where(eq(users.identifier, value))
+        .limit(1);
+      if (rows[0]) {
+        dbReady = true;
+        return rows[0];
+      }
+      const byEmail = await getHandle()
+        .select()
+        .from(users)
+        .where(eq(users.email, value.toLowerCase()))
+        .limit(1);
+      if (byEmail[0]) {
+        dbReady = true;
+        return byEmail[0];
+      }
       dbReady = true;
-      return rows[0];
+      return findInStore(value);
+    } catch {
+      mysqlFailedAt = Date.now();
+      return findInStore(value);
     }
-    const byEmail = await getHandle()
-      .select()
-      .from(users)
-      .where(eq(users.email, value.toLowerCase()))
-      .limit(1);
-    if (byEmail[0]) {
-      dbReady = true;
-      return byEmail[0];
-    }
-    dbReady = true;
-    return findInStore(value);
-  } catch {
-    return findInStore(value);
   }
+  return findInStore(value);
 }
 
 export async function findUserById(id: number): Promise<UserRow | null> {
-  try {
-    const rows = await getHandle()
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
-    if (rows[0]) {
-      dbReady = true;
-      return rows[0];
+  if (shouldAttemptMysql()) {
+    try {
+      const rows = await getHandle()
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+      if (rows[0]) {
+        dbReady = true;
+        return rows[0];
+      }
+      return findInStoreById(id);
+    } catch {
+      mysqlFailedAt = Date.now();
+      return findInStoreById(id);
     }
-    return findInStoreById(id);
-  } catch {
-    return findInStoreById(id);
   }
+  return findInStoreById(id);
 }
 
 type CreateUserInput = {
@@ -229,25 +295,28 @@ type CreateUserInput = {
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
   const normalizedEmail = input.email.trim().toLowerCase();
   const normalizedIdentifier = input.identifier.trim();
-  try {
-    const [result] = await getHandle()
-      .insert(users)
-      .values({
-        name: input.name.trim(),
-        identifier: normalizedIdentifier,
-        email: normalizedEmail,
-        passwordHash: input.passwordHash,
-        role: input.role,
-        interests: input.interests,
-      })
-      .$returningId();
-    dbReady = true;
-    const created = await findUserById(Number(result.id));
-    if (created) return created;
-  } catch (err) {
-    const code = (err as { code?: string })?.code;
-    if (code === "ER_DUP_ENTRY" || code === "23505") {
-      throw err;
+  if (shouldAttemptMysql()) {
+    try {
+      const [result] = await getHandle()
+        .insert(users)
+        .values({
+          name: input.name.trim(),
+          identifier: normalizedIdentifier,
+          email: normalizedEmail,
+          passwordHash: input.passwordHash,
+          role: input.role,
+          interests: input.interests,
+        })
+        .$returningId();
+      dbReady = true;
+      const created = await findUserById(Number(result.id));
+      if (created) return created;
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === "ER_DUP_ENTRY" || code === "23505") {
+        throw err;
+      }
+      mysqlFailedAt = Date.now();
     }
   }
 
@@ -287,19 +356,22 @@ export async function updateUserById(
     ? updates.interests.map((s) => s.trim()).filter(Boolean)
     : undefined;
 
-  try {
-    const updatePayload: { name?: string; interests?: string[] } = {};
-    if (cleanName) updatePayload.name = cleanName;
-    if (cleanInterests !== undefined) updatePayload.interests = cleanInterests;
+  if (shouldAttemptMysql()) {
+    try {
+      const updatePayload: { name?: string; interests?: string[] } = {};
+      if (cleanName) updatePayload.name = cleanName;
+      if (cleanInterests !== undefined) updatePayload.interests = cleanInterests;
 
-    if (Object.keys(updatePayload).length > 0) {
-      await getHandle().update(users).set(updatePayload).where(eq(users.id, id));
-      dbReady = true;
-      const updated = await findUserById(id);
-      if (updated) return updated;
+      if (Object.keys(updatePayload).length > 0) {
+        await getHandle().update(users).set(updatePayload).where(eq(users.id, id));
+        dbReady = true;
+        const updated = await findUserById(id);
+        if (updated) return updated;
+      }
+    } catch {
+      mysqlFailedAt = Date.now();
+      // Fallback ke penyimpanan file lokal bila MySQL belum aktif
     }
-  } catch {
-    // Fallback ke penyimpanan file lokal bila MySQL belum aktif
   }
 
   const row = findInStoreById(id);

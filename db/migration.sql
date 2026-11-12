@@ -20,6 +20,13 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uk_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS learning_profiles (
+  user_id BIGINT UNSIGNED NOT NULL,
+  snapshot_json JSON NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- User aplikasi dengan hak akses terbatas, ganti password setelah dibaca
 CREATE USER IF NOT EXISTS 'kertamarga_app'@'localhost' IDENTIFIED BY 'ganti-dengan-password-kuat';
 CREATE USER IF NOT EXISTS 'kertamarga_app'@'127.0.0.1' IDENTIFIED BY 'ganti-dengan-password-kuat';

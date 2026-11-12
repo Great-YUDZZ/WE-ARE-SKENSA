@@ -9,7 +9,14 @@ import {
   readBoundedJsonBody,
   verifyRequestOrigin,
 } from "@/lib/api-security";
-import { getSessionUserId } from "@/lib/auth";
+import {
+  ACCOUNT_VAULT_COOKIE,
+  buildUpdatedVaultToken,
+  getSessionUserId,
+  SESSION_COOKIE,
+  signSession,
+  VAULT_MAX_AGE_SECONDS,
+} from "@/lib/auth";
 import { findUserById, toSafeResponse, updateUserById } from "@/lib/db";
 import { getUserLearningProfile, saveUserLearningProfile } from "@/lib/profile-store";
 import type { FullLearningSnapshot } from "@/lib/learningProfile";
@@ -98,7 +105,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const learningProfile = getUserLearningProfile(userId);
+  const learningProfile = await getUserLearningProfile(userId);
   return applyStandardApiHeaders(
     NextResponse.json({
       user: toSafeResponse(user),
@@ -171,7 +178,7 @@ async function handleSaveProfile(req: NextRequest) {
       }
     }
 
-    let nextLearningProfile = getUserLearningProfile(userId);
+    let nextLearningProfile = await getUserLearningProfile(userId);
     if (learningProfile) {
       const normalizedSnapshot: FullLearningSnapshot = {
         personalNotes: learningProfile.personalNotes,
@@ -179,22 +186,40 @@ async function handleSaveProfile(req: NextRequest) {
         surveyResult: learningProfile.surveyResult ?? null,
         updatedAt: learningProfile.updatedAt || new Date().toISOString(),
       };
-      nextLearningProfile = saveUserLearningProfile(
+      nextLearningProfile = await saveUserLearningProfile(
         userId,
         normalizedSnapshot,
         syncMode || "merge"
       );
     }
 
-    return applyStandardApiHeaders(
-      NextResponse.json({
-        ok: true,
-        user: toSafeResponse(updatedUser),
-        learningProfile: nextLearningProfile,
-        syncedAt: new Date().toISOString(),
-      }),
-      req
-    );
+    const res = NextResponse.json({
+      ok: true,
+      user: toSafeResponse(updatedUser),
+      learningProfile: nextLearningProfile,
+      syncedAt: new Date().toISOString(),
+    });
+
+    if (name !== undefined || interests !== undefined) {
+      const token = await signSession(updatedUser.id, updatedUser.role, updatedUser);
+      const vaultToken = await buildUpdatedVaultToken(updatedUser);
+      res.cookies.set(SESSION_COOKIE, token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      res.cookies.set(ACCOUNT_VAULT_COOKIE, vaultToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: VAULT_MAX_AGE_SECONDS,
+      });
+    }
+
+    return applyStandardApiHeaders(res, req);
   } catch {
     return applyStandardApiHeaders(
       NextResponse.json(

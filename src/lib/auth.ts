@@ -1,9 +1,13 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { findUserById, upsertUserInStore } from "./db";
+import type { UserRow } from "./schema";
 
 export const SESSION_COOKIE = "kertamarga_session";
+export const ACCOUNT_VAULT_COOKIE = "kertamarga_vault";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+export const VAULT_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 // Hash bcrypt statis berbiaya 10 untuk menjaga waktu komputasi tetap seragam saat user tidak ditemukan (anti-timing enumeration)
 const DUMMY_PASSWORD_HASH =
@@ -160,11 +164,142 @@ export async function verifyPasswordConstantTime(
   return Boolean(hash) && matched;
 }
 
+export interface VaultAccountEntry {
+  id: number;
+  name: string;
+  identifier: string;
+  email: string;
+  passwordHash: string;
+  role: "siswa" | "guru";
+  interests: string[];
+  createdAt: string;
+}
+
+async function decodeVaultToken(token?: string | null): Promise<VaultAccountEntry[]> {
+  if (!token || typeof token !== "string") return [];
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    const rawList = payload.accounts;
+    if (!Array.isArray(rawList)) return [];
+    const valid: VaultAccountEntry[] = [];
+    for (const item of rawList) {
+      if (
+        item &&
+        typeof item === "object" &&
+        typeof (item as VaultAccountEntry).id === "number" &&
+        typeof (item as VaultAccountEntry).identifier === "string" &&
+        typeof (item as VaultAccountEntry).email === "string" &&
+        typeof (item as VaultAccountEntry).passwordHash === "string"
+      ) {
+        const entry = item as VaultAccountEntry;
+        valid.push({
+          id: entry.id,
+          name: String(entry.name || "Pengguna KertaMarga").slice(0, 120),
+          identifier: entry.identifier.trim().slice(0, 80),
+          email: entry.email.trim().toLowerCase().slice(0, 160),
+          passwordHash: entry.passwordHash,
+          role: entry.role === "guru" ? "guru" : "siswa",
+          interests: Array.isArray(entry.interests)
+            ? entry.interests.filter((x): x is string => typeof x === "string").slice(0, 12)
+            : [],
+          createdAt:
+            typeof entry.createdAt === "string"
+              ? entry.createdAt
+              : new Date().toISOString(),
+        });
+      }
+    }
+    return valid;
+  } catch {
+    return [];
+  }
+}
+
+export async function hydrateVaultUsers(
+  extraVaultToken?: string | null
+): Promise<VaultAccountEntry[]> {
+  let cookieToken: string | undefined;
+  try {
+    const store = await cookies();
+    cookieToken = store.get(ACCOUNT_VAULT_COOKIE)?.value;
+  } catch {
+    // Abaikan bila dipanggil di luar konteks request cookies
+  }
+
+  const fromCookie = await decodeVaultToken(cookieToken);
+  const fromExtra =
+    extraVaultToken && extraVaultToken !== cookieToken
+      ? await decodeVaultToken(extraVaultToken)
+      : [];
+
+  const mergedMap = new Map<string, VaultAccountEntry>();
+  for (const item of [...fromCookie, ...fromExtra]) {
+    mergedMap.set(item.identifier.toLowerCase(), item);
+    upsertUserInStore({
+      id: item.id,
+      name: item.name,
+      identifier: item.identifier,
+      email: item.email,
+      passwordHash: item.passwordHash,
+      role: item.role,
+      interests: item.interests,
+      createdAt: new Date(item.createdAt),
+      updatedAt: new Date(),
+    });
+  }
+
+  return Array.from(mergedMap.values());
+}
+
+export async function buildUpdatedVaultToken(
+  user: UserRow,
+  extraVaultToken?: string | null
+): Promise<string> {
+  const existing = await hydrateVaultUsers(extraVaultToken);
+  const entry: VaultAccountEntry = {
+    id: user.id,
+    name: user.name,
+    identifier: user.identifier,
+    email: user.email.toLowerCase(),
+    passwordHash: user.passwordHash,
+    role: user.role === "guru" ? "guru" : "siswa",
+    interests: Array.isArray(user.interests) ? user.interests : [],
+    createdAt:
+      user.createdAt instanceof Date
+        ? user.createdAt.toISOString()
+        : new Date().toISOString(),
+  };
+
+  const filtered = existing.filter(
+    (item) =>
+      item.identifier.toLowerCase() !== entry.identifier.toLowerCase() &&
+      item.email.toLowerCase() !== entry.email.toLowerCase() &&
+      item.id !== entry.id
+  );
+  const accounts = [entry, ...filtered].slice(0, 6);
+
+  return new SignJWT({ accounts })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(getSecret());
+}
+
 export async function signSession(
   userId: number,
-  role: "siswa" | "guru" = "siswa"
+  role: "siswa" | "guru" = "siswa",
+  userSnapshot?: Partial<UserRow>
 ): Promise<string> {
-  return new SignJWT({ sub: String(userId), role })
+  return new SignJWT({
+    sub: String(userId),
+    role,
+    ...(userSnapshot?.name ? { name: userSnapshot.name } : {}),
+    ...(userSnapshot?.identifier ? { identifier: userSnapshot.identifier } : {}),
+    ...(userSnapshot?.email ? { email: userSnapshot.email } : {}),
+    ...(Array.isArray(userSnapshot?.interests)
+      ? { interests: userSnapshot.interests }
+      : {}),
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -175,7 +310,30 @@ export async function verifySession(token: string): Promise<number | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret());
     const id = Number(payload.sub);
-    return Number.isFinite(id) ? id : null;
+    if (!Number.isFinite(id)) return null;
+
+    // Pastikan akun tersedia di instance serverless saat ini bila memakai fallback file-storage
+    const existing = await findUserById(id);
+    if (
+      !existing &&
+      typeof payload.identifier === "string" &&
+      typeof payload.email === "string"
+    ) {
+      upsertUserInStore({
+        id,
+        name: typeof payload.name === "string" ? payload.name : "Pengguna KertaMarga",
+        identifier: payload.identifier,
+        email: payload.email,
+        passwordHash: DUMMY_PASSWORD_HASH,
+        role: payload.role === "guru" ? "guru" : "siswa",
+        interests: Array.isArray(payload.interests)
+          ? payload.interests.filter((x): x is string => typeof x === "string")
+          : [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+    return id;
   } catch {
     return null;
   }
@@ -199,6 +357,7 @@ export async function clearSessionCookie() {
 
 export async function getSessionUserId(): Promise<number | null> {
   const store = await cookies();
+  await hydrateVaultUsers(store.get(ACCOUNT_VAULT_COOKIE)?.value);
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySession(token);

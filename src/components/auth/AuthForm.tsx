@@ -9,7 +9,7 @@ import { useGSAP } from "@gsap/react";
 import PasswordField from "./PasswordField";
 import AuthAbstractArtwork from "./AuthAbstractArtwork";
 import KertaMargaLogo from "@/components/KertaMargaLogo";
-import { saveUserToStorage } from "@/lib/useAuth";
+import { getStoredVaultToken, saveUserToStorage } from "@/lib/useAuth";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, SplitText);
@@ -357,12 +357,14 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
 
     setLoading(true);
     try {
+      const vaultToken = getStoredVaultToken();
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           login: loginEmail.trim(),
           password: loginPassword,
+          ...(vaultToken ? { vaultToken } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -372,7 +374,7 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
         return;
       }
       if (data.user) {
-        saveUserToStorage(data.user);
+        saveUserToStorage(data.user, data.vaultToken);
       }
       router.push("/eksplorasi");
       router.refresh();
@@ -416,6 +418,7 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
 
     setLoading(true);
     try {
+      const vaultToken = getStoredVaultToken();
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -425,6 +428,7 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
           password: regPassword,
           passwordConfirm: regPasswordConfirm,
           agreed,
+          ...(vaultToken ? { vaultToken } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -434,7 +438,7 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
         return;
       }
       if (data.user) {
-        saveUserToStorage(data.user);
+        saveUserToStorage(data.user, data.vaultToken);
       }
       router.push("/eksplorasi");
       router.refresh();

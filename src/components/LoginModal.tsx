@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { saveUserToStorage } from "@/lib/useAuth";
+import { getStoredVaultToken, saveUserToStorage } from "@/lib/useAuth";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -100,6 +100,7 @@ export default function LoginModal({
           setLoading(false);
           return;
         }
+        const vaultToken = getStoredVaultToken();
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,6 +108,7 @@ export default function LoginModal({
             login: cleanIdentifier,
             password,
             role,
+            ...(vaultToken ? { vaultToken } : {}),
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -116,7 +118,7 @@ export default function LoginModal({
           return;
         }
         if (data.user) {
-          saveUserToStorage(data.user);
+          saveUserToStorage(data.user, data.vaultToken);
         }
         setLoading(false);
         onProceedToTest(false, selectedInterests);
@@ -129,6 +131,7 @@ export default function LoginModal({
             ? cleanId
             : `${cleanId.replace(/[^a-zA-Z0-9]/g, "") || "user"}@siswa.sch.id`;
 
+        const vaultToken = getStoredVaultToken();
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -141,6 +144,7 @@ export default function LoginModal({
             role,
             interests: selectedInterests,
             agreed: true,
+            ...(vaultToken ? { vaultToken } : {}),
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -150,7 +154,7 @@ export default function LoginModal({
           return;
         }
         if (data.user) {
-          saveUserToStorage(data.user);
+          saveUserToStorage(data.user, data.vaultToken);
         }
         setLoading(false);
         onProceedToTest(false, selectedInterests);
