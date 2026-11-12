@@ -16,7 +16,7 @@ function getPool(): Pool {
   if (pool) return pool;
   const url = process.env.DATABASE_URL;
   if (url) {
-    return (pool = createPool(url));
+    return (pool = createPool({ uri: url, connectTimeout: 2500 }));
   }
   return (pool = createPool({
     host: process.env.DB_HOST ?? "127.0.0.1",
@@ -24,6 +24,7 @@ function getPool(): Pool {
     database: process.env.DB_DATABASE ?? "kertamarga_bali",
     user: process.env.DB_USERNAME ?? "kertamarga_app",
     password: process.env.DB_PASSWORD ?? "",
+    connectTimeout: 2500,
     waitForConnections: true,
     connectionLimit: 10,
     charset: "utf8mb4",
@@ -273,6 +274,40 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
   };
 
   map.set(row.identifier.toLowerCase(), row);
+  persistStore();
+  return row;
+}
+
+export async function updateUserById(
+  id: number,
+  updates: { name?: string; interests?: string[] }
+): Promise<UserRow | null> {
+  const cleanName = updates.name?.trim();
+  const cleanInterests = updates.interests
+    ? updates.interests.map((s) => s.trim()).filter(Boolean)
+    : undefined;
+
+  try {
+    const updatePayload: { name?: string; interests?: string[] } = {};
+    if (cleanName) updatePayload.name = cleanName;
+    if (cleanInterests !== undefined) updatePayload.interests = cleanInterests;
+
+    if (Object.keys(updatePayload).length > 0) {
+      await getHandle().update(users).set(updatePayload).where(eq(users.id, id));
+      dbReady = true;
+      const updated = await findUserById(id);
+      if (updated) return updated;
+    }
+  } catch {
+    // Fallback ke penyimpanan file lokal bila MySQL belum aktif
+  }
+
+  const row = findInStoreById(id);
+  if (!row) return null;
+
+  if (cleanName) row.name = cleanName;
+  if (cleanInterests !== undefined) row.interests = cleanInterests;
+  row.updatedAt = new Date();
   persistStore();
   return row;
 }

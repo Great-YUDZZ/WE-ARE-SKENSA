@@ -3,7 +3,21 @@
 import React from "react";
 import Link from "next/link";
 
-export default function SurveyRequiredGate() {
+interface SurveyRequiredGateProps {
+  onStartPreview?: () => void;
+  previewFieldName?: string;
+  targetFieldId?: string;
+}
+
+export default function SurveyRequiredGate({
+  onStartPreview,
+  previewFieldName,
+  targetFieldId,
+}: SurveyRequiredGateProps) {
+  const surveyHref = targetFieldId
+    ? `/tes-keminatan?field=${encodeURIComponent(targetFieldId)}`
+    : "/tes-keminatan";
+
   return (
     <section className="max-w-2xl mx-auto py-8 sm:py-14">
       <div className="neo-card rounded-3xl bg-white p-6 sm:p-10 border-2 border-[#141413] shadow-[6px_6px_0px_#141413] space-y-6 text-center">
@@ -33,7 +47,7 @@ export default function SurveyRequiredGate() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link
-            href="/tes-keminatan"
+            href={surveyHref}
             className="neo-btn w-full sm:w-auto inline-flex items-center justify-center min-h-[48px] px-6 py-3 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] shadow-[4px_4px_0px_#141413] font-display font-black text-sm cursor-pointer"
           >
             Mulai Survey Tes Keminatan &rarr;
@@ -45,6 +59,19 @@ export default function SurveyRequiredGate() {
             Lihat Peta Bidang
           </Link>
         </div>
+
+        {onStartPreview && (
+          <div className="pt-2 border-t border-[#141413]/15">
+            <button
+              type="button"
+              onClick={onStartPreview}
+              className="text-xs font-mono font-bold text-[#3B66FF] hover:underline cursor-pointer"
+            >
+              Atau pratinjau langsung modul &amp; pustaka PDF
+              {previewFieldName ? ` (${previewFieldName})` : ""} tanpa skor survey &rarr;
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -89,7 +89,15 @@ export default function EksplorasiPage() {
   };
 
   // Run calculation via backend API (/api/assessment/analyze)
-  const runAssessmentCalculation = async () => {
+  const [activePresetId, setActivePresetId] = useState<string>("seimbang");
+  const [showManualSliders, setShowManualSliders] = useState<boolean>(false);
+
+  const runAssessmentCalculation = async (customWeights?: {
+    matchWeight: number;
+    distanceWeight: number;
+    costWeight: number;
+  }) => {
+    const w = customWeights || { matchWeight, distanceWeight, costWeight };
     setIsLoading(true);
     setAssessmentError(null);
     setCurrentStep(3);
@@ -104,11 +112,7 @@ export default function EksplorasiPage() {
           homeCoords: origin.coords,
           selectedAnswers: answers,
           openEndedReflection: openEndedText,
-          weights: {
-            matchWeight,
-            distanceWeight,
-            costWeight,
-          },
+          weights: w,
         }),
       });
 
@@ -179,16 +183,37 @@ export default function EksplorasiPage() {
     }
   };
 
-  // Re-run calculation when weights change in Step 3
+  // Re-run calculation when preset or manual weights change in Step 3
+  const handleSelectPriorityPreset = (preset: {
+    id: string;
+    matchWeight: number;
+    distanceWeight: number;
+    costWeight: number;
+  }) => {
+    setActivePresetId(preset.id);
+    setMatchWeight(preset.matchWeight);
+    setDistanceWeight(preset.distanceWeight);
+    setCostWeight(preset.costWeight);
+    runAssessmentCalculation({
+      matchWeight: preset.matchWeight,
+      distanceWeight: preset.distanceWeight,
+      costWeight: preset.costWeight,
+    });
+  };
+
   const handleRecalculateWeights = () => {
+    setActivePresetId("manual");
     runAssessmentCalculation();
   };
 
   return (
     <div className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
-      {/* Toast Notification */}
+      {/* Toast Notification (solid dark surface, never neo-card which forces white bg) */}
       {toastMessage && (
-        <div className="fixed top-24 right-4 sm:right-8 z-50 neo-card px-5 py-3 rounded-2xl bg-[#141413] text-white flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md">
+        <div
+          role="status"
+          className="fixed top-24 right-4 sm:right-8 z-50 px-5 py-3 rounded-2xl bg-[#141413] text-white border-2 border-[#141413] shadow-[4px_4px_0px_#B8F348] flex items-center gap-3 max-w-md"
+        >
           <div className="w-3 h-3 rounded-full bg-[#B8F348] shrink-0" />
           <span className="text-xs sm:text-sm font-display font-bold">{toastMessage}</span>
         </div>
@@ -207,7 +232,7 @@ export default function EksplorasiPage() {
         onOpenTest={() => setCurrentStep(1)}
       />
 
-      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
+      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 w-full">
         {/* Step Wizard Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between text-xs font-mono font-bold text-[#52514E] mb-2">
@@ -239,24 +264,25 @@ export default function EksplorasiPage() {
               </div>
 
               <div>
-                <h1 className="font-display font-black text-3xl sm:text-4xl text-[#141413] leading-tight">
+                <h1 className="font-display font-black text-2xl sm:text-4xl text-[#141413] leading-tight">
                   Mulai Temukan Arah Masa Depanmu
                 </h1>
                 <p className="mt-2 text-sm sm:text-base text-[#52514E] leading-relaxed">
-                  Kuesioner ini dirancang untuk membantumu mengeksplorasi potensi dan pilihan program studi di Bali. Hasil yang diberikan adalah <strong>bahan pertimbangan dan diskusi</strong>, bukan penentu mutlak masa depan atau pengganti bimbingan resmi sekolah.
+                  Jawab kuesioner singkat untuk memetakan minat, kesiapan, dan rekomendasi sekolah atau kampus di Bali yang paling cocok dengan profilmu.
                 </p>
               </div>
 
-              {/* Prinsip Privasi & Transparansi Card */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] space-y-2 text-xs sm:text-sm">
-                <span className="font-display font-extrabold text-[#141413] block">
-                  Prinsip Kejujuran Data &amp; Privasi Siswa:
+              {/* Compact Trust Strip */}
+              <div className="flex flex-wrap gap-2 text-xs font-mono font-bold text-[#141413]">
+                <span className="px-3 py-1.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+                  Data Terverifikasi PDDIKTI &amp; Kemendikbud
                 </span>
-                <ul className="space-y-1.5 text-[#52514E] list-disc list-inside">
-                  <li><strong>Zero PII (Tanpa Data Pribadi Sensitif):</strong> Kami tidak meminta nama lengkap, nomor telepon, alamat rumah, atau data rahasia keluarga.</li>
-                  <li><strong>Data Terverifikasi:</strong> Informasi kampus dan sekolah merujuk pada data resmi PDDIKTI, BAN-PT, dan instansi terkait. Informasi yang belum ada ditandai secara jujur sebagai <em>&quot;Belum tersedia&quot;</em>.</li>
-                  <li><strong>Bebas Sponsor:</strong> Tidak ada institusi yang dipromosikan berbayar. Rekomendasi dihitung murni dari kecocokan profilmu.</li>
-                </ul>
+                <span className="px-3 py-1.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+                  Bebas Sponsor &amp; Objektif
+                </span>
+                <span className="px-3 py-1.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413]">
+                  Lokasi Hanya untuk Estimasi Jarak
+                </span>
               </div>
 
               {/* Form Input Profil Minimal */}
@@ -434,7 +460,7 @@ export default function EksplorasiPage() {
                 {currentQuestionIndex === BASE_QUESTIONS.length - 1 && !isBranching && (
                   <button
                     type="button"
-                    onClick={runAssessmentCalculation}
+                    onClick={() => runAssessmentCalculation()}
                     className="group inline-flex items-center gap-3 pl-6 pr-2.5 py-2.5 rounded-2xl bg-[#141413] hover:bg-[#282826] text-white border-2 border-[#141413] shadow-[0_5px_0_#B8F348] active:translate-y-[5px] active:shadow-none transition-all cursor-pointer font-display font-black text-sm"
                   >
                     <span>Selesai &amp; Hitung Rekomendasi</span>
@@ -480,7 +506,7 @@ export default function EksplorasiPage() {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={runAssessmentCalculation}
+                    onClick={() => runAssessmentCalculation()}
                     className="px-5 py-2.5 rounded-xl bg-[#141413] text-[#B8F348] font-display font-bold text-xs border-2 border-[#141413] cursor-pointer"
                   >
                     Coba Hitung Ulang
@@ -556,69 +582,141 @@ export default function EksplorasiPage() {
                     </div>
                   )}
 
-                  {/* Dynamic Weight Equalizer Controls */}
-                  <div className="mt-4 pt-4 border-t-2 border-[#141413]/10">
-                    <span className="text-xs font-mono font-bold text-[#141413] uppercase block mb-3">
-                      UBAH BOBOT PRIORITAS KEPUTUSAN KELUARGA (REAL-TIME):
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                      <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]">
-                        <div className="flex justify-between font-mono font-bold mb-1">
-                          <span className="text-[#3B66FF]">Kecocokan Minat</span>
-                          <span>{matchWeight}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="20"
-                          max="100"
-                          step="5"
-                          value={matchWeight}
-                          onChange={(e) => setMatchWeight(Number(e.target.value))}
-                          className="w-full neo-fader"
-                        />
-                      </div>
-
-                      <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]">
-                        <div className="flex justify-between font-mono font-bold mb-1">
-                          <span className="text-[#0F6E4E]">Jarak Tempuh Bali</span>
-                          <span>{distanceWeight}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="10"
-                          max="100"
-                          step="5"
-                          value={distanceWeight}
-                          onChange={(e) => setDistanceWeight(Number(e.target.value))}
-                          className="w-full neo-fader"
-                        />
-                      </div>
-
-                      <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]">
-                        <div className="flex justify-between font-mono font-bold mb-1">
-                          <span className="text-[#FF5E4D]">Efisiensi Biaya</span>
-                          <span>{costWeight}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="10"
-                          max="100"
-                          step="5"
-                          value={costWeight}
-                          onChange={(e) => setCostWeight(Number(e.target.value))}
-                          className="w-full neo-fader"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex justify-end">
+                  {/* Priority Presets (1-Click) + Optional Manual Sliders */}
+                  <div className="mt-4 pt-4 border-t-2 border-[#141413]/15 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-mono font-bold text-[#141413] uppercase">
+                        Sesuaikan Prioritas Pilihanmu (1-Klik Hitung Ulang):
+                      </span>
                       <button
                         type="button"
-                        onClick={handleRecalculateWeights}
-                        className="px-4 py-2 rounded-xl bg-[#141413] text-[#B8F348] font-mono font-bold text-xs cursor-pointer"
+                        onClick={() => setShowManualSliders((prev) => !prev)}
+                        className="text-xs font-mono font-bold text-[#3B66FF] hover:underline cursor-pointer"
                       >
-                        Terapkan Ulang Bobot &rarr;
+                        {showManualSliders ? "Tutup Pengaturan Manual" : "Atur Bobot Manual"}
                       </button>
                     </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {[
+                        {
+                          id: "minat",
+                          label: "Fokus Minat",
+                          desc: "Utamakan kecocokan bakat",
+                          matchWeight: 95,
+                          distanceWeight: 30,
+                          costWeight: 40,
+                        },
+                        {
+                          id: "seimbang",
+                          label: "Seimbang",
+                          desc: "Kombinasi ideal",
+                          matchWeight: 80,
+                          distanceWeight: 50,
+                          costWeight: 65,
+                        },
+                        {
+                          id: "dekat",
+                          label: "Dekat Rumah",
+                          desc: "Prioritas jarak terdekat",
+                          matchWeight: 65,
+                          distanceWeight: 95,
+                          costWeight: 55,
+                        },
+                        {
+                          id: "hemat",
+                          label: "Hemat Biaya",
+                          desc: "Prioritas biaya terjangkau",
+                          matchWeight: 65,
+                          distanceWeight: 50,
+                          costWeight: 95,
+                        },
+                      ].map((preset) => {
+                        const isActive = activePresetId === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => handleSelectPriorityPreset(preset)}
+                            className={`min-h-[56px] p-3 rounded-xl border-2 border-[#141413] text-left transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-[#B8F348] shadow-[3px_3px_0px_#141413]"
+                                : "bg-[#FAF7F2] hover:bg-white"
+                            }`}
+                          >
+                            <span className="font-display font-black text-xs sm:text-sm text-[#141413] block">
+                              {preset.label}
+                            </span>
+                            <span className="text-xs text-[#52514E] block mt-0.5">
+                              {preset.desc}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {showManualSliders && (
+                      <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                          <div className="p-3 rounded-xl bg-white border border-[#141413]">
+                            <div className="flex justify-between font-mono font-bold mb-1">
+                              <span className="text-[#3B66FF]">Kecocokan Minat</span>
+                              <span>{matchWeight}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="20"
+                              max="100"
+                              step="5"
+                              value={matchWeight}
+                              onChange={(e) => setMatchWeight(Number(e.target.value))}
+                              className="w-full neo-fader"
+                            />
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-white border border-[#141413]">
+                            <div className="flex justify-between font-mono font-bold mb-1">
+                              <span className="text-[#0F6E4E]">Jarak Tempuh Bali</span>
+                              <span>{distanceWeight}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="10"
+                              max="100"
+                              step="5"
+                              value={distanceWeight}
+                              onChange={(e) => setDistanceWeight(Number(e.target.value))}
+                              className="w-full neo-fader"
+                            />
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-white border border-[#141413]">
+                            <div className="flex justify-between font-mono font-bold mb-1">
+                              <span className="text-[#FF5E4D]">Efisiensi Biaya</span>
+                              <span>{costWeight}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="10"
+                              max="100"
+                              step="5"
+                              value={costWeight}
+                              onChange={(e) => setCostWeight(Number(e.target.value))}
+                              className="w-full neo-fader"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleRecalculateWeights}
+                            className="min-h-[40px] px-4 py-2 rounded-xl bg-[#141413] text-[#B8F348] font-mono font-bold text-xs cursor-pointer"
+                          >
+                            Terapkan Bobot Manual &rarr;
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -715,7 +813,9 @@ export default function EksplorasiPage() {
                       {/* Matched Verified Institutions in Bali */}
                       <div className="space-y-2.5 pt-2">
                         <span className="text-xs font-mono font-bold text-[#141413] uppercase block">
-                          Institusi Penyelenggara Terdekat di Bali (Data Terverifikasi):
+                          {educationLevel === "SMP"
+                            ? "Rekomendasi Sekolah (SMA/SMK) & Jurusan Terdekat di Bali:"
+                            : "Rekomendasi Kampus & Program Studi Terdekat di Bali:"}
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {rec.matchedInstitutions.slice(0, 2).map((inst) => (
@@ -723,22 +823,22 @@ export default function EksplorasiPage() {
                               key={inst.institutionId}
                               className="p-3.5 rounded-2xl bg-white border-2 border-[#141413] shadow-[2px_2px_0px_#141413] space-y-1.5 text-xs"
                             >
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between gap-2">
                                 <span className="font-display font-extrabold text-[#141413]">
                                   {inst.institutionName}
                                 </span>
-                                <span className="px-2 py-0.5 rounded bg-[#B8F348] border border-[#141413] font-mono font-bold text-[10px]">
+                                <span className="px-2 py-0.5 rounded bg-[#B8F348] border border-[#141413] font-mono font-bold text-xs shrink-0">
                                   {inst.level}
                                 </span>
                               </div>
                               <p className="text-xs font-semibold text-[#3B66FF]">
                                 {inst.programName}
                               </p>
-                              <div className="flex items-center justify-between font-mono text-[11px] text-[#52514E]">
+                              <div className="flex items-center justify-between font-mono text-xs text-[#52514E]">
                                 <span>{inst.district}, {inst.kabupaten}</span>
                                 <span className="font-bold text-[#141413]">~{inst.estimatedDistanceKm} km</span>
                               </div>
-                              <div className="pt-1.5 border-t border-[#141413]/10 text-[11px] text-[#52514E]">
+                              <div className="pt-1.5 border-t border-[#141413]/10 text-xs text-[#52514E]">
                                 <span>{inst.tuitionFeeText}</span>
                               </div>
                             </div>

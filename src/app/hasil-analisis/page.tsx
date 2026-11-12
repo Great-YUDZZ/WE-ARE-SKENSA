@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -16,6 +16,15 @@ import {
 import { getAllPustakaPdfByField } from "@/data/moduleMasterclassExtension";
 import type { PustakaDokumenItem } from "@/app/api/pustaka-modul/route";
 import type { MentorAgentResponse } from "@/app/api/mentor-agent/route";
+import { getCachedUser } from "@/lib/useAuth";
+import {
+  applyFullLearningSnapshotToStorage,
+  mergeLearningSnapshots,
+  readFieldProgressFromStorage,
+  readFullLearningSnapshot,
+  writeFieldProgressToStorage,
+  type FullLearningSnapshot,
+} from "@/lib/learningProfile";
 import WorkspaceHeader, {
   WorkspaceTabId,
 } from "@/components/hasil-analisis/WorkspaceHeader";
@@ -34,6 +43,7 @@ interface SavedSurveyResult {
   score: number;
   dominant: FieldGroup;
   mismatch: boolean;
+  completedAt?: string;
 }
 
 function HasilAnalisisContent() {
@@ -45,12 +55,14 @@ function HasilAnalisisContent() {
   const rawScoreParam = searchParams.get("score");
   const dominantParam = searchParams.get("dominant") as FieldGroup | null;
   const mismatchParam = searchParams.get("mismatch");
+  const previewParam = searchParams.get("preview");
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
   const [isCheckingSurvey, setIsCheckingSurvey] = useState<boolean>(true);
   const [hasSurveyResult, setHasSurveyResult] = useState<boolean>(false);
+  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   const [baseScore, setBaseScore] = useState<number>(62);
   const [dominantGroup, setDominantGroup] = useState<FieldGroup>("manusia");
   const [isGroupMismatch, setIsGroupMismatch] = useState<boolean>(false);
@@ -93,6 +105,7 @@ function HasilAnalisisContent() {
       setBaseScore(nextScore);
       setDominantGroup(nextDominant);
       setIsGroupMismatch(nextMismatch);
+      setIsPreviewMode(false);
       setHasSurveyResult(true);
       setIsCheckingSurvey(false);
 
@@ -103,6 +116,7 @@ function HasilAnalisisContent() {
           score: nextScore,
           dominant: nextDominant,
           mismatch: nextMismatch,
+          completedAt: new Date().toISOString(),
         };
         window.localStorage.setItem(
           "kertamarga_survey_result",
@@ -145,6 +159,7 @@ function HasilAnalisisContent() {
           setBaseScore(Math.max(35, Math.min(95, parsed.score)));
           setDominantGroup(savedDominant);
           setIsGroupMismatch(Boolean(parsed.mismatch));
+          setIsPreviewMode(false);
           setHasSurveyResult(true);
           setIsCheckingSurvey(false);
           return;
@@ -154,9 +169,34 @@ function HasilAnalisisContent() {
       // Ignore storage errors
     }
 
+    const hasExplicitField = Boolean(
+      fieldParam && MENTOR_CURRICULUM_BY_FIELD[fieldParam]
+    );
+    if (hasExplicitField || previewParam === "1") {
+      const previewField =
+        fieldParam && MENTOR_CURRICULUM_BY_FIELD[fieldParam] ? fieldParam : "tkj";
+      const previewCurr =
+        MENTOR_CURRICULUM_BY_FIELD[previewField] || MENTOR_CURRICULUM_BY_FIELD.tkj;
+      const previewCourse =
+        courseParam && previewCurr.targetCourses.some((c) => c.id === courseParam)
+          ? courseParam
+          : previewCurr.targetCourses[0].id;
+
+      setTargetFieldId(previewField);
+      setTargetCourseId(previewCourse);
+      setBaseScore(62);
+      setDominantGroup(previewCurr.group);
+      setIsGroupMismatch(false);
+      setIsPreviewMode(true);
+      setHasSurveyResult(true);
+      setIsCheckingSurvey(false);
+      return;
+    }
+
+    setIsPreviewMode(false);
     setHasSurveyResult(false);
     setIsCheckingSurvey(false);
-  }, [rawScoreParam, fieldParam, courseParam, dominantParam, mismatchParam]);
+  }, [rawScoreParam, fieldParam, courseParam, dominantParam, mismatchParam, previewParam]);
 
   const [activeTab, setActiveTab] = useState<WorkspaceTabId>("materi");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("ALL");
@@ -170,14 +210,16 @@ function HasilAnalisisContent() {
     const curr =
       MENTOR_CURRICULUM_BY_FIELD[targetFieldId] ||
       MENTOR_CURRICULUM_BY_FIELD.tkj;
-    if (!curr.targetCourses.some((c) => c.id === targetCourseId)) {
-      setTargetCourseId(curr.targetCourses[0].id);
-    }
+    setTargetCourseId((prev) =>
+      curr.targetCourses.some((c) => c.id === prev)
+        ? prev
+        : curr.targetCourses[0].id
+    );
     setExpandedModuleId(curr.learningModules[0]?.id || "");
     setSelectedModuleFilter("ALL");
     setSelectedCertFilter("ALL");
     setInlinePdfModuleId("");
-  }, [targetFieldId, targetCourseId]);
+  }, [targetFieldId]);
 
   const targetCourse: TargetCourse =
     curriculum.targetCourses.find((c) => c.id === targetCourseId) ||
@@ -251,7 +293,8 @@ function HasilAnalisisContent() {
     };
   }, [targetFieldId, pustakaScope, pustakaReloadTick]);
 
-  // Progress & Quiz State (persisted per field in localStorage)
+  // Progress, Practice Notes & Quiz State (persisted per field in localStorage + account sync)
+  const [hydratedFieldId, setHydratedFieldId] = useState<string | null>(null);
   const [completedModules, setCompletedModules] = useState<string[]>([]);
   const [modulePracticeNotes, setModulePracticeNotes] = useState<
     Record<string, string>
@@ -262,43 +305,88 @@ function HasilAnalisisContent() {
   const [submittedCertIds, setSubmittedCertIds] = useState<string[]>([]);
   const [passedCertIds, setPassedCertIds] = useState<string[]>([]);
 
+  const targetFieldRef = useRef(targetFieldId);
+  targetFieldRef.current = targetFieldId;
+  const serverSyncReadyRef = useRef<boolean>(false);
+
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(
-        `kertamarga_study_progress_${targetFieldId}`
-      );
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          completedModules?: string[];
-          passedCertIds?: string[];
-        };
-        setCompletedModules(
-          Array.isArray(parsed.completedModules) ? parsed.completedModules : []
-        );
-        setPassedCertIds(
-          Array.isArray(parsed.passedCertIds) ? parsed.passedCertIds : []
-        );
-      } else {
-        setCompletedModules([]);
-        setPassedCertIds([]);
-      }
-    } catch {
-      setCompletedModules([]);
-      setPassedCertIds([]);
-    }
+    const prog = readFieldProgressFromStorage(targetFieldId);
+    setCompletedModules(prog.completedModules);
+    setPassedCertIds(prog.passedCertIds);
+    setModulePracticeNotes(prog.practiceNotes);
+    setHydratedFieldId(targetFieldId);
   }, [targetFieldId]);
 
   useEffect(() => {
-    if (!hasSurveyResult) return;
-    try {
-      window.localStorage.setItem(
-        `kertamarga_study_progress_${targetFieldId}`,
-        JSON.stringify({ completedModules, passedCertIds })
-      );
-    } catch {
-      // Ignore storage errors
+    let active = true;
+    const cachedUser = getCachedUser();
+    if (!cachedUser) {
+      serverSyncReadyRef.current = true;
+      return;
     }
-  }, [hasSurveyResult, targetFieldId, completedModules, passedCertIds]);
+
+    fetch("/api/profile", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { user?: unknown; learningProfile?: FullLearningSnapshot } | null) => {
+        if (!active) return;
+        if (data?.user && data.learningProfile) {
+          const merged = mergeLearningSnapshots(
+            readFullLearningSnapshot(),
+            data.learningProfile
+          );
+          applyFullLearningSnapshotToStorage(merged);
+          const currentProg = merged.progressByField[targetFieldRef.current];
+          if (currentProg) {
+            setCompletedModules(currentProg.completedModules);
+            setPassedCertIds(currentProg.passedCertIds);
+            setModulePracticeNotes(currentProg.practiceNotes);
+          }
+        }
+        serverSyncReadyRef.current = true;
+      })
+      .catch(() => {
+        if (active) serverSyncReadyRef.current = true;
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasSurveyResult || hydratedFieldId !== targetFieldId) return;
+
+    writeFieldProgressToStorage(targetFieldId, {
+      completedModules,
+      passedCertIds,
+      practiceNotes: modulePracticeNotes,
+    });
+
+    if (!getCachedUser() || !serverSyncReadyRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      const snapshot = readFullLearningSnapshot();
+      fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          learningProfile: snapshot,
+          syncMode: "replace",
+        }),
+      }).catch(() => {
+        // Abaikan kegagalan sinkronisasi latar belakang
+      });
+    }, 600);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    hasSurveyResult,
+    hydratedFieldId,
+    targetFieldId,
+    completedModules,
+    passedCertIds,
+    modulePracticeNotes,
+  ]);
 
   // Mentor Drawer State
   const [isMentorOpen, setIsMentorOpen] = useState<boolean>(false);
@@ -362,7 +450,7 @@ function HasilAnalisisContent() {
       sender: "agent",
       text:
         gapNow > 0
-          ? `Halo! Saya Agen Pembimbing untuk bidang ${curriculum.fieldName}. Skor kesiapan Anda saat ini ${baseScore}% untuk mata kuliah '${targetCourse.name}' (standar minimum: ${targetCourse.minScore}%). Selesaikan modul materi dan latihan sertifikasi untuk menaikkan skor Anda.`
+          ? `Halo! Saya Agen Pembimbing untuk bidang ${curriculum.fieldName}. Skor kesiapan Anda saat ini ${currentReadinessScore}% untuk mata kuliah '${targetCourse.name}' (standar minimum: ${targetCourse.minScore}%). Selesaikan modul materi dan latihan sertifikasi untuk menaikkan skor Anda.`
           : `Selamat! Skor kesiapan Anda (${currentReadinessScore}%) sudah memenuhi standar minimum (${targetCourse.minScore}%) untuk mata kuliah '${targetCourse.name}'. Anda dapat memperdalam modul atau langsung menguji diri di tab Tes Sertifikasi.`,
       diagnosisSummary:
         gapNow > 0
@@ -470,15 +558,22 @@ function HasilAnalisisContent() {
       }
 
       const data = (await res.json()) as MentorAgentResponse;
+      const safeReply =
+        typeof data.replyMessage === "string" && data.replyMessage.trim().length > 0
+          ? data.replyMessage.trim()
+          : `Untuk meningkatkan kesiapan pada ${targetCourse.name} di ${curriculum.fieldName}, pelajari modul '${curriculum.learningModules[0]?.title || curriculum.fieldName}' dan kerjakan latihan sertifikasi ${
+              targetCourse.certificationAlignment || curriculum.mainCertificationTitle
+            }.`;
       const agentTurn: MentorChatTurn = {
         id: "agent-" + Date.now(),
         sender: "agent",
-        text: data.replyMessage,
+        text: safeReply,
         diagnosisSummary: data.diagnosisSummary,
         recommendedActionType: data.recommendedActionType,
         recommendedItemTitle: data.recommendedItemTitle,
         keyTakeaways: data.keyTakeaways,
         encouragementNote: data.encouragementNote,
+        outOfScope: Boolean(data.outOfScope),
       };
       setChatHistory((prev) => [...prev, agentTurn]);
     } catch {
@@ -520,9 +615,34 @@ function HasilAnalisisContent() {
               Memeriksa hasil survey keminatan Anda...
             </div>
           ) : !hasSurveyResult ? (
-            <SurveyRequiredGate />
+            <SurveyRequiredGate
+              targetFieldId={targetFieldId}
+              previewFieldName={curriculum.fieldName}
+              onStartPreview={() => {
+                setIsPreviewMode(true);
+                setHasSurveyResult(true);
+              }}
+            />
           ) : (
             <>
+              {isPreviewMode && (
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-[#FFBE2E]/25 border-2 border-[#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs sm:text-sm text-[#141413] font-medium">
+                    <span className="font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#FFBE2E] border border-[#141413] mr-2">
+                      Mode Pratinjau
+                    </span>
+                    Menampilkan simulasi standar dasar ({baseScore}%) untuk{" "}
+                    <strong>{curriculum.fieldName}</strong>. Isi Survey Keminatan untuk menghitung skor kesiapan asli Anda.
+                  </div>
+                  <Link
+                    href={`/tes-keminatan?field=${encodeURIComponent(targetFieldId)}`}
+                    className="neo-btn inline-flex items-center justify-center min-h-[40px] px-4 rounded-xl bg-[#B8F348] hover:bg-[#a8e635] text-[#141413] border-2 border-[#141413] font-display font-bold text-xs shrink-0"
+                  >
+                    Hitung Skor Survey Asli &rarr;
+                  </Link>
+                </div>
+              )}
+
               <WorkspaceHeader
                 targetFieldId={targetFieldId}
                 onChangeField={setTargetFieldId}
@@ -565,7 +685,15 @@ function HasilAnalisisContent() {
                     curriculum={curriculum}
                     filteredModules={filteredModules}
                     selectedModuleFilter={selectedModuleFilter}
-                    onChangeFilter={setSelectedModuleFilter}
+                    onChangeFilter={(filterId) => {
+                      setSelectedModuleFilter(filterId);
+                      if (filterId !== "ALL") {
+                        const firstMatch = curriculum.learningModules.find(
+                          (mod) => mod.courseId === filterId
+                        );
+                        if (firstMatch) setExpandedModuleId(firstMatch.id);
+                      }
+                    }}
                     onSelectCourse={setTargetCourseId}
                     expandedModuleId={expandedModuleId}
                     onToggleExpand={setExpandedModuleId}
@@ -688,6 +816,9 @@ function HasilAnalisisContent() {
             </Link>
             <Link href="/ai-navigator" className="hover:text-[#141413]">
               AI Navigator
+            </Link>
+            <Link href="/profil" className="hover:text-[#141413]">
+              Profil &amp; Catatan
             </Link>
           </div>
         </div>

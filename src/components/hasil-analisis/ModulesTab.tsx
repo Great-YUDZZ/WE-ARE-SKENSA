@@ -114,7 +114,21 @@ export default function ModulesTab({
 
       {/* Module Accordion List */}
       <div className="space-y-4">
-        {filteredModules.map((mod, idx) => {
+        {filteredModules.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] text-center space-y-3">
+            <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
+              Belum ada modul spesifik untuk filter mata kuliah ini.
+            </p>
+            <button
+              type="button"
+              onClick={() => onChangeFilter("ALL")}
+              className="neo-btn px-4 py-2 rounded-xl bg-[#B8F348] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+            >
+              Tampilkan Semua Modul ({curriculum.learningModules.length})
+            </button>
+          </div>
+        ) : (
+        filteredModules.map((mod, idx) => {
           const isCompleted = completedModules.includes(mod.id);
           const isExpanded = expandedModuleId === mod.id;
           const masterclass = getMasterclassContentForModule(mod);
@@ -400,7 +414,8 @@ export default function ModulesTab({
               )}
             </div>
           );
-        })}
+        })
+        )}
       </div>
     </div>
   );

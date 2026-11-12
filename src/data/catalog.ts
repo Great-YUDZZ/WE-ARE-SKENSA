@@ -1050,15 +1050,27 @@ export interface MatchedInstitutionProgram extends InstitutionProgram {
 /** Filters catalog programs matching a field ID and sorts them by distance from user origin. */
 export function getMatchedInstitutionsForField(
   fieldId: string,
-  origin: string | GeoPoint | UserLocationOrigin = "Kota Denpasar"
+  origin: string | GeoPoint | UserLocationOrigin = "Kota Denpasar",
+  currentEducation?: "SMP" | "SMA" | "SMK" | "Lainnya"
 ): MatchedInstitutionProgram[] {
   const keywords = FIELD_PROGRAM_KEYWORDS[fieldId] ?? [];
   if (keywords.length === 0) return [];
 
-  return INSTITUTIONS_CATALOG.filter((inst) => {
+  const matchedAll = INSTITUTIONS_CATALOG.filter((inst) => {
     const progLower = inst.programName.toLowerCase();
     return keywords.some((kw) => progLower.includes(kw));
-  })
+  });
+
+  let levelFiltered = matchedAll;
+  if (currentEducation === "SMP") {
+    const secondary = matchedAll.filter((inst) => inst.level === "SMK");
+    if (secondary.length > 0) levelFiltered = secondary;
+  } else if (currentEducation) {
+    const higherEd = matchedAll.filter((inst) => inst.level !== "SMK");
+    if (higherEd.length > 0) levelFiltered = higherEd;
+  }
+
+  return levelFiltered
     .map((inst) => ({
       ...inst,
       estimatedDistanceKm: estimateDistanceFromOrigin(origin, inst.kabupaten, inst.district),

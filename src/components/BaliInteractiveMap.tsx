@@ -87,10 +87,14 @@ export default function BaliInteractiveMap({
   );
 
   const activeInstitution: UnifiedKatalogInstitution = useMemo(() => {
+    const byFilteredId = filteredInstitutions.find(
+      (item) => item.id === activeInstitutionId
+    );
+    if (byFilteredId) return byFilteredId;
+    if (filteredInstitutions.length > 0) return filteredInstitutions[0];
     const byId = allInstitutions.find((item) => item.id === activeInstitutionId);
-    if (byId) return byId;
-    return quickList[0] ?? allInstitutions[0];
-  }, [activeInstitutionId, allInstitutions, quickList]);
+    return byId ?? allInstitutions[0];
+  }, [activeInstitutionId, allInstitutions, filteredInstitutions]);
 
   const googleMapsEmbedQuery = [
     activeInstitution.name,

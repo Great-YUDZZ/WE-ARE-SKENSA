@@ -108,7 +108,21 @@ export default function CertificationTab({
 
       {/* Drills List */}
       <div className="space-y-4">
-        {filteredCertDrills.map((drill, dIdx) => {
+        {filteredCertDrills.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] text-center space-y-3">
+            <p className="font-display font-bold text-sm sm:text-base text-[#141413]">
+              Belum ada soal latihan pada filter skema ini.
+            </p>
+            <button
+              type="button"
+              onClick={() => onChangeFilter("ALL")}
+              className="neo-btn px-4 py-2 rounded-xl bg-[#B8F348] text-[#141413] border-2 border-[#141413] font-mono font-bold text-xs cursor-pointer"
+            >
+              Tampilkan Semua Soal ({curriculum.certificationDrills.length})
+            </button>
+          </div>
+        ) : (
+        filteredCertDrills.map((drill, dIdx) => {
           const chosenIdx = selectedCertAnswers[drill.id];
           const isSubmitted = submittedCertIds.includes(drill.id);
           const isPassed = passedCertIds.includes(drill.id);
@@ -220,7 +234,8 @@ export default function CertificationTab({
               )}
             </div>
           );
-        })}
+        })
+        )}
       </div>
     </div>
   );

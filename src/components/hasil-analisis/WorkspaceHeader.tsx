@@ -83,7 +83,7 @@ export default function WorkspaceHeader({
           </Link>
           <span>/</span>
           <Link
-            href="/tes-keminatan"
+            href={`/tes-keminatan?field=${encodeURIComponent(targetFieldId)}`}
             className="hover:text-[#141413] transition-colors"
           >
             Survey Keminatan
@@ -92,12 +92,20 @@ export default function WorkspaceHeader({
           <span className="text-[#141413]">Modul &amp; Sertifikasi</span>
         </nav>
 
-        <Link
-          href="/tes-keminatan"
-          className="neo-btn inline-flex items-center min-h-[44px] px-4 rounded-xl bg-white border-2 border-[#141413] hover:bg-[#FAF7F2] text-xs font-mono font-bold text-[#141413]"
-        >
-          Ulangi / Ubah Survey &rarr;
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/profil"
+            className="neo-btn inline-flex items-center min-h-[44px] px-4 rounded-xl bg-[#B8F348] border-2 border-[#141413] hover:bg-[#a8e635] text-xs font-mono font-bold text-[#141413]"
+          >
+            Profil &amp; Catatan Belajar
+          </Link>
+          <Link
+            href={`/tes-keminatan?field=${encodeURIComponent(targetFieldId)}`}
+            className="neo-btn inline-flex items-center min-h-[44px] px-4 rounded-xl bg-white border-2 border-[#141413] hover:bg-[#FAF7F2] text-xs font-mono font-bold text-[#141413]"
+          >
+            Ulangi / Ubah Survey &rarr;
+          </Link>
+        </div>
       </div>
 
       {/* Unified Compact Header Bar: Switcher + Readiness Score */}

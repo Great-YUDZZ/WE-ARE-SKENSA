@@ -14,6 +14,7 @@ export interface MentorChatTurn {
   recommendedActionType?: "materi" | "sertifikasi" | "portofolio" | "siap";
   keyTakeaways?: string[];
   encouragementNote?: string;
+  outOfScope?: boolean;
 }
 
 interface MentorDrawerProps {
@@ -158,13 +159,19 @@ export default function MentorDrawer({
                         {turn.sender === "student" ? "Anda" : "AI Pembimbing"}
                       </span>
                       {turn.diagnosisSummary && (
-                        <span className="px-2 py-0.5 rounded bg-[#B8F348] text-[#141413] font-bold border border-[#141413]">
+                        <span
+                          className={`px-2 py-0.5 rounded font-bold border border-[#141413] ${
+                            turn.outOfScope
+                              ? "bg-[#FFBE2E] text-[#141413]"
+                              : "bg-[#B8F348] text-[#141413]"
+                          }`}
+                        >
                           {turn.diagnosisSummary}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-[#141413] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#141413] leading-relaxed whitespace-pre-line">
                       {turn.text}
                     </p>
 
@@ -181,7 +188,7 @@ export default function MentorDrawer({
                       </div>
                     )}
 
-                    {turn.sender === "agent" && turn.recommendedActionType && (
+                    {turn.sender === "agent" && turn.recommendedActionType && !turn.outOfScope && (
                       <div className="pt-1">
                         <button
                           type="button"

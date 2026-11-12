@@ -37,13 +37,13 @@ Berdasarkan evaluasi pasca penyisihan dan persiapan menuju penjurian final, peni
 | **Backend / Runtime** | Next.js App Router API Routes (Node.js Runtime) |
 | **Database / Storage** | Drizzle ORM + MySQL (`mysql2`) dengan fallback persistent JSON store (`data/users.json` / `/tmp`) dan in-memory cache |
 | **Hosting / Deployment** | Vercel Production (HTTPS aktif 24/7) |
-| **AI Model / API / Method** | Multi-tier pipeline: 9Router OpenAI-compatible gateway + Google Gemini REST API (`gemini-3.5-flash-lite` / fallback chain; disinkronkan saat commit final AI tim) + Skoring Deterministik Multi-Dimensi (`src/lib/scoring.ts`) & Deterministic Fallback Engine |
+| **AI Model / API / Method** | Multi-tier pipeline: 9Router OpenAI-compatible gateway (`ag/gemini-3-flash`, `ag/gemini-3-flash-agent`, `openrouter/openrouter/free`) + Google Gemini REST API (`gemini-3.5-flash-lite` / `gemini-flash-lite-latest`) + Skoring Deterministik Multi-Dimensi (`src/lib/scoring.ts`) & Deterministic Fallback Engine |
 | **Peran AI dalam Produk** | Menganalisis kesenjangan kesiapan akademik siswa dan merekomendasikan modul/latihan sertifikasi di `/api/mentor-agent`, serta konsultasi interaktif jurusan dan institusi Bali di `/api/navigator-chat` |
-| **Dataset / Data Source** | Data program studi & akreditasi PDDIKTI, BAN-PT, BAN-SM; standar kompetensi BNSP; koordinat geografis 9 kabupaten/kota Bali (15 institusi percontohan & 11 bidang program) |
-| **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `clsx`, `tailwind-merge`, `typescript`, `tailwindcss` |
+| **Dataset / Data Source** | Data program studi & akreditasi PDDIKTI, BAN-PT, BAN-SM; standar kompetensi BNSP; koordinat geografis 9 kabupaten/kota Bali (284 institusi direktori pendidikan Bali + 15 sorotan program audit = 285 katalog terpadu dalam 11 bidang program) |
+| **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `gsap`, `@gsap/react`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `clsx`, `tailwind-merge`, `typescript`, `tailwindcss` |
 | **Template / Boilerplate** | Tidak memakai template jadi; struktur dasar dibuat dari `create-next-app` lalu dirancang khusus sesuai arsitektur AetherCraft & Neo-Pop KertaMarga Bali |
 | **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring modular, type safety TypeScript, penyusunan test smoke, dan review kualitas kode) |
 | **Pre-existing Components** | Tidak ada komponen produk komersial pra-kompetisi; seluruh fitur dikembangkan untuk Bali DigiFest 2026 |
-| **Third-party Assets / Credits** | Peta interaktif Leaflet, Google Fonts (Outfit & Inter), dokumen standar modul belajar mandiri pada `public/pustaka-modul/` |
+| **Third-party Assets / Credits** | Integrasi Google Maps Embed & Geocoding Nominatim/ipwho.is (+ peta fallback Leaflet), Google Fonts (Outfit & Inter), dokumen modul belajar mandiri pada `public/pustaka-modul/` |
 
 Pernyataan: Kami menyatakan bahwa informasi di atas benar dan lengkap. Kami bertanggung jawab atas penggunaan teknologi, source code, data, library, API, model AI, dan aset yang digunakan pada produk.

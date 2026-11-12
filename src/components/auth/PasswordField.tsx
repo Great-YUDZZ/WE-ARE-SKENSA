@@ -10,6 +10,7 @@ export default function PasswordField({
   onChange,
   placeholder,
   autoComplete = "current-password",
+  minLength = 8,
   tabIndex,
 }: {
   id: string;
@@ -18,6 +19,7 @@ export default function PasswordField({
   onChange: (v: string) => void;
   placeholder?: string;
   autoComplete?: string;
+  minLength?: number;
   tabIndex?: number;
 }) {
   const [visible, setVisible] = useState(false);
@@ -31,11 +33,11 @@ export default function PasswordField({
           id={id}
           type={visible ? "text" : "password"}
           required
-          minLength={8}
+          minLength={minLength}
           tabIndex={tabIndex}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ?? "Minimal 8 karakter"}
+          placeholder={placeholder ?? `Minimal ${minLength} karakter`}
           autoComplete={autoComplete}
           className="w-full h-11 pr-20 px-3 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-sm font-medium placeholder:text-[#52514E]/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#3B66FF]"
         />

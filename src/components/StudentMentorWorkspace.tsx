@@ -290,10 +290,14 @@ export default function StudentMentorWorkspace({
       });
 
       const data = (await res.json()) as MentorAgentResponse;
+      const safeReply =
+        data.replyMessage && data.replyMessage.trim().length > 0
+          ? data.replyMessage.trim()
+          : `${data.diagnosisSummary || `Fokus kesiapan untuk mata kuliah ${targetCourse.name}:`} Pelajari '${data.recommendedItemTitle || curriculum.learningModules[0]?.title}' terlebih dahulu dan lanjutkan ke simulasi sertifikasi ${curriculum.mainCertificationTitle}.`;
       const agentTurn: ChatTurn = {
         id: "agent-" + Date.now(),
         sender: "agent",
-        text: data.replyMessage,
+        text: safeReply,
         diagnosisSummary: data.diagnosisSummary,
         recommendedActionType: data.recommendedActionType,
         recommendedItemTitle: data.recommendedItemTitle,

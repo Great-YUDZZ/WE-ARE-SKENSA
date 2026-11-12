@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /katalog
+Allow: /kuesioner
+Allow: /login
+Allow: /daftar
+Disallow: /api/
+
+Sitemap: https://kertamarga-bali.vercel.app/sitemap.xml

@@ -108,13 +108,14 @@ export default function PetaBidangIndexPage() {
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
+      let splitInstance: SplitText | null = null;
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         if (heroTitleRef.current) {
-          const split = SplitText.create(heroTitleRef.current, {
+          splitInstance = SplitText.create(heroTitleRef.current, {
             type: "words",
           });
-          gsap.from(split.words, {
+          gsap.from(splitInstance.words, {
             y: 18,
             opacity: 0,
             duration: 0.55,
@@ -173,7 +174,10 @@ export default function PetaBidangIndexPage() {
         }
       });
 
-      return () => mm.revert();
+      return () => {
+        splitInstance?.revert();
+        mm.revert();
+      };
     },
     { scope: containerRef }
   );

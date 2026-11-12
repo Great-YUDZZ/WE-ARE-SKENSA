@@ -1,16 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  applyStandardApiHeaders,
+  handleCorsPreflight,
+  verifyRequestOrigin,
+} from "@/lib/api-security";
 import { clearSessionCookie } from "@/lib/auth";
 
-export async function POST() {
-  await clearSessionCookie();
-  const res = NextResponse.json({ ok: true });
-  res.cookies.delete("kertamarga_session");
-  return res;
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsPreflight(req, "POST, DELETE, OPTIONS");
 }
 
-export async function DELETE() {
+async function handleLogout(req: NextRequest) {
+  const originErr = verifyRequestOrigin(req);
+  if (originErr) return originErr;
   await clearSessionCookie();
   const res = NextResponse.json({ ok: true });
   res.cookies.delete("kertamarga_session");
-  return res;
+  return applyStandardApiHeaders(res, req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleLogout(req);
+}
+
+export async function DELETE(req: NextRequest) {
+  return handleLogout(req);
 }

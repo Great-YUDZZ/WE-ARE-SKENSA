@@ -1,12 +1,12 @@
 /**
  * 9Router Resilient Client with Multi-Provider Failover & Anti-Ban Protections
- * 
+ *
  * Features:
- * 1. Multi-Tier Cascading Failover (Antigravity -> Kiro -> OpenRouter)
- * 2. Proactive Cooldown / Circuit Breaker (Auto-cools rate-limited models for 15 mins to avoid bans)
- * 3. Humanized Jitter & Throttling (Eliminates robotic microsecond burst spikes)
- * 4. In-Memory LRU Response Caching with TTL (Saves 60-80% token volume and upstream API calls)
- * 5. Sanitized Headers & Clean Identification
+ * 1. Multi-Tier Cascading Failover (Antigravity -> Backup Pool -> OpenRouter)
+ * 2. Strict Request Time Budgeting (prevents serverless 504 timeouts on stalling models)
+ * 3. Proactive Cooldown / Circuit Breaker (auto-cools failing/429 models)
+ * 4. Humanized Retry Jitter & In-Memory LRU Response Caching with Validation
+ * 5. Resilient JSON Extraction & Anti-Slop Text Sanitizer
  */
 
 import crypto from "crypto";
@@ -22,7 +22,9 @@ export interface RouterChatOptions {
   messages: ChatMessage[];
   responseFormatJson?: boolean;
   timeoutMs?: number;
+  totalBudgetMs?: number;
   bypassCache?: boolean;
+  validateResponse?: (text: string) => boolean;
 }
 
 export interface RouterChatResult {
@@ -32,6 +34,138 @@ export interface RouterChatResult {
   promptTokens?: number;
   completionTokens?: number;
   fromCache?: boolean;
+}
+
+export const VALID_FIELD_IDS = new Set([
+  "tkj",
+  "informatika",
+  "dkv",
+  "arsitektur",
+  "kesehatan",
+  "pendidikan",
+  "budaya",
+  "pertanian",
+  "lingkungan",
+  "bisnis",
+  "pariwisata",
+]);
+
+const FIELD_ALIAS_MAP: Record<string, string> = {
+  kelautan: "lingkungan",
+  maritim: "lingkungan",
+  konservasi: "lingkungan",
+  ti: "informatika",
+  rpl: "informatika",
+  pplg: "informatika",
+  it: "informatika",
+  tjkt: "tkj",
+  jaringan: "tkj",
+  perhotelan: "pariwisata",
+  hospitality: "pariwisata",
+  desain: "dkv",
+  multimedia: "dkv",
+  agro: "pertanian",
+  subak: "pertanian",
+  kedokteran: "kesehatan",
+  keperawatan: "kesehatan",
+  guru: "pendidikan",
+  konseling: "pendidikan",
+  seni: "budaya",
+  karawitan: "budaya",
+  umkm: "bisnis",
+  manajemen: "bisnis",
+};
+
+export function normalizeFieldId(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const cleaned = raw.trim().toLowerCase();
+  if (!cleaned || cleaned === "null" || cleaned === "none" || cleaned === "umum") {
+    return null;
+  }
+  if (VALID_FIELD_IDS.has(cleaned)) return cleaned;
+  return FIELD_ALIAS_MAP[cleaned] ?? null;
+}
+
+/**
+ * Strips emoji pictographs and converts em/en-dashes to standard ASCII hyphens.
+ */
+export function sanitizeNoEmojiNoEmDash(text: string): string {
+  return text
+    .replace(/\u2014/g, " - ")
+    .replace(/\u2013/g, "-")
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +\n/g, "\n")
+    .trim();
+}
+
+/**
+ * Extracts a JSON object reliably from LLM text that may include markdown code fences,
+ * trailing explanations after closing backticks, or single-element arrays like `[{...}]`.
+ */
+export function extractJsonPayload(raw: string): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "string") return null;
+
+  const cleaned = raw
+    .trim()
+    .replace(/```(?:json)?/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const tryParse = (candidate: string): Record<string, unknown> | null => {
+    try {
+      const val = JSON.parse(candidate);
+      if (Array.isArray(val) && val.length > 0 && val[0] && typeof val[0] === "object") {
+        return val[0] as Record<string, unknown>;
+      }
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        return val as Record<string, unknown>;
+      }
+    } catch {
+      // Ignore and try balanced extraction below
+    }
+    return null;
+  };
+
+  const direct = tryParse(cleaned);
+  if (direct) return direct;
+
+  // Scan balanced `{...}` object while respecting string literals and escapes
+  const firstBrace = cleaned.indexOf("{");
+  if (firstBrace === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = firstBrace; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\" && inString) {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (!inString) {
+      if (ch === "{") depth += 1;
+      else if (ch === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          const slice = cleaned.slice(firstBrace, i + 1);
+          const parsedSlice = tryParse(slice);
+          if (parsedSlice) return parsedSlice;
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 // -----------------------------------------------------------------------------
@@ -98,11 +232,12 @@ function isModelInCooldown(model: string): boolean {
 
   if (Date.now() < health.cooldownUntil) {
     const remainingSec = Math.round((health.cooldownUntil - Date.now()) / 1000);
-    console.warn(`[Anti-Ban Guard] Model '${model}' is in cooldown for ${remainingSec}s (${health.lastErrorReason}). Skipping.`);
+    console.warn(
+      `[Anti-Ban Guard] Model '${model}' is in cooldown for ${remainingSec}s (${health.lastErrorReason}). Skipping.`
+    );
     return true;
   }
 
-  // Cooldown expired, allow canary request
   return false;
 }
 
@@ -122,35 +257,91 @@ function recordModelFailure(model: string, status: number, errorSnippet: string)
   };
 
   const newFailures = current.consecutiveFailures + 1;
-  const is429 = status === 429 || errorSnippet.toLowerCase().includes("rate-limited") || errorSnippet.toLowerCase().includes("quota");
+  const lower = errorSnippet.toLowerCase();
+  const is429 =
+    status === 429 || lower.includes("rate-limited") || lower.includes("quota");
+  const isInvalidOrGone = status === 400 || status === 404;
 
-  // Default cooldowns: 15 mins for 429, 3 mins for 5xx, or progressive backoff
   const configuredCooldownMs = parseInt(process.env.ROUTER_COOLDOWN_MS || "900000", 10);
-  const cooldownDuration = is429
+  const cooldownDuration = is429 || isInvalidOrGone
     ? configuredCooldownMs
-    : newFailures >= 2
+    : status === 0 || newFailures >= 2
     ? 180000
-    : 30000;
+    : 45000;
 
   modelHealthRegistry.set(model, {
     consecutiveFailures: newFailures,
     cooldownUntil: Date.now() + cooldownDuration,
-    lastErrorReason: is429 ? `Rate limit 429 (auto-cooled ${Math.round(cooldownDuration / 60000)}m)` : `HTTP ${status}: ${errorSnippet.slice(0, 50)}`,
+    lastErrorReason: is429
+      ? `Rate limit 429 (auto-cooled ${Math.round(cooldownDuration / 60000)}m)`
+      : `HTTP ${status}: ${errorSnippet.slice(0, 60)}`,
   });
 
-  console.warn(`[Anti-Ban Guard] Model '${model}' placed into cooldown for ${Math.round(cooldownDuration / 1000)}s to protect account.`);
+  console.warn(
+    `[Anti-Ban Guard] Model '${model}' placed into cooldown for ${Math.round(cooldownDuration / 1000)}s.`
+  );
 }
 
 // -----------------------------------------------------------------------------
-// 3. Humanized Jitter & Throttling
+// 3. Humanized Retry Jitter & Local/SSE Helpers
 // -----------------------------------------------------------------------------
-async function applyJitter() {
-  const minJitter = parseInt(process.env.ROUTER_JITTER_MIN_MS || "200", 10);
-  const maxJitter = parseInt(process.env.ROUTER_JITTER_MAX_MS || "600", 10);
-  if (maxJitter <= 0) return;
+async function applyRetryJitter(remainingMs: number) {
+  const minJitter = Math.min(parseInt(process.env.ROUTER_JITTER_MIN_MS || "120", 10), 250);
+  const maxJitter = Math.min(parseInt(process.env.ROUTER_JITTER_MAX_MS || "280", 10), 350);
+  if (maxJitter <= 0 || remainingMs < 1500) return;
 
   const delayMs = Math.floor(Math.random() * (maxJitter - minJitter + 1)) + minJitter;
   await new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+function isLocalRouterUrl(urlStr: string): boolean {
+  return /^https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])(:\d+)?(\/|$)/i.test(
+    urlStr.trim()
+  );
+}
+
+async function parseRouterResponseText(
+  res: Response
+): Promise<{ text: string; promptTokens?: number; completionTokens?: number } | null> {
+  const contentType = res.headers.get("content-type") || "";
+  const rawBody = await res.text();
+  if (!rawBody.trim()) return null;
+
+  // Handle SSE chunks if upstream ignores stream: false
+  if (contentType.includes("text/event-stream") || rawBody.trimStart().startsWith("data:")) {
+    const parts: string[] = [];
+    for (const line of rawBody.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payloadStr = trimmed.slice(5).trim();
+      if (!payloadStr || payloadStr === "[DONE]") continue;
+      try {
+        const chunk = JSON.parse(payloadStr);
+        const delta = chunk?.choices?.[0]?.delta?.content ?? chunk?.choices?.[0]?.message?.content;
+        if (typeof delta === "string") parts.push(delta);
+      } catch {
+        // Ignore partial chunk
+      }
+    }
+    const merged = parts.join("").trim();
+    return merged ? { text: merged } : null;
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    const content = data?.choices?.[0]?.message?.content;
+    if (typeof content === "string" && content.trim()) {
+      return {
+        text: content.trim(),
+        promptTokens: data?.usage?.prompt_tokens,
+        completionTokens: data?.usage?.completion_tokens,
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 // -----------------------------------------------------------------------------
@@ -164,60 +355,90 @@ export async function callRouterWithFailover(
     return null;
   }
 
-  // 1. Check in-memory cache first if caching is enabled
+  // In serverless deployment (Vercel), never stall trying to connect to laptop localhost
+  if (process.env.VERCEL && isLocalRouterUrl(routerBase)) {
+    return null;
+  }
+
   const cacheEnabled = process.env.ROUTER_CACHE_ENABLED !== "false";
-  const cacheTtlMs = parseInt(process.env.ROUTER_CACHE_TTL_MS || "7200000", 10); // default 2 jam
+  const cacheTtlMs = parseInt(process.env.ROUTER_CACHE_TTL_MS || "7200000", 10);
   const cacheKey = computeCacheKey(options.messages, options.responseFormatJson);
 
   if (cacheEnabled && !options.bypassCache) {
     const cached = getFromCache(cacheKey);
-    if (cached) {
+    if (cached && (!options.validateResponse || options.validateResponse(cached.content))) {
       return cached;
     }
   }
 
   const routerKey = process.env.ROUTER_API_KEY || process.env.NINEROUTER_API_KEY || "";
-  const endpoint =
-    routerBase.replace(/\/+$/, "") +
-    (routerBase.includes("/v1") ? "/chat/completions" : "/v1/chat/completions");
+  const cleanBase = routerBase.replace(/\/+$/, "");
+  const endpoint = cleanBase.endsWith("/v1")
+    ? `${cleanBase}/chat/completions`
+    : cleanBase.includes("/v1/")
+    ? `${cleanBase}/chat/completions`
+    : `${cleanBase}/v1/chat/completions`;
 
-  // Determine candidate model chain
   const primaryModel =
     options.model ||
     process.env.ROUTER_COMBO_MODEL ||
     process.env.ROUTER_MODEL ||
-    "skensa-failover";
+    "ag/gemini-3-flash";
 
-  const defaultBackups = [
+  // Healthy verified fallbacks are included ahead of unreachable legacy combos
+  const healthyDefaults = [
+    "ag/gemini-3-flash",
+    "ag/gemini-3-flash-agent",
     "ag/gemini-3.8-flash-low",
-    "kr/auto",
-    "kr/deepseek-3.2",
-    "kr/claude-sonnet-4.5",
-    "openrouter/nvidia/nemotron-3.5-super-vl:free",
+    "openrouter/openrouter/free",
   ];
 
   const envBackups = process.env.ROUTER_BACKUP_MODELS
     ? process.env.ROUTER_BACKUP_MODELS.split(",").map((m) => m.trim()).filter(Boolean)
     : [];
 
-  const backupCandidates = options.backupModels || (envBackups.length > 0 ? envBackups : defaultBackups);
+  const backupCandidates = options.backupModels || [
+    ...healthyDefaults,
+    ...envBackups,
+  ];
   const rawModelChain = Array.from(new Set([primaryModel, ...backupCandidates]));
 
-  // Filter out any models currently in proactive cooldown (Anti-Ban Guard)
   let activeModelChain = rawModelChain.filter((m) => !isModelInCooldown(m));
-
-  // If all models are cooled down, pick the one with earliest cooldown expiration as a fallback
   if (activeModelChain.length === 0) {
-    console.warn("[Anti-Ban Guard] All candidate models are in cooldown. Attempting fallback to primary model.");
-    activeModelChain = [primaryModel];
+    activeModelChain = [healthyDefaults[0], primaryModel];
   }
 
-  for (const model of activeModelChain) {
-    // Apply jitter to avoid robotic concurrency patterns
-    await applyJitter();
+  const totalBudgetMs =
+    options.totalBudgetMs ||
+    parseInt(
+      process.env.ROUTER_TOTAL_BUDGET_MS || (process.env.VERCEL ? "5000" : "7500"),
+      10
+    );
+  const startedAt = Date.now();
 
+  for (let i = 0; i < activeModelChain.length; i++) {
+    const model = activeModelChain[i];
+    const remainingMs = totalBudgetMs - (Date.now() - startedAt);
+    if (remainingMs < 700) {
+      break;
+    }
+
+    if (i > 0) {
+      await applyRetryJitter(remainingMs);
+    }
+
+    const postJitterRemaining = totalBudgetMs - (Date.now() - startedAt);
+    if (postJitterRemaining < 600) {
+      break;
+    }
+
+    const attemptTimeoutMs = Math.min(
+      options.timeoutMs ?? 3800,
+      3800,
+      postJitterRemaining
+    );
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 25000);
+    const timeout = setTimeout(() => controller.abort(), attemptTimeoutMs);
 
     try {
       const payload: Record<string, unknown> = {
@@ -244,34 +465,29 @@ export async function callRouterWithFailover(
       clearTimeout(timeout);
 
       if (!res.ok) {
-        let errBody = "";
-        try {
-          errBody = await res.text();
-        } catch {
-          errBody = "";
-        }
-
-        // Trigger proactive circuit breaker for this model
+        const errBody = await res.text().catch(() => "");
         recordModelFailure(model, res.status, errBody);
         continue;
       }
 
-      const data = await res.json();
-      const text = data?.choices?.[0]?.message?.content;
+      const parsedOut = await parseRouterResponseText(res);
+      if (parsedOut?.text) {
+        if (options.validateResponse && !options.validateResponse(parsedOut.text)) {
+          recordModelFailure(model, 422, "Invalid structured JSON payload");
+          continue;
+        }
 
-      if (text && typeof text === "string" && text.trim().length > 0) {
         recordModelSuccess(model);
 
         const result: RouterChatResult = {
-          content: text.trim(),
+          content: parsedOut.text,
           modelUsed: model,
           sourceMode: `9router-${model.split("/")[0] || "combo"}`,
-          promptTokens: data?.usage?.prompt_tokens,
-          completionTokens: data?.usage?.completion_tokens,
+          promptTokens: parsedOut.promptTokens,
+          completionTokens: parsedOut.completionTokens,
           fromCache: false,
         };
 
-        // Cache the successful response
         if (cacheEnabled) {
           setToCache(cacheKey, result, cacheTtlMs);
         }
@@ -282,6 +498,98 @@ export async function callRouterWithFailover(
       clearTimeout(timeout);
       const errMsg = err instanceof Error ? err.message : String(err);
       recordModelFailure(model, 0, errMsg);
+    }
+  }
+
+  return null;
+}
+
+export interface GeminiDirectOptions {
+  apiKey?: string;
+  systemInstruction: string;
+  userPrompt: string;
+  candidateModels?: string[];
+  perModelTimeoutMs?: number;
+  totalBudgetMs?: number;
+  validateResponse?: (text: string) => boolean;
+}
+
+/**
+ * Direct Google Gemini REST API caller with cooldown memory and total time budget.
+ */
+export async function callGeminiDirectWithFailover(
+  options: GeminiDirectOptions
+): Promise<{ content: string; modelUsed: string } | null> {
+  const apiKey = options.apiKey ?? process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const rawCandidates = options.candidateModels ?? [
+    process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+  ];
+  const uniqueCandidates = Array.from(new Set(rawCandidates.filter(Boolean)));
+  let activeCandidates = uniqueCandidates.filter((m) => !isModelInCooldown(`gemini:${m}`));
+  if (activeCandidates.length === 0) {
+    activeCandidates = [uniqueCandidates[0] || "gemini-flash-lite-latest"];
+  }
+
+  const totalBudgetMs = options.totalBudgetMs ?? 13000;
+  const perModelTimeoutMs = options.perModelTimeoutMs ?? 6500;
+  const startedAt = Date.now();
+
+  for (const gModel of activeCandidates) {
+    const remainingMs = totalBudgetMs - (Date.now() - startedAt);
+    if (remainingMs < 1000) break;
+
+    const attemptMs = Math.min(perModelTimeoutMs, remainingMs);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), attemptMs);
+
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: options.systemInstruction }] },
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: options.userPrompt }],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
+            },
+          }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timer);
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        recordModelFailure(`gemini:${gModel}`, res.status, errBody);
+        continue;
+      }
+
+      const data = await res.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (typeof rawText === "string" && rawText.trim().length > 0) {
+        if (options.validateResponse && !options.validateResponse(rawText)) {
+          recordModelFailure(`gemini:${gModel}`, 422, "Invalid structured JSON payload");
+          continue;
+        }
+        recordModelSuccess(`gemini:${gModel}`);
+        return { content: rawText.trim(), modelUsed: gModel };
+      }
+    } catch (err: unknown) {
+      clearTimeout(timer);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      recordModelFailure(`gemini:${gModel}`, 0, errMsg);
     }
   }
 

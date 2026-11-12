@@ -168,7 +168,11 @@ export function analyzeAssessment(input: UserAssessmentInput): AssessmentAnalysi
     const coreMatch = Math.round(iScore * 0.55 + rScore * 0.25 + pScore * 0.2);
 
     // Kaitan institusi di katalog yang relevan dengan bidang ini
-    const matchedInstitutions = getMatchedInstitutionsForField(field.id, distanceOrigin);
+    const matchedInstitutions = getMatchedInstitutionsForField(
+      field.id,
+      distanceOrigin,
+      input.currentEducation
+    );
 
     // Hitung jarak terdekat institusi yang ada
     const nearestKm = matchedInstitutions.length > 0 ? matchedInstitutions[0].estimatedDistanceKm : 30;

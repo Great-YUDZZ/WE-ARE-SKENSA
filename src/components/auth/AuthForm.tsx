@@ -350,9 +350,9 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
       triggerErrorShake(loginBoxRef.current);
       return setError("Masukkan email atau username akun Anda");
     }
-    if (loginPassword.length < 8) {
+    if (loginPassword.length < 6) {
       triggerErrorShake(loginBoxRef.current);
-      return setError("Kata sandi minimal 8 karakter");
+      return setError("Kata sandi minimal 6 karakter");
     }
 
     setLoading(true);
@@ -400,6 +400,10 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
     if (regPassword.length < 8) {
       triggerErrorShake(registerBoxRef.current);
       return setError("Kata sandi minimal 8 karakter");
+    }
+    if (!/[a-zA-Z]/.test(regPassword) || !/[0-9]/.test(regPassword)) {
+      triggerErrorShake(registerBoxRef.current);
+      return setError("Kata sandi wajib mengandung kombinasi huruf dan angka");
     }
     if (regPassword !== regPasswordConfirm) {
       triggerErrorShake(registerBoxRef.current);
@@ -570,6 +574,7 @@ export default function AuthForm({ mode = "login" }: { mode?: "login" | "registe
                   label="Kata Sandi"
                   value={loginPassword}
                   onChange={setLoginPassword}
+                  minLength={6}
                   autoComplete="current-password"
                   tabIndex={isRegister ? -1 : 0}
                 />

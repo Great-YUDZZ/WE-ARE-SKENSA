@@ -248,6 +248,20 @@ function toNavigatorResult(entry: FieldMatcherEntry, userKabupaten: string): Nav
   };
 }
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function hasKeywordMatch(queryLower: string, keyword: string): boolean {
+  const kw = keyword.trim().toLowerCase();
+  if (!kw) return false;
+  if (kw.length <= 3) {
+    const boundary = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(kw)}(?:$|[^a-z0-9])`, "i");
+    return boundary.test(queryLower);
+  }
+  return queryLower.includes(kw);
+}
+
 // Matcher deterministik berbasis kata kunci dan fieldId agar hasil tetap konsisten
 // dan tidak mengarang akreditasi, sesuai guardrail AI KertaMarga
 export function matchNavigator(
@@ -257,15 +271,19 @@ export function matchNavigator(
 ): NavigatorResult[] {
   const q = inputQuery.trim().toLowerCase();
 
-  // Cocokkan langsung jika input adalah fieldId eksplisit dari API
-  const exactField = MATCHER_ENTRIES.find((entry) => entry.fieldId === q);
+  // Cocokkan langsung jika input adalah fieldId eksplisit atau nama bidang
+  const exactField = MATCHER_ENTRIES.find(
+    (entry) =>
+      entry.fieldId === q ||
+      entry.title.toLowerCase() === q
+  );
   let matchedEntries: FieldMatcherEntry[];
 
   if (exactField) {
     matchedEntries = [exactField];
   } else {
     matchedEntries = MATCHER_ENTRIES.filter((entry) =>
-      entry.keywords.some((kw) => q.includes(kw))
+      entry.keywords.some((kw) => hasKeywordMatch(q, kw))
     );
     if (matchedEntries.length === 0) {
       matchedEntries = MATCHER_ENTRIES.slice(0, 2);

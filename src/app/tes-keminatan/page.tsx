@@ -135,25 +135,31 @@ function TesKeminatanContent() {
     router.push(`/hasil-analisis?${params.toString()}`);
   };
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const totalQuestions = INTEREST_TEST_QUESTIONS.length;
+  const answeredCount = Object.keys(answers).length;
+  const allAnswered = answeredCount === totalQuestions;
+
   const handleSubmitSurvey = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!allAnswered) {
+      setValidationError(
+        `Masih ada ${totalQuestions - answeredCount} pertanyaan yang belum dijawab. Lengkapi seluruh ${totalQuestions} pertanyaan terlebih dahulu.`
+      );
+      return;
+    }
+    setValidationError(null);
     computeAndNavigateToResult();
   };
 
-  const handleSimulateLowScore = () => {
-    const simulatedAnswers: Record<string, number> = {
-      "q1-situasi": curriculum.group === "teknologi" ? 1 : 0,
-      "q2-fondasi-nilai": 2,
-      "q3-kesiapan-matkul": 2,
-      "q4-portofolio": 3,
-    };
-    setAnswers(simulatedAnswers);
-    computeAndNavigateToResult(simulatedAnswers);
+  const handleResetAnswers = () => {
+    setAnswers({});
+    setValidationError(null);
   };
 
   const groupStyle = GROUP_CONFIG[curriculum.group];
   const selectedFieldObj = FIELDS.find((f) => f.id === targetFieldId) || FIELDS[0];
-  const answeredCount = Object.keys(answers).length;
 
   return (
     <div className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
@@ -163,75 +169,83 @@ function TesKeminatanContent() {
         onOpenTest={() => {}}
       />
 
-      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 w-full">
         {/* Breadcrumb */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold text-[#52514E] mb-6">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold text-[#52514E] mb-4">
           <Link href="/" className="hover:text-[#141413] transition-colors">
             Beranda
           </Link>
           <span>/</span>
           <span className="text-[#3B66FF] uppercase">
-            Survey Tes Keminatan & Kesiapan Siswa
+            Survey Tes Keminatan
           </span>
         </div>
 
-        {/* Header */}
+        {/* Compact Header */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="text-center max-w-4xl mx-auto space-y-4 mb-10"
+          transition={{ duration: 0.22 }}
+          className="mb-6 space-y-2"
         >
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-xl text-xs font-mono font-bold bg-[#3B66FF] text-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413]">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#B8F348] border border-[#141413]" />
-            <span>TAHAP 1 DARI 2 &bull; SURVEY KEMINATAN & KESIAPAN AKADEMIK</span>
-          </div>
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-xl text-xs font-mono font-bold bg-[#3B66FF] text-white border-2 border-[#141413] shadow-[2px_2px_0px_#141413]">
+            Tahap 1 dari 2 &bull; Evaluasi Kesiapan Jurusan
+          </span>
 
-          <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-[#141413] tracking-tight leading-tight">
-            Survey Keminatan &amp; Evaluasi Jurusan Tujuan
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-[#141413] tracking-tight leading-snug">
+            Survey Keminatan &amp; Target Mata Kuliah
           </h1>
 
-          <p className="text-sm sm:text-base lg:text-lg text-[#52514E] max-w-3xl mx-auto leading-relaxed font-medium">
-            Isi kuesioner singkat di bawah ini sesuai kondisi nilai dan minat Anda. Setelah selesai, Anda akan diarahkan ke halaman khusus Hasil Analisis &amp; Agen Pembimbing.
+          <p className="text-xs sm:text-sm text-[#52514E] max-w-3xl leading-relaxed font-medium">
+            Pilih jurusan tujuan dan jawab 4 pertanyaan singkat di bawah ini untuk mendapatkan skor kesiapan serta modul belajar terarah.
           </p>
         </motion.div>
 
         {/* Survey Form Card */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.05 }}
-          className="neo-card-lg rounded-3xl p-5 sm:p-8 bg-white"
+          transition={{ duration: 0.25, delay: 0.04 }}
+          className="neo-card-lg rounded-3xl p-5 sm:p-7 bg-white"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b-2 border-[#141413]">
-            <div>
-              <span className="text-xs font-mono font-bold text-[#3B66FF] uppercase tracking-wider">
-                FORMULIR SURVEY SISWA &bull; {answeredCount}/4 TERJAWAB
-              </span>
-              <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413] mt-1">
-                Tentukan Jurusan &amp; Mata Kuliah yang Ingin Anda Tuju
+            <div className="space-y-1.5 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-mono font-bold text-[#3B66FF] uppercase tracking-wider">
+                  Progres Pengisian: {answeredCount}/{totalQuestions} Terjawab
+                </span>
+                {answeredCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleResetAnswers}
+                    className="min-h-[36px] px-3 py-1 rounded-xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] text-xs font-mono font-bold cursor-pointer"
+                  >
+                    Reset Jawaban
+                  </button>
+                )}
+              </div>
+              <div className="w-full h-2.5 bg-[#FAF7F2] rounded-full border-2 border-[#141413] overflow-hidden">
+                <div
+                  className="h-full bg-[#B8F348] transition-all duration-300"
+                  style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
+                />
+              </div>
+              <h2 className="font-display font-black text-lg sm:text-xl text-[#141413] pt-1">
+                1. Tentukan Jurusan &amp; Mata Kuliah Fokus
               </h2>
             </div>
-
-            <button
-              type="button"
-              onClick={handleSimulateLowScore}
-              className="neo-btn text-xs font-mono font-bold px-4 py-2.5 rounded-xl bg-[#FFE5E0] hover:bg-[#FF5E4D] hover:text-white text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] cursor-pointer shrink-0"
-            >
-              Simulasikan Nilai Kecil &amp; Lihat Bimbingan &rarr;
-            </button>
           </div>
 
           {/* Target Major & Target Course Selector */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] min-w-0">
               <label className="block text-xs font-display font-extrabold text-[#141413] mb-2">
-                1. Jurusan / Program Studi yang Dituju di Bali:
+                Jurusan / Program Studi Tujuan di Bali
               </label>
               <select
                 value={targetFieldId}
                 onChange={(e) => setTargetFieldId(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3B66FF] transition-colors"
+                className="w-full min-h-[44px] px-3.5 pr-8 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-bold truncate focus:outline-none focus:ring-2 focus:ring-[#3B66FF] transition-colors cursor-pointer"
               >
                 {FIELDS.map((field) => (
                   <option key={field.id} value={field.id}>
@@ -243,7 +257,7 @@ function TesKeminatanContent() {
                 <span className={`font-mono font-bold px-2.5 py-0.5 rounded-lg border border-[#141413] ${groupStyle.badgeBg} ${groupStyle.badgeText}`}>
                   {groupStyle.label}
                 </span>
-                <span>
+                <span className="truncate">
                   Rujukan:{" "}
                   <strong className="text-[#141413]">
                     {selectedFieldObj.institutions.map((i) => i.name).join(", ")}
@@ -252,14 +266,14 @@ function TesKeminatanContent() {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
+            <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] min-w-0">
               <label className="block text-xs font-display font-extrabold text-[#141413] mb-2">
-                2. Mata Kuliah / Kompetensi Inti yang Dituju:
+                Mata Kuliah / Kompetensi Inti
               </label>
               <select
                 value={targetCourse.id}
                 onChange={(e) => setTargetCourseId(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3B66FF] transition-colors"
+                className="w-full min-h-[44px] px-3.5 pr-8 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-bold truncate focus:outline-none focus:ring-2 focus:ring-[#3B66FF] transition-colors cursor-pointer"
               >
                 {curriculum.targetCourses.map((course) => (
                   <option key={course.id} value={course.id}>
@@ -286,11 +300,11 @@ function TesKeminatanContent() {
           {/* 4 Survey Questions */}
           <form onSubmit={handleSubmitSurvey} className="mt-6 space-y-5 pt-6 border-t-2 border-[#141413]">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-display font-extrabold text-[#141413]">
-                3. Pertanyaan Survey Minat &amp; Penguasaan Nilai Awal:
+              <span className="text-base sm:text-lg font-display font-black text-[#141413]">
+                2. Pertanyaan Survey Minat &amp; Penguasaan Awal
               </span>
               <span className="text-xs font-mono font-bold text-[#52514E] px-2.5 py-1 rounded-lg bg-[#F0ECE1] border border-[#141413]">
-                Pilih satu jawaban per nomor
+                Wajib dijawab semua ({answeredCount}/{totalQuestions})
               </span>
             </div>
 
@@ -302,8 +316,8 @@ function TesKeminatanContent() {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg bg-[#3B66FF] text-white border border-[#141413]">
-                        PERTANYAAN 0{q.step} &bull; {q.category.toUpperCase()}
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-[#3B66FF] text-white border border-[#141413]">
+                        Pertanyaan 0{q.step} &bull; {q.category.toUpperCase()}
                       </span>
                     </div>
                     <h3 className="font-display font-bold text-sm sm:text-base text-[#141413] leading-snug">
@@ -321,20 +335,21 @@ function TesKeminatanContent() {
                         <button
                           key={oIdx}
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
                             setAnswers((prev) => ({
                               ...prev,
                               [q.id]: oIdx,
-                            }))
-                          }
-                          className={`w-full text-left p-3 rounded-xl text-xs transition-all cursor-pointer border-2 flex items-start gap-2.5 ${
+                            }));
+                            setValidationError(null);
+                          }}
+                          className={`w-full min-h-[44px] text-left p-3 rounded-xl text-xs sm:text-sm transition-all cursor-pointer border-2 flex items-start gap-2.5 ${
                             isSelected
                               ? "bg-[#B8F348] border-[#141413] text-[#141413] font-bold shadow-[3px_3px_0px_#141413]"
                               : "bg-white border-[#141413] text-[#52514E] hover:bg-[#F0ECE1] hover:text-[#141413] font-medium"
                           }`}
                         >
                           <span
-                            className={`w-5 h-5 rounded-lg shrink-0 mt-0.5 flex items-center justify-center text-[10px] font-mono font-bold border border-[#141413] ${
+                            className={`w-6 h-6 rounded-lg shrink-0 mt-0.5 flex items-center justify-center text-xs font-mono font-bold border border-[#141413] ${
                               isSelected
                                 ? "bg-[#141413] text-[#B8F348]"
                                 : "bg-[#FAF7F2] text-[#141413]"
@@ -351,20 +366,31 @@ function TesKeminatanContent() {
               ))}
             </div>
 
+            {validationError && (
+              <div
+                role="alert"
+                className="p-3.5 rounded-2xl bg-[#FFE5E0] border-2 border-[#141413] text-xs sm:text-sm font-bold text-[#7A1A12]"
+              >
+                {validationError}
+              </div>
+            )}
+
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t-2 border-[#141413]">
-              <p className="text-xs text-[#52514E] font-medium">
-                Setelah menekan tombol selesai, Anda akan diarahkan ke halaman khusus{" "}
-                <strong className="text-[#141413]">
-                  Hasil Analisis &amp; Bimbingan Agen
-                </strong>
-                .
+              <p className="text-xs sm:text-sm text-[#52514E] font-medium">
+                {allAnswered
+                  ? "Semua pertanyaan sudah terjawab. Klik tombol di kanan untuk melihat hasil analisis Anda."
+                  : `Lengkapi ${totalQuestions - answeredCount} pertanyaan lagi untuk membuka hasil analisis.`}
               </p>
 
               <button
                 type="submit"
-                className="neo-btn w-full sm:w-auto h-12 px-7 rounded-2xl bg-[#FFBE2E] hover:bg-[#f2b329] text-[#141413] font-display font-black text-sm border-2 border-[#141413] shadow-[4px_4px_0px_#141413] cursor-pointer flex items-center justify-center gap-2 shrink-0"
+                className={`neo-btn w-full sm:w-auto min-h-[48px] px-7 rounded-2xl font-display font-black text-sm border-2 border-[#141413] shadow-[4px_4px_0px_#141413] cursor-pointer flex items-center justify-center gap-2 shrink-0 transition-colors ${
+                  allAnswered
+                    ? "bg-[#FFBE2E] hover:bg-[#f2b329] text-[#141413]"
+                    : "bg-[#FAF7F2] text-[#52514E]"
+                }`}
               >
-                <span>Selesaikan Survey &amp; Lihat Hasil Analisis</span>
+                <span>Selesaikan Survey &amp; Lihat Hasil</span>
                 <span className="font-mono text-sm">&rarr;</span>
               </button>
             </div>
@@ -398,6 +424,9 @@ function TesKeminatanContent() {
             </Link>
             <Link href="/ai-navigator" className="hover:text-[#141413]">
               AI Navigator
+            </Link>
+            <Link href="/profil" className="hover:text-[#141413]">
+              Profil &amp; Catatan
             </Link>
           </div>
         </div>

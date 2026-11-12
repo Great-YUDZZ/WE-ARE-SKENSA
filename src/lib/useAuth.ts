@@ -10,7 +10,29 @@ export function getCachedUser(): SafeUser | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as SafeUser) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SafeUser>;
+    if (
+      !parsed ||
+      typeof parsed.id !== "number" ||
+      typeof parsed.name !== "string" ||
+      typeof parsed.identifier !== "string" ||
+      typeof parsed.email !== "string"
+    ) {
+      return null;
+    }
+    // Jangan pernah mempercayai eskalasi role "guru" dari localStorage sebelum diverifikasi /api/auth/me
+    return {
+      id: parsed.id,
+      name: parsed.name.slice(0, 120),
+      identifier: parsed.identifier.slice(0, 80),
+      email: parsed.email.slice(0, 160),
+      role: "siswa",
+      interests: Array.isArray(parsed.interests)
+        ? parsed.interests.filter((x): x is string => typeof x === "string")
+        : [],
+      createdAt: parsed.createdAt ? new Date(parsed.createdAt) : new Date(),
+    };
   } catch {
     return null;
   }
@@ -37,7 +59,7 @@ export function useAuth() {
   const syncAuth = useCallback(async () => {
     const cached = getCachedUser();
     if (cached) {
-      setUser(cached);
+      setUser((prev) => prev ?? cached);
     }
 
     try {
@@ -45,6 +67,7 @@ export function useAuth() {
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
+          // Server (/api/auth/me via HttpOnly JWT cookie) adalah satu-satunya sumber kebenaran peran & identitas akun
           setUser(data.user);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
         } else {
@@ -56,26 +79,31 @@ export function useAuth() {
         localStorage.removeItem(STORAGE_KEY);
       }
     } catch {
-      // Pertahankan cached jika network error
+      // Pertahankan state minimal jika sedang offline sementara
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    syncAuth();
+    void syncAuth();
 
-    const handleAuthChange = () => {
-      const cached = getCachedUser();
-      setUser(cached);
+    const handleInternalAuthChange = () => {
+      void syncAuth();
     };
 
-    window.addEventListener(AUTH_EVENT, handleAuthChange);
-    window.addEventListener("storage", handleAuthChange);
+    const handleCrossTabStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === STORAGE_KEY) {
+        void syncAuth();
+      }
+    };
+
+    window.addEventListener(AUTH_EVENT, handleInternalAuthChange);
+    window.addEventListener("storage", handleCrossTabStorage);
 
     return () => {
-      window.removeEventListener(AUTH_EVENT, handleAuthChange);
-      window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener(AUTH_EVENT, handleInternalAuthChange);
+      window.removeEventListener("storage", handleCrossTabStorage);
     };
   }, [syncAuth]);
 

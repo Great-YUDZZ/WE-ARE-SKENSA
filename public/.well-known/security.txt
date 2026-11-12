@@ -1,0 +1,7 @@
+Contact: mailto:security@kertamarga-bali.id
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: id, en
+Canonical: https://kertamarga-bali.vercel.app/.well-known/security.txt
+Policy: https://kertamarga-bali.vercel.app/.well-known/security.txt
+# Kebijakan Pengungkapan Kerentanan KertaMarga Bali (SMKN 1 Denpasar / SKENSA)
+# Laporkan temuan keamanan secara bertanggung jawab beserta langkah reproduksi ke kontak di atas.

@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ChatBubble from "@/components/ai-navigator/ChatBubble";
 import TypingIndicator from "@/components/ai-navigator/TypingIndicator";
+import { FIELDS } from "@/data/fields";
 import { matchNavigator, type NavigatorResult, type TargetLevel } from "@/lib/ai-matcher";
 import type { NavigatorChatResponse } from "@/app/api/navigator-chat/route";
 
@@ -33,22 +35,58 @@ const KABUPATEN = [
   "Kabupaten Jembrana",
 ];
 
-export default function AiNavigatorPage() {
-  const [messages, setMessages] = useState<Message[]>([
+function resolveFieldFromQuery(rawField: string | null) {
+  if (!rawField) return null;
+  const q = rawField.trim().toLowerCase();
+  if (!q) return null;
+  return (
+    FIELDS.find((f) => f.id.toLowerCase() === q) ||
+    FIELDS.find((f) => f.name.toLowerCase() === q) ||
+    FIELDS.find(
+      (f) =>
+        f.name.toLowerCase().includes(q) || q.includes(f.name.toLowerCase())
+    ) ||
+    null
+  );
+}
+
+function resolveKabupatenFromQuery(rawKab: string | null): string | null {
+  if (!rawKab) return null;
+  const normalized = rawKab.replace(/^Kab\.\s+/i, "Kabupaten ").trim().toLowerCase();
+  return (
+    KABUPATEN.find((k) => k.toLowerCase() === normalized) ||
+    KABUPATEN.find((k) => k.toLowerCase().replace(/^kabupaten\s+/i, "") === normalized.replace(/^kabupaten\s+/i, "")) ||
+    null
+  );
+}
+
+function AiNavigatorContent() {
+  const searchParams = useSearchParams();
+  const initialField = resolveFieldFromQuery(searchParams.get("field"));
+  const initialKab = resolveKabupatenFromQuery(searchParams.get("kabupaten")) || "Kota Denpasar";
+
+  const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: "welcome",
       role: "assistant",
-      content:
-        "Halo, aku Navigator KertaMarga. Tanyakan apa saja seputar pilihan jurusan, langkah persiapan masuk prodi impian, info kampus/SMK di Bali, hingga prospek karier masa depan. Apa yang ingin kamu diskusikan hari ini?",
+      content: initialField
+        ? `Halo, aku Navigator KertaMarga. Kulihat kamu sedang mengeksplorasi bidang "${initialField.name}". Di panel sebelah kanan sudah kutampilkan rekomendasi SMK dan Perguruan Tinggi terkait di Bali. Silakan tanyakan apa saja mengenai persiapan, mata kuliah, atau prospek karier bidang ini.`
+        : "Halo, aku Navigator KertaMarga. Tanyakan apa saja seputar pilihan jurusan, langkah persiapan masuk prodi impian, info kampus/SMK di Bali, hingga prospek karier masa depan. Apa yang ingin kamu diskusikan hari ini?",
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(() =>
+    initialField ? `Saya ingin tahu langkah persiapan masuk bidang ${initialField.name} di Bali.` : ""
+  );
   const [isTyping, setIsTyping] = useState(false);
   const [streamId, setStreamId] = useState<string | null>(null);
-  const [sourceMode, setSourceMode] = useState<"9router-live" | "gemini-live" | "deterministic-qa">("9router-live");
-  const [activeResults, setActiveResults] = useState<NavigatorResult[]>([]);
-  const [lastMatchedQuery, setLastMatchedQuery] = useState<string | null>(null);
-  const [userKabupaten, setUserKabupaten] = useState("Kota Denpasar");
+  const [sourceMode, setSourceMode] = useState<"9router-live" | "gemini-live" | "deterministic-qa" | "scope-guard">("9router-live");
+  const [activeResults, setActiveResults] = useState<NavigatorResult[]>(() =>
+    initialField ? matchNavigator(initialField.id, initialKab, "semua") : []
+  );
+  const [lastMatchedQuery, setLastMatchedQuery] = useState<string | null>(() =>
+    initialField ? initialField.id : null
+  );
+  const [userKabupaten, setUserKabupaten] = useState(initialKab);
   const [targetLevel, setTargetLevel] = useState<TargetLevel>("semua");
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -56,6 +94,20 @@ export default function AiNavigatorPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const resolvedField = resolveFieldFromQuery(searchParams.get("field"));
+    const resolvedKab = resolveKabupatenFromQuery(searchParams.get("kabupaten"));
+    if (resolvedKab) {
+      setUserKabupaten(resolvedKab);
+    }
+    if (resolvedField) {
+      setLastMatchedQuery(resolvedField.id);
+      setActiveResults(matchNavigator(resolvedField.id, resolvedKab || userKabupaten, targetLevel));
+    }
+    // Jalankan saat query parameter URL berubah
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -112,12 +164,14 @@ export default function AiNavigatorPage() {
         throw new Error("Respons konsultasi kosong, silakan coba kirim ulang.");
       }
 
-      // Perbarui kartu institusi terkait di panel samping mengikuti topik terbaru
-      const queryForResults = matchedField || clean;
-      const results = matchNavigator(queryForResults, userKabupaten, targetLevel);
-      if (results.length > 0) {
-        setLastMatchedQuery(queryForResults);
-        setActiveResults(results);
+      // Perbarui kartu institusi terkait hanya jika pertanyaan berada dalam cakupan website
+      if (!data.outOfScope) {
+        const queryForResults = matchedField || clean;
+        const results = matchNavigator(queryForResults, userKabupaten, targetLevel);
+        if (results.length > 0) {
+          setLastMatchedQuery(queryForResults);
+          setActiveResults(results);
+        }
       }
 
       const assistantId = `a-${Date.now()}`;
@@ -189,254 +243,281 @@ export default function AiNavigatorPage() {
       )}
       <Navbar onOpenLogin={() => {}} onOpenRegister={() => {}} onOpenTest={() => {}} />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-36">
-        <div className="flex items-center gap-2 text-xs font-mono text-[#141413]/60 mb-4">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24">
+        <div className="flex items-center gap-2 text-xs font-mono text-[#141413]/70 mb-4">
           <Link href="/" className="hover:text-[#141413] underline font-bold">
             Beranda
           </Link>
           <span>/</span>
-          <span className="text-[#141413] font-black uppercase">AI Navigator Q&A</span>
+          <span className="text-[#141413] font-black uppercase">AI Navigator</span>
         </div>
 
         <div className="mb-5">
           <h1 className="font-display font-black text-2xl sm:text-4xl tracking-tight">
-            Konsultasi & Tanya Jawab Jurusan
+            Konsultasi &amp; Tanya Jawab Jurusan
           </h1>
-          <p className="text-sm text-[#141413]/70 font-medium mt-1">
+          <p className="text-sm text-[#141413]/75 font-medium mt-1">
             Sesi dialog interaktif langsung dengan AI Navigator KertaMarga berbasis kurikulum dan data institusi se-Bali.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_360px] gap-5 items-start">
-          <div className="bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] overflow-hidden flex flex-col h-[500px] sm:h-[620px]">
-            <div className="px-4 sm:px-5 py-3 border-b-2 border-[#141413] bg-[#FAF7F2] flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 shrink-0 rounded-xl bg-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-display font-black text-xs">
-                  AI
-                </span>
-                <div className="min-w-0">
-                  <p className="font-display font-black text-sm leading-tight truncate">
-                    Navigator KertaMarga
-                  </p>
-                  <p className="text-[11px] font-bold text-[#0F6E4E] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#1AD598] border border-[#141413]" />
-                    Online sekarang
-                  </p>
-                </div>
+        {/* Compact Context Bar: Domisili & Target Jenjang */}
+        <div className="mb-4 bg-white border-2 border-[#141413] rounded-2xl shadow-[4px_4px_0px_#141413] p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            <label
+              htmlFor="kab"
+              className="text-xs font-mono font-black uppercase text-[#141413] shrink-0"
+            >
+              Domisili Bali:
+            </label>
+            <select
+              id="kab"
+              value={userKabupaten}
+              onChange={(e) => setUserKabupaten(e.target.value)}
+              className="w-full sm:w-60 min-h-[44px] px-3 pr-8 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3B66FF] cursor-pointer"
+            >
+              {KABUPATEN.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-mono font-black uppercase text-[#141413] hidden md:inline">
+              Jenjang:
+            </span>
+            <div className="grid grid-cols-3 gap-1.5 w-full sm:w-auto">
+              {(["semua", "smk", "kuliah"] as TargetLevel[]).map((lvl) => (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() => setTargetLevel(lvl)}
+                  className={`min-h-[44px] px-3.5 rounded-xl text-xs font-mono font-bold uppercase border-2 border-[#141413] transition-colors cursor-pointer ${
+                    targetLevel === lvl
+                      ? "bg-[#FFBE2E] text-[#141413] shadow-[2px_2px_0px_#141413]"
+                      : "bg-[#FAF7F2] text-[#141413]/75 hover:bg-[#F0ECE1]"
+                  }`}
+                >
+                  {lvl === "semua" ? "Semua" : lvl === "smk" ? "SMK" : "Kuliah"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Full-Width Roomy Chat AI Workspace */}
+        <div className="bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] overflow-hidden flex flex-col h-[560px] sm:h-[640px]">
+          <div className="px-4 sm:px-6 py-3.5 border-b-2 border-[#141413] bg-[#FAF7F2] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-9 h-9 shrink-0 rounded-xl bg-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-display font-black text-xs">
+                AI
+              </span>
+              <div className="min-w-0">
+                <p className="font-display font-black text-sm sm:text-base leading-tight truncate">
+                  Navigator KertaMarga
+                </p>
+                <p className="text-xs font-bold text-[#0F6E4E] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#1AD598] border border-[#141413]" />
+                  Online sekarang &bull; Konteks {userKabupaten}
+                </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono font-bold bg-white border border-[#141413]/20 rounded-lg px-2.5 py-1 text-[#141413]/80">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      sourceMode.includes("live") ? "bg-[#1AD598] animate-pulse" : "bg-[#FFBE2E]"
-                    }`}
-                  />
-                  {sourceMode === "9router-live"
-                    ? "AI Live (9Router)"
-                    : sourceMode === "gemini-live"
-                    ? "AI Live (Gemini)"
-                    : "Q&A Fallback"}
-                </span>
-                {streamId && (
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono font-bold bg-white border border-[#141413]/25 rounded-lg px-2.5 py-1 text-[#141413]/85">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    sourceMode.includes("live") ? "bg-[#1AD598] animate-pulse" : "bg-[#FFBE2E]"
+                  }`}
+                />
+                {sourceMode === "9router-live"
+                  ? "AI Live (9Router)"
+                  : sourceMode === "gemini-live"
+                  ? "AI Live (Gemini)"
+                  : sourceMode === "scope-guard"
+                  ? "Fokus Topik Web"
+                  : "Q&A Fallback"}
+              </span>
+              {streamId && (
+                <button
+                  type="button"
+                  onClick={stopStream}
+                  className="text-xs font-bold border-2 border-[#141413] bg-[#FFBE2E] rounded-lg px-3 py-1 cursor-pointer"
+                >
+                  Berhenti
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#FAF7F2]/60">
+            {messages.map((m) => (
+              <ChatBubble key={m.id} role={m.role} content={m.content} streaming={streamId === m.id} />
+            ))}
+            {isTyping && <TypingIndicator />}
+            {chatError && (
+              <div
+                role="alert"
+                className="p-3.5 rounded-2xl bg-[#FFE5E0] border-2 border-[#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div className="text-xs sm:text-sm text-[#7A1A12] font-bold">
+                  {chatError}
+                </div>
+                {lastFailedPrompt && (
                   <button
                     type="button"
-                    onClick={stopStream}
-                    className="text-[11px] font-bold border-2 border-[#141413] bg-[#FFBE2E] rounded-lg px-2.5 py-1"
+                    onClick={() => sendMessage(lastFailedPrompt)}
+                    className="shrink-0 min-h-[40px] px-3.5 py-1.5 rounded-xl bg-[#141413] text-[#B8F348] font-mono font-bold text-xs border border-[#141413] cursor-pointer"
                   >
-                    Berhenti
+                    Kirim Ulang
                   </button>
                 )}
               </div>
-            </div>
-
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-[#FAF7F2]/60">
-              {messages.map((m) => (
-                <ChatBubble key={m.id} role={m.role} content={m.content} streaming={streamId === m.id} />
-              ))}
-              {isTyping && <TypingIndicator />}
-              {chatError && (
-                <div
-                  role="alert"
-                  className="p-3.5 rounded-2xl bg-[#FFE5E0] border-2 border-[#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                >
-                  <div className="text-xs text-[#7A1A12] font-bold">
-                    {chatError}
-                  </div>
-                  {lastFailedPrompt && (
+            )}
+            {messages.length === 1 && (
+              <div className="pt-2 space-y-2.5">
+                <p className="text-xs font-mono font-black uppercase text-[#141413]/70">
+                  Contoh Pertanyaan yang Sering Diajukan:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {PRESET_QUERIES.map((p) => (
                     <button
+                      key={p}
                       type="button"
-                      onClick={() => sendMessage(lastFailedPrompt)}
-                      className="shrink-0 px-3 py-1.5 rounded-xl bg-[#141413] text-[#B8F348] font-mono font-bold text-xs border border-[#141413] cursor-pointer"
-                    >
-                      Kirim Ulang
-                    </button>
-                  )}
-                </div>
-              )}
-              {messages.length === 1 && (
-                <div className="pt-2 space-y-2">
-                  <p className="text-xs font-mono font-black uppercase text-[#141413]/60">
-                    Contoh Pertanyaan yang Sering Diajukan:
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {PRESET_QUERIES.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => sendMessage(p)}
-                        className={`text-xs px-3.5 py-2 rounded-xl border-2 border-[#141413] font-semibold text-left transition-all ${
-                          selectedPreset === p
-                            ? "bg-[#B8F348] shadow-[2px_2px_0_#141413]"
-                            : "bg-white hover:bg-[#F0ECE1] shadow-[2px_2px_0_#141413]"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t-2 border-[#141413] bg-white">
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={textareaRef}
-                  rows={2}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  placeholder="Ketik pertanyaan atau diskusikan pilihan jurusanmu di sini... (Enter kirim, Shift+Enter baris baru)"
-                  className="flex-1 min-h-[48px] max-h-32 p-3 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] text-sm font-medium placeholder:text-[#141413]/40 focus:bg-white focus:outline-none resize-none"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isTyping}
-                  aria-label="Kirim pertanyaan"
-                  className="h-12 w-12 shrink-0 rounded-2xl bg-[#FF5E4D] hover:bg-[#ff4b38] disabled:opacity-40 text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all flex items-center justify-center font-bold"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <aside className="space-y-4 lg:sticky lg:top-24">
-            <div className="bg-white border-2 border-[#141413] rounded-3xl shadow-[4px_4px_0px_#141413] p-4 space-y-3">
-              <div>
-                <label htmlFor="kab" className="block text-xs font-mono font-black uppercase mb-1.5">
-                  Domisili Kamu di Bali:
-                </label>
-                <select
-                  id="kab"
-                  value={userKabupaten}
-                  onChange={(e) => setUserKabupaten(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-xs font-bold focus:outline-none"
-                >
-                  {KABUPATEN.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <p className="text-xs font-mono font-black uppercase mb-1.5">Target Jenjang:</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["semua", "smk", "kuliah"] as TargetLevel[]).map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setTargetLevel(lvl)}
-                      className={`py-2 rounded-xl text-xs font-mono font-bold uppercase border-2 border-[#141413] ${
-                        targetLevel === lvl ? "bg-[#FFBE2E]" : "bg-[#FAF7F2] text-[#141413]/70"
+                      onClick={() => sendMessage(p)}
+                      className={`min-h-[48px] text-xs sm:text-sm px-4 py-2.5 rounded-xl border-2 border-[#141413] font-semibold text-left transition-all cursor-pointer ${
+                        selectedPreset === p
+                          ? "bg-[#B8F348] shadow-[2px_2px_0_#141413]"
+                          : "bg-white hover:bg-[#F0ECE1] shadow-[2px_2px_0_#141413]"
                       }`}
                     >
-                      {lvl === "semua" ? "Semua" : lvl === "smk" ? "SMK" : "Kuliah"}
+                      {p}
                     </button>
                   ))}
                 </div>
               </div>
-              <p className="text-[11px] font-medium text-[#141413]/60 leading-relaxed">
-                Konteks wilayah dan jenjang di atas otomatis dikirimkan ke AI Navigator agar rekomendasi jarak dan kurikulum tetap akurat.
-              </p>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-3.5 sm:p-4 border-t-2 border-[#141413] bg-white">
+            <div className="flex items-end gap-2.5">
+              <textarea
+                ref={textareaRef}
+                rows={2}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder="Ketik pertanyaan atau diskusikan pilihan jurusanmu di sini... (Enter kirim, Shift+Enter baris baru)"
+                className="flex-1 min-h-[52px] max-h-36 p-3.5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] text-sm font-medium placeholder:text-[#141413]/45 focus:bg-white focus:outline-none resize-none"
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isTyping}
+                aria-label="Kirim pertanyaan"
+                className="h-13 w-13 shrink-0 rounded-2xl bg-[#FF5E4D] hover:bg-[#ff4b38] disabled:opacity-40 text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] active:translate-y-[3px] active:shadow-none transition-all flex items-center justify-center font-bold cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Conditional Rekomendasi Kampus Terkait Shelf (only shown when typing or results exist) */}
+        {(isTyping || activeResults.length > 0) && (
+          <section className="mt-6 bg-white border-2 border-[#141413] rounded-3xl p-5 sm:p-6 shadow-[4px_4px_0px_#141413] space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span className="text-xs font-mono font-bold text-[#3B66FF] uppercase block">
+                  Rekomendasi Terdeteksi Otomatis
+                </span>
+                <h2 className="font-display font-black text-lg sm:text-xl text-[#141413]">
+                  Kampus &amp; Jurusan Terkait di {userKabupaten}
+                </h2>
+              </div>
+              <span className="text-xs bg-[#B8F348] border-2 border-[#141413] px-3 py-1 rounded-xl font-mono font-bold">
+                {activeResults.length} Bidang Cocok
+              </span>
             </div>
 
-            <div className="bg-white border-2 border-[#141413] rounded-3xl p-4 shadow-[4px_4px_0px_#141413]">
-              <p className="text-xs font-mono font-black uppercase mb-3 flex items-center justify-between">
-                <span>Rekomendasi Kampus Terkait</span>
-                <span className="text-[10px] bg-[#B8F348] border border-[#141413] px-1.5 py-0.5 rounded font-mono">
-                  Otomatis
-                </span>
-              </p>
-              {isTyping && activeResults.length === 0 ? (
-                <div className="space-y-3 animate-pulse py-2" aria-busy="true">
-                  <div className="h-24 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]/20" />
-                  <div className="h-24 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]/20" />
-                </div>
-              ) : activeResults.length === 0 ? (
-                <div className="text-center py-6">
-                  <div className="w-10 h-10 mx-auto rounded-xl bg-[#FFBE2E] border-2 border-[#141413] flex items-center justify-center font-mono font-black mb-2 shadow-[2px_2px_0_#141413]">
-                    ?
-                  </div>
-                  <p className="text-xs font-semibold text-[#141413]/80">Belum ada topik jurusan terdeteksi.</p>
-                  <p className="text-[11px] text-[#141413]/60 mt-1">
-                    Ajukan pertanyaan seputar jurusan impianmu untuk melihat rekomendasi kampus di Bali.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
-                  {activeResults.map((item) => (
-                    <div
-                      key={item.fieldId}
-                      className="border-2 border-[#141413] rounded-2xl p-3.5 shadow-[2px_2px_0_#141413] bg-[#FAF7F2]"
-                    >
+            {isTyping && activeResults.length === 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse" aria-busy="true">
+                <div className="h-36 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]/20" />
+                <div className="h-36 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]/20" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeResults.map((item) => (
+                  <div
+                    key={item.fieldId}
+                    className="border-2 border-[#141413] rounded-2xl p-4 shadow-[3px_3px_0_#141413] bg-[#FAF7F2] flex flex-col justify-between gap-3"
+                  >
+                    <div>
                       <span
-                        className={`text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded-lg border-2 border-[#141413] ${groupColor(
+                        className={`text-xs font-mono font-black uppercase px-2.5 py-0.5 rounded-lg border-2 border-[#141413] inline-block ${groupColor(
                           item.group
                         )}`}
                       >
                         {item.badgeName}
                       </span>
-                      <h3 className="font-display font-black text-sm mt-2 leading-snug">{item.title}</h3>
-                      <p className="text-xs text-[#141413]/80 font-medium mt-1 leading-relaxed">{item.reason}</p>
-                      <div className="mt-2 space-y-1.5">
+                      <h3 className="font-display font-black text-base mt-2.5 leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#141413]/80 font-medium mt-1 leading-relaxed">
+                        {item.reason}
+                      </p>
+                      <div className="mt-3 space-y-2">
                         {item.recommendedInstitutions.map((inst) => (
                           <div
                             key={inst.name}
-                            className="text-xs font-medium bg-white border border-[#141413]/20 rounded-xl px-2.5 py-2"
+                            className="text-xs font-medium bg-white border-2 border-[#141413]/20 rounded-xl px-3 py-2"
                           >
-                            <span className="font-bold text-[#141413]">{inst.name}</span>
-                            <span className="block text-[#141413]/70 text-[11px]">
-                              {inst.level} • {inst.kabupaten} • ~{inst.distanceKm} km • Akreditasi {inst.akreditasi}
+                            <span className="font-bold text-[#141413] block">{inst.name}</span>
+                            <span className="text-[#141413]/75 text-xs">
+                              {inst.level} &bull; {inst.kabupaten} &bull; ~{inst.distanceKm} km &bull; Akreditasi {inst.akreditasi}
                             </span>
                           </div>
                         ))}
                       </div>
-                      <div className="mt-3 flex gap-2">
-                        <Link
-                          href={`/peta-bidang/${item.fieldId}`}
-                          className="text-[11px] font-black border-2 border-[#141413] bg-[#141413] text-white rounded-lg px-2.5 py-1.5 hover:bg-[#333]"
-                        >
-                          Panduan Silabus
-                        </Link>
-                        <Link
-                          href={`/hasil-analisis?field=${item.fieldId}`}
-                          className="text-[11px] font-black border-2 border-[#141413] bg-[#FFBE2E] rounded-lg px-2.5 py-1.5 hover:bg-[#e6a81f]"
-                        >
-                          Modul Latihan
-                        </Link>
-                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Link
+                        href={`/peta-bidang/${item.fieldId}`}
+                        className="inline-flex items-center min-h-[40px] text-xs font-black border-2 border-[#141413] bg-[#141413] text-white rounded-xl px-3.5 py-1.5 hover:bg-[#333]"
+                      >
+                        Panduan Silabus
+                      </Link>
+                      <Link
+                        href={`/hasil-analisis?field=${item.fieldId}`}
+                        className="inline-flex items-center min-h-[40px] text-xs font-black border-2 border-[#141413] bg-[#FFBE2E] rounded-xl px-3.5 py-1.5 hover:bg-[#e6a81f]"
+                      >
+                        Modul Latihan
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
+  );
+}
+
+export default function AiNavigatorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FAF7F2] text-[#141413] flex items-center justify-center font-mono font-bold text-xs">
+          Memuat AI Navigator KertaMarga...
+        </div>
+      }
+    >
+      <AiNavigatorContent />
+    </Suspense>
   );
 }

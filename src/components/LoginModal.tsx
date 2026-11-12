@@ -34,6 +34,7 @@ export default function LoginModal({
   const [mode, setMode] = useState<"login" | "register">("login");
   const [role, setRole] = useState<"siswa" | "guru">("siswa");
   const [identifier, setIdentifier] = useState("");
+  const [guruEmail, setGuruEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
@@ -77,8 +78,16 @@ export default function LoginModal({
     e.preventDefault();
     setError(null);
 
-    if (password.length < 6) {
-      setError("Kata sandi minimal 6 karakter");
+    const minPassLen = mode === "register" ? 8 : 6;
+    if (password.length < minPassLen) {
+      setError(`Kata sandi minimal ${minPassLen} karakter`);
+      return;
+    }
+    if (
+      mode === "register" &&
+      (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password))
+    ) {
+      setError("Kata sandi wajib mengandung kombinasi huruf dan angka.");
       return;
     }
 
@@ -112,16 +121,20 @@ export default function LoginModal({
         setLoading(false);
         onProceedToTest(false, selectedInterests);
       } else {
-        const emailFallback = identifier.includes("@")
-          ? identifier.trim()
-          : `${identifier.trim().replace(/[^a-zA-Z0-9]/g, "") || "user"}@siswa.sch.id`;
+        const cleanId = identifier.trim();
+        const emailFallback =
+          role === "guru" && guruEmail.trim()
+            ? guruEmail.trim()
+            : cleanId.includes("@")
+            ? cleanId
+            : `${cleanId.replace(/[^a-zA-Z0-9]/g, "") || "user"}@siswa.sch.id`;
 
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: name.trim() || "Siswa Baru",
-            identifier: identifier.trim(),
+            identifier: cleanId,
             email: emailFallback,
             password,
             passwordConfirm: password,
@@ -314,6 +327,8 @@ export default function LoginModal({
                 <label className="block text-xs font-bold text-[#141413] mb-1">
                   {role === "siswa"
                     ? "NISN / Email Sekolah"
+                    : mode === "register"
+                    ? "NIP Pendidik Resmi (18 Digit)"
                     : "NIP / Email Pembimbing"}
                 </label>
                 <input
@@ -324,11 +339,29 @@ export default function LoginModal({
                   placeholder={
                     role === "siswa"
                       ? "Contoh: 0071234567 atau kamu@smk.sch.id"
-                      : "guru@sekolah.sch.id"
+                      : mode === "register"
+                      ? "Contoh: 198501012010011001 (18 digit NIP)"
+                      : "NIP 18 digit atau guru@sekolah.sch.id"
                   }
                   className="w-full h-10 px-3 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-medium placeholder:text-[#52514E]/60 focus:outline-none"
                 />
               </div>
+
+              {mode === "register" && role === "guru" && (
+                <div>
+                  <label className="block text-xs font-bold text-[#141413] mb-1">
+                    Email Dinas Pendidikan (.belajar.id / .sch.id / .ac.id)
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={guruEmail}
+                    onChange={(e) => setGuruEmail(e.target.value)}
+                    placeholder="Contoh: nama@guru.sma.belajar.id"
+                    className="w-full h-10 px-3 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-medium placeholder:text-[#52514E]/60 focus:outline-none"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-[#141413] mb-1">
@@ -337,9 +370,14 @@ export default function LoginModal({
                 <input
                   type="password"
                   required
+                  minLength={mode === "register" ? 8 : 6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimal 6 karakter"
+                  placeholder={
+                    mode === "register"
+                      ? "Minimal 8 karakter (kombinasi huruf & angka)"
+                      : "Minimal 6 karakter"
+                  }
                   className="w-full h-10 px-3 rounded-xl bg-white border-2 border-[#141413] text-[#141413] text-xs sm:text-sm font-medium placeholder:text-[#52514E]/60 focus:outline-none"
                 />
               </div>
