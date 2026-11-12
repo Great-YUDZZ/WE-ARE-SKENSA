@@ -3,47 +3,60 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import KertaMargaLogo from "@/components/KertaMargaLogo";
 import LoginModal from "@/components/LoginModal";
-import { FIELDS, GROUP_CONFIG, FieldGroup } from "@/data/fields";
+import { GROUP_CONFIG, FieldGroup } from "@/data/fields";
 import {
   MENTOR_CURRICULUM_BY_FIELD,
   FieldCurriculum,
   TargetCourse,
 } from "@/data/mentorCurriculum";
-import {
-  getMasterclassContentForModule,
-  getAllPustakaPdfByField,
-} from "@/data/moduleMasterclassExtension";
+import { getAllPustakaPdfByField } from "@/data/moduleMasterclassExtension";
 import type { PustakaDokumenItem } from "@/app/api/pustaka-modul/route";
 import type { MentorAgentResponse } from "@/app/api/mentor-agent/route";
+import WorkspaceHeader, {
+  WorkspaceTabId,
+} from "@/components/hasil-analisis/WorkspaceHeader";
+import StudyPlanTab from "@/components/hasil-analisis/StudyPlanTab";
+import ModulesTab from "@/components/hasil-analisis/ModulesTab";
+import PustakaPdfTab from "@/components/hasil-analisis/PustakaPdfTab";
+import CertificationTab from "@/components/hasil-analisis/CertificationTab";
+import MentorDrawer, {
+  MentorChatTurn,
+} from "@/components/hasil-analisis/MentorDrawer";
+import SurveyRequiredGate from "@/components/hasil-analisis/SurveyRequiredGate";
 
-interface ChatTurn {
-  id: string;
-  sender: "student" | "agent";
-  text: string;
-  diagnosisSummary?: string;
-  recommendedItemTitle?: string;
-  recommendedActionType?: "materi" | "sertifikasi" | "portofolio" | "siap";
-  keyTakeaways?: string[];
-  encouragementNote?: string;
+interface SavedSurveyResult {
+  fieldId: string;
+  courseId?: string;
+  score: number;
+  dominant: FieldGroup;
+  mismatch: boolean;
 }
 
 function HasilAnalisisContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const fieldParam = searchParams.get("field") || "tkj";
-  const courseParam = searchParams.get("course") || undefined;
-  const scoreParam = Number(searchParams.get("score")) || 62;
-  const dominantParam = (searchParams.get("dominant") as FieldGroup) || "manusia";
-  const mismatchParam = searchParams.get("mismatch") !== "0";
+  const fieldParam = searchParams.get("field");
+  const courseParam = searchParams.get("course");
+  const rawScoreParam = searchParams.get("score");
+  const dominantParam = searchParams.get("dominant") as FieldGroup | null;
+  const mismatchParam = searchParams.get("mismatch");
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
+  const [isCheckingSurvey, setIsCheckingSurvey] = useState<boolean>(true);
+  const [hasSurveyResult, setHasSurveyResult] = useState<boolean>(false);
+  const [baseScore, setBaseScore] = useState<number>(62);
+  const [dominantGroup, setDominantGroup] = useState<FieldGroup>("manusia");
+  const [isGroupMismatch, setIsGroupMismatch] = useState<boolean>(false);
+
   const [targetFieldId, setTargetFieldId] = useState<string>(
-    MENTOR_CURRICULUM_BY_FIELD[fieldParam] ? fieldParam : "tkj"
+    fieldParam && MENTOR_CURRICULUM_BY_FIELD[fieldParam] ? fieldParam : "tkj"
   );
 
   const curriculum: FieldCurriculum =
@@ -56,8 +69,107 @@ function HasilAnalisisContent() {
   );
 
   useEffect(() => {
+    const hasExplicitScore =
+      rawScoreParam !== null &&
+      rawScoreParam.trim() !== "" &&
+      !Number.isNaN(Number(rawScoreParam));
+
+    if (hasExplicitScore) {
+      const nextField =
+        fieldParam && MENTOR_CURRICULUM_BY_FIELD[fieldParam] ? fieldParam : "tkj";
+      const nextCurr =
+        MENTOR_CURRICULUM_BY_FIELD[nextField] || MENTOR_CURRICULUM_BY_FIELD.tkj;
+      const nextCourse =
+        courseParam && nextCurr.targetCourses.some((c) => c.id === courseParam)
+          ? courseParam
+          : nextCurr.targetCourses[0].id;
+      const nextScore = Math.max(35, Math.min(95, Number(rawScoreParam)));
+      const nextDominant: FieldGroup =
+        dominantParam && GROUP_CONFIG[dominantParam] ? dominantParam : nextCurr.group;
+      const nextMismatch = mismatchParam === "1";
+
+      setTargetFieldId(nextField);
+      setTargetCourseId(nextCourse);
+      setBaseScore(nextScore);
+      setDominantGroup(nextDominant);
+      setIsGroupMismatch(nextMismatch);
+      setHasSurveyResult(true);
+      setIsCheckingSurvey(false);
+
+      try {
+        const payload: SavedSurveyResult = {
+          fieldId: nextField,
+          courseId: nextCourse,
+          score: nextScore,
+          dominant: nextDominant,
+          mismatch: nextMismatch,
+        };
+        window.localStorage.setItem(
+          "kertamarga_survey_result",
+          JSON.stringify(payload)
+        );
+      } catch {
+        // Ignore storage errors
+      }
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem("kertamarga_survey_result");
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<SavedSurveyResult>;
+        if (typeof parsed.score === "number" && !Number.isNaN(parsed.score)) {
+          const savedField =
+            fieldParam && MENTOR_CURRICULUM_BY_FIELD[fieldParam]
+              ? fieldParam
+              : parsed.fieldId && MENTOR_CURRICULUM_BY_FIELD[parsed.fieldId]
+              ? parsed.fieldId
+              : "tkj";
+          const savedCurr =
+            MENTOR_CURRICULUM_BY_FIELD[savedField] ||
+            MENTOR_CURRICULUM_BY_FIELD.tkj;
+          const savedCourse =
+            courseParam && savedCurr.targetCourses.some((c) => c.id === courseParam)
+              ? courseParam
+              : parsed.courseId &&
+                savedCurr.targetCourses.some((c) => c.id === parsed.courseId)
+              ? parsed.courseId
+              : savedCurr.targetCourses[0].id;
+          const savedDominant: FieldGroup =
+            parsed.dominant && GROUP_CONFIG[parsed.dominant]
+              ? parsed.dominant
+              : savedCurr.group;
+
+          setTargetFieldId(savedField);
+          setTargetCourseId(savedCourse);
+          setBaseScore(Math.max(35, Math.min(95, parsed.score)));
+          setDominantGroup(savedDominant);
+          setIsGroupMismatch(Boolean(parsed.mismatch));
+          setHasSurveyResult(true);
+          setIsCheckingSurvey(false);
+          return;
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+
+    setHasSurveyResult(false);
+    setIsCheckingSurvey(false);
+  }, [rawScoreParam, fieldParam, courseParam, dominantParam, mismatchParam]);
+
+  const [activeTab, setActiveTab] = useState<WorkspaceTabId>("materi");
+  const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("ALL");
+  const [selectedCertFilter, setSelectedCertFilter] = useState<string>("ALL");
+  const [expandedModuleId, setExpandedModuleId] = useState<string>(
+    curriculum.learningModules[0]?.id || ""
+  );
+  const [inlinePdfModuleId, setInlinePdfModuleId] = useState<string>("");
+
+  useEffect(() => {
     const curr =
-      MENTOR_CURRICULUM_BY_FIELD[targetFieldId] || MENTOR_CURRICULUM_BY_FIELD.tkj;
+      MENTOR_CURRICULUM_BY_FIELD[targetFieldId] ||
+      MENTOR_CURRICULUM_BY_FIELD.tkj;
     if (!curr.targetCourses.some((c) => c.id === targetCourseId)) {
       setTargetCourseId(curr.targetCourses[0].id);
     }
@@ -65,37 +177,34 @@ function HasilAnalisisContent() {
     setSelectedModuleFilter("ALL");
     setSelectedCertFilter("ALL");
     setInlinePdfModuleId("");
-  }, [targetFieldId]);
+  }, [targetFieldId, targetCourseId]);
 
   const targetCourse: TargetCourse =
     curriculum.targetCourses.find((c) => c.id === targetCourseId) ||
     curriculum.targetCourses[0];
 
-  const baseScore = Math.max(35, Math.min(95, scoreParam));
-  const dominantGroup: FieldGroup = GROUP_CONFIG[dominantParam] ? dominantParam : "manusia";
-  const isGroupMismatch = mismatchParam;
-
-  const [activeAgentTab, setActiveAgentTab] = useState<
-    "rencana" | "materi" | "pustaka" | "sertifikasi" | "konsultasi"
-  >("materi");
-
-  // Filter states for expanded modules & certification tracks
-  const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("ALL");
-  const [selectedCertFilter, setSelectedCertFilter] = useState<string>("ALL");
-
-  // Centralized PDF Library state (from public/pustaka-modul/)
+  // Centralized PDF Library state
   const [pustakaDocs, setPustakaDocs] = useState<PustakaDokumenItem[]>([]);
-  const [pustakaScope, setPustakaScope] = useState<"FIELD" | "ALL_FIELDS">("FIELD");
+  const [pustakaScope, setPustakaScope] = useState<"FIELD" | "ALL_FIELDS">(
+    "FIELD"
+  );
+  const [isPustakaLoading, setIsPustakaLoading] = useState<boolean>(false);
+  const [pustakaError, setPustakaError] = useState<string | null>(null);
+  const [pustakaReloadTick, setPustakaReloadTick] = useState<number>(0);
   const [activePreviewPdfUrl, setActivePreviewPdfUrl] = useState<string>("");
-  const [activePreviewPdfTitle, setActivePreviewPdfTitle] = useState<string>("");
-  const [inlinePdfModuleId, setInlinePdfModuleId] = useState<string>("");
-  const [showAdminFolderGuide, setShowAdminFolderGuide] = useState<boolean>(false);
+  const [activePreviewPdfTitle, setActivePreviewPdfTitle] =
+    useState<string>("");
 
   useEffect(() => {
     let isMounted = true;
+    setIsPustakaLoading(true);
+    setPustakaError(null);
     const query = pustakaScope === "FIELD" ? `?field=${targetFieldId}` : "";
     fetch(`/api/pustaka-modul${query}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         if (!isMounted) return;
         const docs: PustakaDokumenItem[] = data.documents || [];
@@ -103,14 +212,23 @@ function HasilAnalisisContent() {
         if (docs.length > 0) {
           setActivePreviewPdfUrl(docs[0].fileUrl);
           setActivePreviewPdfTitle(docs[0].title);
+        } else {
+          setActivePreviewPdfUrl("");
+          setActivePreviewPdfTitle("");
         }
+        setIsPustakaLoading(false);
       })
       .catch(() => {
         if (!isMounted) return;
+        setPustakaError(
+          "Gagal memuat daftar modul dari server, menampilkan cadangan lokal."
+        );
         const fallback = getAllPustakaPdfByField(targetFieldId).map((p) => ({
           id: p.id,
           fieldId: targetFieldId,
-          folderName: p.folderPath.replace("public/pustaka-modul/", "").replace("/", ""),
+          folderName: p.folderPath
+            .replace("public/pustaka-modul/", "")
+            .replace("/", ""),
           filename: p.filename,
           fileUrl: p.fileUrl,
           fileSizeKb: 12.5,
@@ -126,30 +244,72 @@ function HasilAnalisisContent() {
           setActivePreviewPdfUrl(fallback[0].fileUrl);
           setActivePreviewPdfTitle(fallback[0].title);
         }
+        setIsPustakaLoading(false);
       });
     return () => {
       isMounted = false;
     };
-  }, [targetFieldId, pustakaScope]);
+  }, [targetFieldId, pustakaScope, pustakaReloadTick]);
 
-  // Progress State: Completed Learning Modules & Passed Certification Drills
+  // Progress & Quiz State (persisted per field in localStorage)
   const [completedModules, setCompletedModules] = useState<string[]>([]);
-  const [expandedModuleId, setExpandedModuleId] = useState<string>(
-    curriculum.learningModules[0]?.id || ""
-  );
-  const [modulePracticeNotes, setModulePracticeNotes] = useState<Record<string, string>>({});
-
-  // Certification Quiz State
-  const [selectedCertAnswers, setSelectedCertAnswers] = useState<Record<string, number>>({});
+  const [modulePracticeNotes, setModulePracticeNotes] = useState<
+    Record<string, string>
+  >({});
+  const [selectedCertAnswers, setSelectedCertAnswers] = useState<
+    Record<string, number>
+  >({});
   const [submittedCertIds, setSubmittedCertIds] = useState<string[]>([]);
   const [passedCertIds, setPassedCertIds] = useState<string[]>([]);
 
-  // Agent Chat State
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(
+        `kertamarga_study_progress_${targetFieldId}`
+      );
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          completedModules?: string[];
+          passedCertIds?: string[];
+        };
+        setCompletedModules(
+          Array.isArray(parsed.completedModules) ? parsed.completedModules : []
+        );
+        setPassedCertIds(
+          Array.isArray(parsed.passedCertIds) ? parsed.passedCertIds : []
+        );
+      } else {
+        setCompletedModules([]);
+        setPassedCertIds([]);
+      }
+    } catch {
+      setCompletedModules([]);
+      setPassedCertIds([]);
+    }
+  }, [targetFieldId]);
+
+  useEffect(() => {
+    if (!hasSurveyResult) return;
+    try {
+      window.localStorage.setItem(
+        `kertamarga_study_progress_${targetFieldId}`,
+        JSON.stringify({ completedModules, passedCertIds })
+      );
+    } catch {
+      // Ignore storage errors
+    }
+  }, [hasSurveyResult, targetFieldId, completedModules, passedCertIds]);
+
+  // Mentor Drawer State
+  const [isMentorOpen, setIsMentorOpen] = useState<boolean>(false);
   const [chatInput, setChatInput] = useState<string>("");
   const [isAgentLoading, setIsAgentLoading] = useState<boolean>(false);
-  const [chatHistory, setChatHistory] = useState<ChatTurn[]>([]);
+  const [agentError, setAgentError] = useState<string | null>(null);
+  const [lastFailedAgentPrompt, setLastFailedAgentPrompt] = useState<
+    string | null
+  >(null);
+  const [chatHistory, setChatHistory] = useState<MentorChatTurn[]>([]);
 
-  // Calculate bonus points earned from studying modules & passing certification drills
   const moduleBonus = curriculum.learningModules
     .filter((m) => completedModules.includes(m.id))
     .reduce((acc, m) => acc + m.scoreBoost, 0);
@@ -158,12 +318,13 @@ function HasilAnalisisContent() {
     .filter((c) => passedCertIds.includes(c.id))
     .reduce((acc, c) => acc + c.scoreBoost, 0);
 
-  const currentReadinessScore = Math.min(99, baseScore + moduleBonus + certBonus);
+  const currentReadinessScore = Math.min(
+    99,
+    baseScore + moduleBonus + certBonus
+  );
   const scoreGap = Math.max(0, targetCourse.minScore - currentReadinessScore);
-  const isInitialLowOrMismatch = baseScore < targetCourse.minScore || isGroupMismatch;
   const isNowReady = currentReadinessScore >= targetCourse.minScore;
 
-  // Filtered Learning Modules
   const filteredModules = curriculum.learningModules.filter((mod) => {
     if (selectedModuleFilter === "ALL") return true;
     if (selectedModuleFilter === "TARGET_COURSE") {
@@ -172,67 +333,59 @@ function HasilAnalisisContent() {
     return mod.courseId === selectedModuleFilter;
   });
 
-  // Filtered Certification Drills
   const filteredCertDrills = curriculum.certificationDrills.filter((drill) => {
     if (selectedCertFilter === "ALL") return true;
     if (selectedCertFilter === "TARGET_COURSE") {
       return !drill.courseId || drill.courseId === targetCourse.id;
     }
-    return drill.certTrack === selectedCertFilter || drill.certName === selectedCertFilter;
+    return (
+      drill.certTrack === selectedCertFilter ||
+      drill.certName === selectedCertFilter
+    );
   });
 
-  // Extract distinct certification tracks for filter pills
   const certTrackOptions =
     curriculum.availableCertTracks && curriculum.availableCertTracks.length > 0
       ? curriculum.availableCertTracks
       : Array.from(
           new Set(
-            curriculum.certificationDrills.map((d) => d.certTrack || d.certName)
+            curriculum.certificationDrills.map(
+              (d) => d.certTrack || d.certName
+            )
           )
         );
 
-  // Initialize welcome message from the AI Mentor Agent
   useEffect(() => {
     const gapNow = Math.max(0, targetCourse.minScore - currentReadinessScore);
-    const initialTurn: ChatTurn = {
+    const initialTurn: MentorChatTurn = {
       id: "init-" + targetFieldId + "-" + targetCourse.id,
       sender: "agent",
       text:
         gapNow > 0
-          ? `Halo! Saya Agen Pembimbing untuk bidang ${curriculum.fieldName}. Hasil evaluasi survey Anda menunjukkan skor kesiapan ${baseScore}% untuk mata kuliah tujuan '${targetCourse.name}' (standar minimum: ${targetCourse.minScore}%). ${
-              isGroupMismatch
-                ? `Saya juga mendeteksi profil minat alami Anda cenderung ke kelompok '${GROUP_CONFIG[dominantGroup].label}', sedangkan jurusan tujuan Anda berada di kelompok '${GROUP_CONFIG[curriculum.group].label}'. `
-                : ""
-            }Jangan berkecil hati. Saya telah menyusun 4 langkah perbaikan, ${curriculum.learningModules.length} modul pembelajaran berkepanjangan (dari semester dasar hingga mahir), serta ${curriculum.certificationDrills.length} latihan uji sertifikasi (${curriculum.certificationBody}) yang disesuaikan dengan mata kuliah ${targetCourse.code} agar keahlian Anda meningkat hingga memenuhi syarat jurusan tujuan.`
-          : `Selamat! Skor kesiapan Anda (${currentReadinessScore}%) sudah memenuhi ambang batas minimum (${targetCourse.minScore}%) untuk mata kuliah '${targetCourse.name}' pada jurusan ${curriculum.fieldName}. Anda tetap dapat mempelajari seluruh ${curriculum.learningModules.length} modul kurikulum berkepanjangan dan menyelesaikan latihan sertifikasi ${curriculum.mainCertificationTitle} untuk memperkokoh portofolio Anda.`,
+          ? `Halo! Saya Agen Pembimbing untuk bidang ${curriculum.fieldName}. Skor kesiapan Anda saat ini ${baseScore}% untuk mata kuliah '${targetCourse.name}' (standar minimum: ${targetCourse.minScore}%). Selesaikan modul materi dan latihan sertifikasi untuk menaikkan skor Anda.`
+          : `Selamat! Skor kesiapan Anda (${currentReadinessScore}%) sudah memenuhi standar minimum (${targetCourse.minScore}%) untuk mata kuliah '${targetCourse.name}'. Anda dapat memperdalam modul atau langsung menguji diri di tab Tes Sertifikasi.`,
       diagnosisSummary:
         gapNow > 0
-          ? `Perlu Peningkatan +${gapNow} Poin Menuju Standar ${targetCourse.code} (${targetCourse.minScore}%)`
-          : `Memenuhi Standar Kesiapan ${targetCourse.code} (${currentReadinessScore}% >= ${targetCourse.minScore}%)`,
+          ? `Perlu +${gapNow} Poin Menuju ${targetCourse.code}`
+          : `Memenuhi Standar ${targetCourse.code}`,
       recommendedActionType: gapNow > 0 ? "materi" : "sertifikasi",
       recommendedItemTitle: curriculum.learningModules[0]?.title,
       keyTakeaways: [
-        `Target Jurusan: ${curriculum.fieldName}`,
-        `Target Mata Kuliah: ${targetCourse.code} - ${targetCourse.name} (Min. ${targetCourse.minScore}%)`,
-        `Sertifikasi Matkul: ${targetCourse.certificationAlignment || curriculum.mainCertificationTitle}`,
+        `Jurusan: ${curriculum.fieldName}`,
+        `Matkul: ${targetCourse.code} (Min. ${targetCourse.minScore}%)`,
+        `Sertifikasi: ${
+          targetCourse.certificationAlignment || curriculum.mainCertificationTitle
+        }`,
       ],
-      encouragementNote:
-        "Tuntaskan setiap modul materi berkepanjangan dan latihan soal sertifikasi sesuai mata kuliah untuk menaikkan grafik kesiapan Anda secara langsung.",
     };
     setChatHistory([initialTurn]);
-  }, [targetFieldId, targetCourseId]);
+  }, [targetFieldId, targetCourse.id]);
 
-  const handleOpenLogin = () => {
-    setAuthMode("login");
-    setIsLoginModalOpen(true);
-  };
-
-  const handleOpenRegister = () => {
-    setAuthMode("register");
-    setIsLoginModalOpen(true);
-  };
-
-  const handleToggleCompleteModule = (moduleId: string, moduleTitle: string, boost: number) => {
+  const handleToggleCompleteModule = (
+    moduleId: string,
+    moduleTitle: string,
+    boost: number
+  ) => {
     const alreadyDone = completedModules.includes(moduleId);
     const updated = alreadyDone
       ? completedModules.filter((id) => id !== moduleId)
@@ -240,13 +393,15 @@ function HasilAnalisisContent() {
     setCompletedModules(updated);
 
     if (!alreadyDone) {
-      const newTurn: ChatTurn = {
+      const newTurn: MentorChatTurn = {
         id: "mod-done-" + Date.now(),
         sender: "agent",
-        text: `Bagus sekali! Anda telah menyelesaikan pembelajaran '${moduleTitle}'. Skor kesiapan Anda untuk mata kuliah ${targetCourse.name} meningkat sebesar +${boost} poin. Langkah selanjutnya, uji pemahaman Anda pada tab 'Latihan Sertifikasi' atau lanjutkan ke modul berikutnya.`,
-        diagnosisSummary: `Progres Belajar Bertambah (+${boost}% Kesiapan)`,
+        text: `Bagus! Anda menyelesaikan '${moduleTitle}' dan memperoleh +${boost} poin kesiapan untuk mata kuliah ${targetCourse.name}.`,
+        diagnosisSummary: `Progres +${boost}% Kesiapan`,
         recommendedActionType: "sertifikasi",
-        recommendedItemTitle: targetCourse.certificationAlignment || curriculum.mainCertificationTitle,
+        recommendedItemTitle:
+          targetCourse.certificationAlignment ||
+          curriculum.mainCertificationTitle,
       };
       setChatHistory((prev) => [...prev, newTurn]);
     }
@@ -267,11 +422,11 @@ function HasilAnalisisContent() {
 
     if (chosen === correctIndex && !passedCertIds.includes(certId)) {
       setPassedCertIds([...passedCertIds, certId]);
-      const newTurn: ChatTurn = {
+      const newTurn: MentorChatTurn = {
         id: "cert-pass-" + Date.now(),
         sender: "agent",
-        text: `Luar biasa! Jawaban Anda pada latihan sertifikasi unit kompetensi ${code} tepat. Anda memperoleh tambahan +${boost} poin kesiapan keahlian menuju standar ${curriculum.fieldName}.`,
-        diagnosisSummary: `Unit Kompetensi ${code} Terverifikasi (+${boost}% Kesiapan)`,
+        text: `Tepat! Unit kompetensi ${code} terverifikasi dan menambah +${boost} poin kesiapan menuju standar ${curriculum.fieldName}.`,
+        diagnosisSummary: `Unit ${code} Kompeten (+${boost}%)`,
         recommendedActionType: "materi",
         recommendedItemTitle: curriculum.mainCertificationTitle,
       };
@@ -283,7 +438,7 @@ function HasilAnalisisContent() {
     const messageToSend = (customPrompt ?? chatInput).trim();
     if (!messageToSend || isAgentLoading) return;
 
-    const studentTurn: ChatTurn = {
+    const studentTurn: MentorChatTurn = {
       id: "user-" + Date.now(),
       sender: "student",
       text: messageToSend,
@@ -291,6 +446,8 @@ function HasilAnalisisContent() {
 
     setChatHistory((prev) => [...prev, studentTurn]);
     if (!customPrompt) setChatInput("");
+    setAgentError(null);
+    setLastFailedAgentPrompt(null);
     setIsAgentLoading(true);
 
     try {
@@ -308,8 +465,12 @@ function HasilAnalisisContent() {
         }),
       });
 
+      if (!res.ok) {
+        throw new Error(`Server merespons status ${res.status}`);
+      }
+
       const data = (await res.json()) as MentorAgentResponse;
-      const agentTurn: ChatTurn = {
+      const agentTurn: MentorChatTurn = {
         id: "agent-" + Date.now(),
         sender: "agent",
         text: data.replyMessage,
@@ -321,11 +482,17 @@ function HasilAnalisisContent() {
       };
       setChatHistory((prev) => [...prev, agentTurn]);
     } catch {
-      const fallbackTurn: ChatTurn = {
+      setAgentError(
+        "Koneksi ke Agen Pembimbing sedang terganggu. Menampilkan panduan lokal."
+      );
+      setLastFailedAgentPrompt(messageToSend);
+      const fallbackTurn: MentorChatTurn = {
         id: "agent-fallback-" + Date.now(),
         sender: "agent",
-        text: `Untuk meningkatkan kesiapan pada mata kuliah ${targetCourse.name} di jurusan ${curriculum.fieldName}, fokuskan belajar pada modul '${curriculum.learningModules[0]?.title}' dan kerjakan simulasi sertifikasi ${targetCourse.certificationAlignment || curriculum.mainCertificationTitle}.`,
-        diagnosisSummary: "Mode Pendampingan Deterministik Aktif",
+        text: `Untuk meningkatkan kesiapan pada ${targetCourse.name} di ${curriculum.fieldName}, pelajari modul '${curriculum.learningModules[0]?.title}' dan kerjakan simulasi sertifikasi ${
+          targetCourse.certificationAlignment || curriculum.mainCertificationTitle
+        }.`,
+        diagnosisSummary: "Panduan Lokal Aktif",
       };
       setChatHistory((prev) => [...prev, fallbackTurn]);
     } finally {
@@ -334,1288 +501,192 @@ function HasilAnalisisContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-kmNeutral-latar text-kmNeutral-tinta relative transition-colors selection:bg-[#FFC93C] selection:text-[#1B1B2F]">
+    <div className="min-h-screen flex flex-col neopop-canvas-subtle overflow-x-clip">
       <Navbar
-        onOpenLogin={handleOpenLogin}
-        onOpenRegister={handleOpenRegister}
-        onOpenTest={() => router.push("/tes-keminatan")}
+        onOpenLogin={() => {
+          setAuthMode("login");
+          setIsLoginModalOpen(true);
+        }}
+        onOpenRegister={() => {
+          setAuthMode("register");
+          setIsLoginModalOpen(true);
+        }}
       />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 w-full min-h-[calc(100vh-4rem)]">
-        {/* Top Navigation Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-kmNeutral-sekunder">
-            <Link href="/" className="hover:text-kmNeutral-tinta transition-colors">
-              Beranda
-            </Link>
-            <span>/</span>
-            <Link
-              href={`/tes-keminatan?field=${targetFieldId}`}
-              className="hover:text-kmNeutral-tinta transition-colors"
-            >
-              Survey Tes Keminatan
-            </Link>
-            <span>/</span>
-            <span className="text-[#1F7A52] font-bold">
-              Hasil Analisis, Kurikulum Berkepanjangan & Sertifikasi
-            </span>
-          </div>
+      <main className="flex-1 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {isCheckingSurvey ? (
+            <div className="max-w-2xl mx-auto py-14 text-center text-xs font-mono font-bold text-[#52514E]">
+              Memeriksa hasil survey keminatan Anda...
+            </div>
+          ) : !hasSurveyResult ? (
+            <SurveyRequiredGate />
+          ) : (
+            <>
+              <WorkspaceHeader
+                targetFieldId={targetFieldId}
+                onChangeField={setTargetFieldId}
+                targetCourse={targetCourse}
+                onChangeCourse={setTargetCourseId}
+                curriculum={curriculum}
+                baseScore={baseScore}
+                moduleBonus={moduleBonus}
+                certBonus={certBonus}
+                currentReadinessScore={currentReadinessScore}
+                scoreGap={scoreGap}
+                isNowReady={isNowReady}
+                isGroupMismatch={isGroupMismatch}
+                dominantGroup={dominantGroup}
+                activeTab={activeTab}
+                onChangeTab={setActiveTab}
+                pustakaCount={pustakaDocs.length}
+                passedCertCount={passedCertIds.length}
+              />
 
-          <Link
-            href={`/tes-keminatan?field=${targetFieldId}`}
-            className="text-xs sm:text-sm font-mono font-bold px-4 py-2 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis text-kmNeutral-sekunder hover:text-kmNeutral-tinta transition-colors"
-          >
-            &larr; Ulangi / Ubah Jawaban Survey
-          </Link>
-        </div>
-
-        {/* QUICK SWITCHER FOR JURUSAN & MATA KULIAH / SKEMA SERTIFIKASI */}
-        <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-kmNeutral-surface border border-kmNeutral-garis shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex-1">
-              <label className="block text-xs font-mono font-bold text-[#2D6CDF] uppercase mb-2">
-                PILIH JURUSAN / PROGRAM STUDI (TERMASUK TKJ CCNA/MTCNA, RPL, DKV, ARSITEKTUR):
-              </label>
-              <select
-                value={targetFieldId}
-                onChange={(e) => setTargetFieldId(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm font-semibold text-kmNeutral-tinta"
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
               >
-                {FIELDS.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} ({f.categoryName})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-xs font-mono font-bold text-[#1F7A52] uppercase mb-2">
-                PILIH MATA KULIAH & JALUR SERTIFIKASI SPESIFIK:
-              </label>
-              <select
-                value={targetCourse.id}
-                onChange={(e) => setTargetCourseId(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm font-semibold text-kmNeutral-tinta"
-              >
-                {curriculum.targetCourses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    [{c.code}] {c.name} {c.certificationAlignment ? `- (${c.certificationAlignment})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* MAIN RESULT & MENTOR AGENT WORKSPACE */}
-        <div className="space-y-8">
-          {/* SCORE & DIAGNOSIS BANNER */}
-          <div
-            className={`rounded-2xl p-6 sm:p-9 border-2 shadow-sm transition-colors ${
-              isNowReady
-                ? "bg-kmNeutral-surface border-[#2E9E6B]"
-                : "bg-kmNeutral-surface border-[#D7263D]"
-            }`}
-          >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-kmNeutral-garis">
-              <div className="space-y-3 max-w-3xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  {isNowReady ? (
-                    <span className="text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-[#2E9E6B]/15 text-[#1F7A52] border border-[#2E9E6B]/40">
-                      STATUS: KESIAPAN TERCAPAI &bull; SIAP MASUK JURUSAN TUJUAN
-                    </span>
-                  ) : (
-                    <span className="text-xs font-mono font-bold px-3.5 py-1 rounded-full bg-[#D7263D]/15 text-[#D7263D] border border-[#D7263D]/40">
-                      PERHATIAN: NILAI KESIAPAN DI BAWAH STANDAR / PERLU BIMBINGAN AGEN
-                    </span>
-                  )}
-                  <span className="text-xs sm:text-sm font-mono text-kmNeutral-sekunder">
-                    Target Matkul: [{targetCourse.code}] {targetCourse.name}
-                  </span>
-                </div>
-
-                <h1 className="font-serif font-bold text-3xl sm:text-4xl lg:text-5xl text-kmNeutral-tinta leading-tight">
-                  {isNowReady
-                    ? `Selamat! Kompetensi Anda Telah Sesuai dengan Standar ${curriculum.fieldName}`
-                    : `Apa yang Harus Anda Lakukan Saat Hasil Analisis Nilai Belum Sesuai (${currentReadinessScore}%)`}
-                </h1>
-
-                <p className="text-sm sm:text-base text-kmNeutral-sekunder leading-relaxed">
-                  {isNowReady
-                    ? `Melalui penyelesaian materi pembelajaran dan latihan sertifikasi bersama Agen Pembimbing, skor kesiapan Anda meningkat dari ${baseScore}% menjadi ${currentReadinessScore}% (melampaui batas minimum ${targetCourse.minScore}%).`
-                    : `Skor awal Anda adalah ${baseScore}%, sedangkan mata kuliah '${targetCourse.name}' pada jurusan ${curriculum.fieldName} menuntut kesiapan minimal ${targetCourse.minScore}% (selisih ${scoreGap} poin). Ikuti panduan Agen Pembimbing di bawah untuk menuntaskan modul materi berkepanjangan dan simulasi sertifikasi (${targetCourse.certificationAlignment || curriculum.mainCertificationTitle}) hingga skor Anda memenuhi syarat.`}
-                </p>
-              </div>
-
-              {/* Dynamic Score Meter Card */}
-              <div className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis min-w-[260px] space-y-3">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-kmNeutral-sekunder">
-                    SKOR KESIAPAN SAAT INI:
-                  </span>
-                  <span
-                    className={`font-bold text-xl ${
-                      isNowReady
-                        ? "text-[#1F7A52]"
-                        : "text-[#D7263D]"
-                    }`}
-                  >
-                    {currentReadinessScore}%
-                  </span>
-                </div>
-
-                {/* Progress bar with target marker */}
-                <div className="space-y-1">
-                  <div className="w-full h-3 rounded-full bg-kmNeutral-garis overflow-hidden relative">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        isNowReady ? "bg-[#2E9E6B]" : "bg-[#2D6CDF]"
-                      }`}
-                      style={{ width: `${currentReadinessScore}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[10px] font-mono text-kmNeutral-sekunder">
-                    <span>Skor Awal: {baseScore}%</span>
-                    <span>Bonus Latihan: +{moduleBonus + certBonus}%</span>
-                    <span className="font-bold text-kmNeutral-tinta">
-                      Target: {targetCourse.minScore}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-kmNeutral-garis grid grid-cols-2 gap-2 text-[11px] font-mono">
-                  <div>
-                    <span className="text-kmNeutral-sekunder block">
-                      Modul Selesai:
-                    </span>
-                    <span className="font-bold text-kmNeutral-tinta">
-                      {completedModules.length} / {curriculum.learningModules.length} Materi
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-kmNeutral-sekunder block">
-                      Uji Sertifikasi:
-                    </span>
-                    <span className="font-bold text-kmNeutral-tinta">
-                      {passedCertIds.length} / {curriculum.certificationDrills.length} Lulus
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mismatch Bridge Explanation Box */}
-            {isInitialLowOrMismatch && (
-              <div className="mt-4 p-4 rounded-xl bg-[#FFC93C]/15 border border-[#E6B020]/40 text-xs sm:text-sm text-kmNeutral-tinta">
-                <span className="font-mono font-bold text-[11px] uppercase tracking-wider block mb-1 text-[#1B1B2F]">
-                  STRATEGI JEMBATAN LINTAS MINAT & PERBAIKAN NILAI OLEH AGEN:
-                </span>
-                <p className="leading-relaxed">{curriculum.mismatchBridgeAdvice}</p>
-              </div>
-            )}
-
-            {/* Navigation Tabs for the Agent Mentoring System */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveAgentTab("rencana")}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeAgentTab === "rencana"
-                    ? "bg-[#D7263D] text-white shadow-xs"
-                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                }`}
-              >
-                <span>1. Langkah yang Harus Dilakukan</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAgentTab("materi")}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeAgentTab === "materi"
-                    ? "bg-[#2D6CDF] text-white shadow-xs"
-                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                }`}
-              >
-                <span>
-                  2. Modul Masterclass Mendalam ({completedModules.length}/{curriculum.learningModules.length})
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAgentTab("pustaka")}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeAgentTab === "pustaka"
-                    ? "bg-[#1B1B2F] text-white shadow-xs"
-                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                }`}
-              >
-                <span>
-                  3. Pustaka Modul PDF Terpusat ({pustakaDocs.length} Dokumen)
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAgentTab("sertifikasi")}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeAgentTab === "sertifikasi"
-                    ? "bg-[#2E9E6B] text-white shadow-xs"
-                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                }`}
-              >
-                <span>
-                  4. Tes Sertifikasi Sesuai Jurusan/Matkul ({passedCertIds.length}/{curriculum.certificationDrills.length})
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAgentTab("konsultasi")}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  activeAgentTab === "konsultasi"
-                    ? "bg-[#FFC93C] text-[#1B1B2F] shadow-xs"
-                    : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                }`}
-              >
-                <span>5. Tanya Agen Pembimbing AI</span>
-              </button>
-            </div>
-          </div>
-
-          {/* TAB CONTENT 1: LANGKAH YANG HARUS DILAKUKAN (ACTION PLAN) */}
-          {activeAgentTab === "rencana" && (
-            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-[#D7263D] uppercase tracking-wider">
-                    PETA JALAN REMEDIAL & PENYELARASAN KOMPETENSI
-                  </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
-                    4 Langkah Wajib Jika Nilai Kecil atau Belum Sesuai dengan {curriculum.fieldName}
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveAgentTab("materi")}
-                  className="h-10 px-4 rounded-xl bg-[#2D6CDF] hover:bg-[#2256B8] text-white font-sans font-bold text-xs transition-colors cursor-pointer shrink-0"
-                >
-                  Mulai Pelajari Materi Sekarang &rarr;
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {curriculum.remedialActionPlan.map((step) => (
-                  <div
-                    key={step.stepNumber}
-                    className="p-5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="w-8 h-8 rounded-lg bg-[#D7263D]/15 text-[#D7263D] font-mono font-bold text-xs flex items-center justify-center border border-[#D7263D]/30">
-                          {step.stepNumber}
-                        </span>
-                        <span className="text-[11px] font-mono font-semibold text-kmNeutral-sekunder">
-                          {step.phase}
-                        </span>
-                      </div>
-                      <h3 className="font-serif font-bold text-base text-kmNeutral-tinta">
-                        {step.title}
-                      </h3>
-                      <p className="text-xs text-kmNeutral-sekunder mt-1.5 leading-relaxed">
-                        {step.action}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-kmNeutral-garis text-[11px]">
-                      <span className="font-mono font-bold text-[#1F7A52] block">
-                        Target Capaian:
-                      </span>
-                      <span className="text-kmNeutral-tinta">
-                        {step.targetOutcome}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Target Courses Checklist */}
-              <div className="p-5 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis space-y-3">
-                <span className="text-xs font-mono font-bold text-kmNeutral-tinta uppercase">
-                  DAFTAR MATA KULIAH INTI & SERTIFIKASI TERKAIT (KLIK UNTUK GANTI FOKUS MATKUL):
-                </span>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {curriculum.targetCourses.map((c) => {
-                    const isSelectedCourse = c.id === targetCourse.id;
-                    const meetsCourse = currentReadinessScore >= c.minScore;
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => setTargetCourseId(c.id)}
-                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
-                          isSelectedCourse
-                            ? "bg-kmNeutral-surface border-[#2D6CDF]"
-                            : "bg-kmNeutral-surface/60 border-kmNeutral-garis"
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between text-[11px] font-mono mb-1">
-                            <span className="font-bold text-[#2D6CDF]">
-                              {c.code} &bull; {c.sks} SKS
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded font-bold ${
-                                meetsCourse
-                                  ? "bg-[#2E9E6B]/15 text-[#1F7A52]"
-                                  : "bg-[#D7263D]/15 text-[#D7263D]"
-                              }`}
-                            >
-                              Min. {c.minScore}%
-                            </span>
-                          </div>
-                          <h4 className="font-bold text-xs text-kmNeutral-tinta">
-                            {c.name}
-                          </h4>
-                          <p className="text-[11px] text-kmNeutral-sekunder mt-1">
-                            {c.description}
-                          </p>
-                        </div>
-
-                        {c.certificationAlignment && (
-                          <div className="mt-2.5 pt-2 border-t border-kmNeutral-garis">
-                            <span className="text-[10px] font-mono font-bold text-[#1F7A52] block">
-                              Sertifikasi Matkul: {c.certificationAlignment}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB CONTENT 2: MATERI PEMBELAJARAN BERKEPANJANGAN (MASTERCLASS LENGKAP + PDF) */}
-          {activeAgentTab === "materi" && (
-            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] uppercase tracking-wider">
-                    KURIKULUM MODUL MASTERCLASS MENDALAM &bull; BUKU AJAR & PRAKTIKUM MULTI-SEMESTER
-                  </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
-                    Modul Keahlian Lengkap & Dokumen PDF: {curriculum.fieldName}
-                  </h2>
-                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
-                    Setiap modul di bawah menyajikan 5 Bab pembahasan teknis mendalam (Landasan Teori, Rumus/CLI/SOP Standar, Tahapan Langkah Kerja Profesional, Matriks Kesalahan Umum vs Solusi Ahli, serta Lampiran Modul PDF Terpusat).
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setActiveAgentTab("pustaka")}
-                    className="h-10 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis hover:border-[#2D6CDF] text-kmNeutral-tinta font-mono font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    Buka Pustaka PDF ({pustakaDocs.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveAgentTab("sertifikasi")}
-                    className="h-10 px-4 rounded-xl bg-[#2E9E6B] hover:bg-[#1F7A52] text-white font-sans font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    Lanjut ke Latihan Sertifikasi &rarr;
-                  </button>
-                </div>
-              </div>
-
-              {/* Filter Modul Berdasarkan Mata Kuliah */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder mr-1">
-                  FILTER MODUL:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedModuleFilter("ALL")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                    selectedModuleFilter === "ALL"
-                      ? "bg-[#2D6CDF] text-white"
-                      : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                  }`}
-                >
-                  Semua Modul ({curriculum.learningModules.length})
-                </button>
-                {curriculum.targetCourses.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => {
-                      setTargetCourseId(c.id);
-                      setSelectedModuleFilter(c.id);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                      selectedModuleFilter === c.id
-                        ? "bg-[#2D6CDF] text-white"
-                        : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                    }`}
-                  >
-                    Matkul [{c.code}]
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-4">
-                {filteredModules.map((mod, idx) => {
-                  const isCompleted = completedModules.includes(mod.id);
-                  const isExpanded = expandedModuleId === mod.id;
-                  const masterclass = getMasterclassContentForModule(mod);
-                  const isPdfPreviewOpen = inlinePdfModuleId === mod.id;
-
-                  return (
-                    <div
-                      key={mod.id}
-                      className={`rounded-xl border-2 transition-all overflow-hidden ${
-                        isCompleted
-                          ? "border-[#2E9E6B]/60 bg-kmNeutral-latar"
-                          : "border-kmNeutral-garis bg-kmNeutral-latar"
-                      }`}
-                    >
-                      {/* Module Header */}
-                      <div
-                        onClick={() => setExpandedModuleId(isExpanded ? "" : mod.id)}
-                        className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-kmNeutral-surface/50 transition-colors"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-bold">
-                              {mod.moduleCode ? mod.moduleCode : `MODUL 0${idx + 1}`} &bull; {mod.level.toUpperCase()}
-                            </span>
-                            {mod.semesterStage && (
-                              <span className="px-2 py-0.5 rounded bg-[#FFC93C]/20 text-[#1B1B2F] font-bold">
-                                {mod.semesterStage}
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] font-bold">
-                              + LAMPIRAN PDF
-                            </span>
-                            <span className="text-kmNeutral-sekunder">
-                              Matkul: {mod.courseName}
-                            </span>
-                            <span className="text-kmNeutral-sekunder">
-                              &bull; Durasi: {mod.duration}
-                            </span>
-                          </div>
-                          <h3 className="font-serif font-bold text-base sm:text-lg text-kmNeutral-tinta">
-                            {mod.title}
-                          </h3>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {isCompleted ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#2E9E6B]/20 text-[#1F7A52] border border-[#2E9E6B]/40">
-                              ✓ Selesai (+{mod.scoreBoost}%)
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FFC93C]/25 text-[#1B1B2F] border border-[#E6B020]/40">
-                              +{mod.scoreBoost}% Kesiapan
-                            </span>
-                          )}
-                          <span className="text-xs font-mono text-kmNeutral-sekunder px-2">
-                            {isExpanded ? "[Tutup]" : "[Buka Materi Lengkap]"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Expanded Module Body */}
-                      {isExpanded && (
-                        <div className="p-5 pt-0 border-t border-kmNeutral-garis space-y-5">
-                          <p className="text-xs sm:text-sm text-kmNeutral-sekunder pt-3 leading-relaxed">
-                            {mod.summary}
-                          </p>
-
-                          {/* Key Concepts */}
-                          <div className="p-4 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis">
-                            <span className="text-xs font-mono font-bold text-[#2D6CDF] uppercase block mb-2">
-                              KONSEP INTI YANG WAJIB DIKUASAI:
-                            </span>
-                            <ul className="space-y-1.5 text-xs sm:text-sm text-kmNeutral-tinta">
-                              {mod.keyConcepts.map((kc, kIdx) => (
-                                <li key={kIdx} className="flex items-start gap-2">
-                                  <span className="font-mono font-bold text-[#2D6CDF]">
-                                    {kIdx + 1}.
-                                  </span>
-                                  <span>{kc}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Multi-Chapter Masterclass Deep Dive */}
-                          {masterclass.deepDiveChapters.map((ch, cIdx) => (
-                            <div
-                              key={cIdx}
-                              className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-3"
-                            >
-                              <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase block">
-                                {ch.chapterTitle}
-                              </span>
-                              <div className="space-y-3 text-xs sm:text-sm text-kmNeutral-tinta leading-relaxed">
-                                {ch.paragraphs.map((pText, pIdx) => (
-                                  <p key={pIdx}>{pText}</p>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* Technical Reference Code / Formulas / SOP Block */}
-                          <div className="p-4 sm:p-5 rounded-xl bg-[#1B1B2F] text-[#F4F6FA] border border-[#2E2E42] space-y-2.5">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="text-xs font-mono font-bold text-[#FFC93C] uppercase">
-                                BAB III: {masterclass.technicalReferenceTitle}
-                              </span>
-                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-white/80">
-                                Referensi Teknis & Rumus Praktisi
-                              </span>
-                            </div>
-                            <pre className="text-[11px] sm:text-xs font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap text-[#E6ECF5] pt-1">
-                              {masterclass.technicalReferenceCode}
-                            </pre>
-                          </div>
-
-                          {/* Step-by-Step Professional Implementation Roadmap */}
-                          <div className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-3">
-                            <span className="text-xs font-mono font-bold text-[#2D6CDF] uppercase block">
-                              BAB IV: TAHAPAN LANGKAH KERJA PROFESIONAL & PRAKTIKUM TERSTRUKTUR:
-                            </span>
-                            <div className="space-y-2.5">
-                              {masterclass.professionalWorkflowSteps.map((stepText, sIdx) => (
-                                <div
-                                  key={sIdx}
-                                  className="p-3 rounded-lg bg-kmNeutral-latar border border-kmNeutral-garis flex items-start gap-3 text-xs sm:text-sm text-kmNeutral-tinta"
-                                >
-                                  <span className="w-6 h-6 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                                    0{sIdx + 1}
-                                  </span>
-                                  <span className="leading-relaxed">{stepText}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Common Pitfalls vs Certified Expert Best Practices */}
-                          <div className="p-4 sm:p-5 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-3">
-                            <span className="text-xs font-mono font-bold text-[#D7263D] uppercase block">
-                              BAB V: MATRIKS KESALAHAN UMUM PEMULA VS SOLUSI AHLI BERSERTIFIKAT:
-                            </span>
-                            <div className="grid grid-cols-1 gap-3">
-                              {masterclass.pitfallComparisons.map((pit, pIdx) => (
-                                <div
-                                  key={pIdx}
-                                  className="p-3.5 rounded-lg bg-kmNeutral-latar border border-kmNeutral-garis grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"
-                                >
-                                  <div className="space-y-1">
-                                    <span className="font-mono font-bold text-[10px] text-[#D7263D] uppercase block">
-                                      [X] Kesalahan yang Sering Terjadi #{pIdx + 1}:
-                                    </span>
-                                    <p className="text-kmNeutral-tinta leading-relaxed">
-                                      {pit.mistake}
-                                    </p>
-                                  </div>
-                                  <div className="space-y-1 md:border-l md:pl-3 border-kmNeutral-garis">
-                                    <span className="font-mono font-bold text-[10px] text-[#1F7A52] uppercase block">
-                                      [✓] Standar Praktisi Bersertifikat:
-                                    </span>
-                                    <p className="text-kmNeutral-tinta leading-relaxed">
-                                      {pit.expertSolution}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Attached PDF Handbook from Centralized Folder public/pustaka-modul/ */}
-                          <div className="p-4 sm:p-5 rounded-xl bg-[#2D6CDF]/8 border-2 border-[#2D6CDF]/30 space-y-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                              <div className="space-y-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#2D6CDF] text-white">
-                                    BUKU MODUL PDF TERPUSAT
-                                  </span>
-                                  <span className="text-[11px] font-mono text-kmNeutral-sekunder">
-                                    Lokasi Admin: {masterclass.attachedPdf.folderPath}{masterclass.attachedPdf.filename}
-                                  </span>
-                                </div>
-                                <h4 className="font-serif font-bold text-sm sm:text-base text-kmNeutral-tinta">
-                                  {masterclass.attachedPdf.title}
-                                </h4>
-                              </div>
-
-                              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setInlinePdfModuleId(isPdfPreviewOpen ? "" : mod.id)
-                                  }
-                                  className="px-3.5 py-2 rounded-lg bg-[#2D6CDF] hover:bg-[#2256B8] text-white font-mono font-bold text-xs transition-colors cursor-pointer"
-                                >
-                                  {isPdfPreviewOpen
-                                    ? "Tutup Pratinjau PDF"
-                                    : "Baca PDF Langsung di Web"}
-                                </button>
-                                <a
-                                  href={masterclass.attachedPdf.fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  download={masterclass.attachedPdf.filename}
-                                  className="px-3.5 py-2 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis hover:border-[#2D6CDF] text-kmNeutral-tinta font-mono font-bold text-xs transition-colors"
-                                >
-                                  Unduh PDF &rarr;
-                                </a>
-                              </div>
-                            </div>
-
-                            {isPdfPreviewOpen && (
-                              <div className="pt-2 space-y-2">
-                                <iframe
-                                  src={masterclass.attachedPdf.fileUrl}
-                                  title={masterclass.attachedPdf.title}
-                                  className="w-full h-[540px] rounded-xl border border-kmNeutral-garis bg-white"
-                                />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* External Reference Resources for Long-Term Study */}
-                          {mod.referenceResources && mod.referenceResources.length > 0 && (
-                            <div className="p-4 rounded-xl bg-kmNeutral-surface border border-kmNeutral-garis space-y-2">
-                              <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase block">
-                                REFERENSI BELAJAR EKSTERNAL & DOKUMENTASI RESMI (PEMBELAJARAN BERKEPANJANGAN):
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {mod.referenceResources.map((refItem, rIdx) => (
-                                  <a
-                                    key={rIdx}
-                                    href={refItem.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-kmNeutral-latar border border-kmNeutral-garis hover:border-[#2D6CDF] text-xs font-medium text-kmNeutral-tinta transition-colors"
-                                  >
-                                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF]">
-                                      {refItem.provider}
-                                    </span>
-                                    <span>{refItem.title} &rarr;</span>
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Practice Exercise Input */}
-                          <div className="p-4 rounded-xl bg-[#FFC93C]/10 border border-[#E6B020]/40 space-y-3">
-                            <div>
-                              <span className="text-xs font-mono font-bold text-[#1B1B2F] uppercase block">
-                                TUGAS PRAKTIK MANDIRI (PENINGKAT KOMPETENSI):
-                              </span>
-                              <p className="text-xs sm:text-sm font-medium text-kmNeutral-tinta mt-1">
-                                {mod.practiceTask}
-                              </p>
-                            </div>
-
-                            <textarea
-                              rows={2}
-                              value={modulePracticeNotes[mod.id] || ""}
-                              onChange={(e) =>
-                                setModulePracticeNotes((prev) => ({
-                                  ...prev,
-                                  [mod.id]: e.target.value,
-                                }))
-                              }
-                              placeholder="Tuliskan catatan jawaban, perintah konfigurasi CLI, atau rancangan singkat Anda di sini sebelum menandai modul selesai..."
-                              className="w-full p-3 rounded-lg bg-kmNeutral-surface border border-kmNeutral-garis text-xs sm:text-sm text-kmNeutral-tinta"
-                            />
-
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveAgentTab("konsultasi");
-                                  handleSendAgentMessage(
-                                    `Bantu saya memahami lebih dalam tentang ${mod.title} pada mata kuliah ${mod.courseName}`
-                                  );
-                                }}
-                                className="text-xs font-mono font-bold text-[#2D6CDF] hover:underline cursor-pointer"
-                              >
-                                Diskusikan Materi Ini dengan Agen Pembimbing &rarr;
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleToggleCompleteModule(
-                                    mod.id,
-                                    mod.title,
-                                    mod.scoreBoost
-                                  )
-                                }
-                                className={`h-10 px-5 rounded-lg font-sans font-bold text-xs transition-all cursor-pointer ${
-                                  isCompleted
-                                    ? "bg-[#2E9E6B] text-white"
-                                    : "bg-[#FFC93C] hover:bg-[#F5BF2E] text-[#1B1B2F]"
-                                }`}
-                              >
-                                {isCompleted
-                                  ? "✓ Modul Telah Dikuasai (Klik untuk Batal)"
-                                  : `Tandai Selesai Dipelajari (+${mod.scoreBoost}% Skor)`}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* TAB CONTENT 2B: PUSTAKA MODUL PDF & DOKUMEN EKSTERNAL TERPUSAT (FOLDER KHUSUS ADMIN) */}
-          {activeAgentTab === "pustaka" && (
-            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-[#2D6CDF] uppercase tracking-wider">
-                    REPOSITORI DOKUMEN PEMBELAJARAN TERPUSAT &bull; FOLDER KHUSUS ADMINISTRATOR
-                  </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
-                    Pustaka Buku Modul PDF, Panduan Praktikum & Standar Sertifikasi
-                  </h2>
-                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
-                    Seluruh berkas PDF tersimpan rapi di dalam satu direktori khusus (<code className="font-mono font-bold">public/pustaka-modul/</code>) yang terstruktur per jurusan sehingga mudah dipelihara oleh Administrator.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPustakaScope(pustakaScope === "FIELD" ? "ALL_FIELDS" : "FIELD")
-                    }
-                    className="h-10 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis hover:border-[#2D6CDF] text-kmNeutral-tinta font-mono font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    {pustakaScope === "FIELD"
-                      ? "Tampilkan Semua 11 Jurusan (33 PDF)"
-                      : `Fokus Jurusan ${curriculum.fieldName}`}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminFolderGuide(!showAdminFolderGuide)}
-                    className="h-10 px-4 rounded-xl bg-[#FFC93C] hover:bg-[#F5BF2E] text-[#1B1B2F] font-mono font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    {showAdminFolderGuide ? "Tutup Info Admin" : "Panduan Maintenance Admin"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Administrator Maintenance Info Box */}
-              {showAdminFolderGuide && (
-                <div className="p-5 rounded-xl bg-[#1B1B2F] text-[#F4F6FA] border border-[#2E2E42] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-[#FFC93C] uppercase">
-                      ARSITEKTUR PENYIMPANAN BERKAS MODUL TERPUSAT (UNTUK MAINTENANCE ADMINISTRATOR)
-                    </span>
-                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded bg-white/10">
-                      Auto-Discovery Aktif (/api/pustaka-modul)
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#E6ECF5] leading-relaxed">
-                    Agar file modul eksternal (PDF, DOCX, PPTX, Markdown) tidak tercecer di berbagai komponen kode, seluruh file dikumpulkan di dalam satu folder induk <code className="font-mono text-[#FFC93C]">public/pustaka-modul/</code> dengan 11 subfolder jurusan. Jika Administrator menambahkan file PDF baru ke dalam salah satu subfolder di bawah ini, sistem akan langsung mendeteksi dan menampilkannya di halaman ini secara otomatis.
-                  </p>
-                  <pre className="text-[11px] font-mono bg-black/30 p-3.5 rounded-lg overflow-x-auto text-[#4CC992]">
-{`public/pustaka-modul/
-├── PANDUAN-ADMIN-MAINTENANCE.md   (Dokumentasi SOP Maintenance Administrator)
-├── katalog-pustaka.json           (Metadata Indeks Katalog Modul PDF)
-├── 01-tkj/                        (3 PDF Modul CCNA, MTCNA & Debian Server)
-├── 02-informatika/                (3 PDF Modul Algoritma SOLID, Web/AWS & SQL 3NF)
-├── 03-dkv/                        (3 PDF Modul Nirmana Pre-Press, Branding GSM & UI/UX)
-├── 04-arsitektur/                 (3 PDF Modul Asta Kosala Kosali, BIM Revit & Struktur)
-├── 05-kesehatan/                  (3 PDF Modul TTV/BTCLS, Patient Safety SKP & Farmakologi)
-├── 06-pendidikan/                 (3 PDF Modul Psikologi ZPD, Kurikulum UbD & Konseling RIASEC)
-├── 07-budaya/                     (3 PDF Modul Karawitan/Tari, Filologi Lontar & HKI Komunal)
-├── 08-pertanian/                  (3 PDF Modul Organik SNI 6729, Smart Farming & HACCP)
-├── 09-lingkungan/                 (3 PDF Modul IPAL PPPA/POPAL, Terumbu Karang & PLTS Surya)
-├── 10-bisnis/                     (3 PDF Modul Digital Marketing ROAS, E-Commerce & SAK EMKM)
-└── 11-pariwisata/                 (3 PDF Modul Front Office RevPAR, Ekowisata GSTC & F&B Hygiene)`}
-                  </pre>
-                </div>
-              )}
-
-              {/* Grid of PDF Document Cards + Interactive PDF Reader */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-5 space-y-3 max-h-[680px] overflow-y-auto pr-1">
-                  {pustakaDocs.map((doc) => {
-                    const isSelected = activePreviewPdfUrl === doc.fileUrl;
-                    return (
-                      <div
-                        key={doc.id}
-                        onClick={() => {
-                          setActivePreviewPdfUrl(doc.fileUrl);
-                          setActivePreviewPdfTitle(doc.title);
-                        }}
-                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer space-y-2 ${
-                          isSelected
-                            ? "border-[#2D6CDF] bg-kmNeutral-latar"
-                            : "border-kmNeutral-garis bg-kmNeutral-latar/60 hover:border-[#2D6CDF]/50"
-                        }`}
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono">
-                          <span className="px-2 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] font-bold">
-                            {doc.courseCode || doc.folderName.toUpperCase()} &bull; PDF ({doc.fileSizeKb} KB)
-                          </span>
-                          <span className="text-[#1F7A52] font-bold">
-                            {doc.certStandard}
-                          </span>
-                        </div>
-
-                        <h3 className="font-serif font-bold text-sm text-kmNeutral-tinta leading-snug">
-                          {doc.title}
-                        </h3>
-
-                        <p className="text-xs text-kmNeutral-sekunder leading-relaxed">
-                          {doc.summary}
-                        </p>
-
-                        <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-kmNeutral-garis text-[11px] font-mono">
-                          <span className="text-kmNeutral-sekunder truncate max-w-[210px]">
-                            Folder: public/pustaka-modul/{doc.folderName}/
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={doc.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              download={doc.filename}
-                              onClick={(e) => e.stopPropagation()}
-                              className="px-2.5 py-1 rounded bg-[#2E9E6B] text-white font-bold hover:bg-[#1F7A52] transition-colors"
-                            >
-                              Unduh PDF
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Interactive Embedded PDF Reader */}
-                <div className="lg:col-span-7 flex flex-col rounded-xl border-2 border-kmNeutral-garis bg-kmNeutral-latar overflow-hidden">
-                  <div className="p-3.5 bg-kmNeutral-surface border-b border-kmNeutral-garis flex flex-wrap items-center justify-between gap-2">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] font-mono font-bold text-[#2D6CDF] uppercase block">
-                        PEMBACA DOKUMEN PDF INTERAKTIF
-                      </span>
-                      <h4 className="font-sans font-bold text-xs text-kmNeutral-tinta line-clamp-1">
-                        {activePreviewPdfTitle || "Pilih dokumen PDF di sebelah kiri"}
-                      </h4>
-                    </div>
-                    {activePreviewPdfUrl && (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <a
-                          href={activePreviewPdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 rounded-lg bg-[#2D6CDF] text-white font-mono font-bold text-xs hover:bg-[#2256B8] transition-colors"
-                        >
-                          Buka Layar Penuh &rarr;
-                        </a>
-                      </div>
-                    )}
-                  </div>
-
-                  {activePreviewPdfUrl ? (
-                    <iframe
-                      src={activePreviewPdfUrl}
-                      title={activePreviewPdfTitle}
-                      className="w-full h-[620px] bg-white"
-                    />
-                  ) : (
-                    <div className="h-[620px] flex items-center justify-center text-xs font-mono text-kmNeutral-sekunder">
-                      Pilih salah satu modul PDF untuk membaca langsung di halaman ini.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB CONTENT 3: LATIHAN SERTIFIKASI & UJI KOMPETENSI SESUAI JURUSAN/MATKUL */}
-          {activeAgentTab === "sertifikasi" && (
-            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-kmNeutral-garis">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
-                    SIMULASI UJI KOMPETENSI TERSTANDAR &bull; {curriculum.certificationBody}
-                  </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
-                    {curriculum.mainCertificationTitle}
-                  </h2>
-                  <p className="text-xs text-kmNeutral-sekunder mt-0.5">
-                    Soal latihan di bawah disesuaikan dengan jurusan dan mata kuliah pilihan Anda (seperti Cisco CCNA, MikroTik MTCNA, BNSP, Adobe ACP, Autodesk ACU).
-                  </p>
-                </div>
-
-                <div className="px-3.5 py-2 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs font-mono">
-                  Status Lulus:{" "}
-                  <strong className="text-[#1F7A52]">
-                    {passedCertIds.length} / {curriculum.certificationDrills.length} Unit Kompetensi
-                  </strong>
-                </div>
-              </div>
-
-              {/* Filter Skema Sertifikasi & Mata Kuliah */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder mr-1">
-                  FILTER SKEMA SERTIFIKASI:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCertFilter("ALL")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                    selectedCertFilter === "ALL"
-                      ? "bg-[#2E9E6B] text-white"
-                      : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                  }`}
-                >
-                  Semua Skema ({curriculum.certificationDrills.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCertFilter("TARGET_COURSE")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                    selectedCertFilter === "TARGET_COURSE"
-                      ? "bg-[#2E9E6B] text-white"
-                      : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                  }`}
-                >
-                  Sesuai Matkul [{targetCourse.code}]
-                </button>
-                {certTrackOptions.map((trackName) => (
-                  <button
-                    key={trackName}
-                    type="button"
-                    onClick={() => setSelectedCertFilter(trackName)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                      selectedCertFilter === trackName
-                        ? "bg-[#2E9E6B] text-white"
-                        : "bg-kmNeutral-latar text-kmNeutral-sekunder border border-kmNeutral-garis"
-                    }`}
-                  >
-                    {trackName}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-5">
-                {filteredCertDrills.map((drill, dIdx) => {
-                  const chosenIdx = selectedCertAnswers[drill.id];
-                  const isSubmitted = submittedCertIds.includes(drill.id);
-                  const isPassed = passedCertIds.includes(drill.id);
-                  const isCorrectNow = chosenIdx === drill.correctIndex;
-
-                  return (
-                    <div
-                      key={drill.id}
-                      className={`p-5 rounded-xl border-2 space-y-4 ${
-                        isPassed
-                          ? "bg-kmNeutral-latar border-[#2E9E6B]/60"
-                          : "bg-kmNeutral-latar border-kmNeutral-garis"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2E9E6B]/15 text-[#1F7A52] border border-[#2E9E6B]/30">
-                            KODE UNIT: {drill.competencyCode}
-                          </span>
-                          {drill.certTrack && (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#2D6CDF]/15 text-[#2D6CDF] border border-[#2D6CDF]/30">
-                              SKEMA: {drill.certTrack}
-                            </span>
-                          )}
-                          <span className="text-xs font-mono text-kmNeutral-sekunder">
-                            {drill.certName}
-                          </span>
-                        </div>
-
-                        {isPassed ? (
-                          <span className="text-xs font-mono font-bold text-[#1F7A52]">
-                            ✓ KOMPETEN (+{drill.scoreBoost}% Skor)
-                          </span>
-                        ) : (
-                          <span className="text-xs font-mono text-kmNeutral-sekunder">
-                            Soal Sertifikasi #{dIdx + 1} (+{drill.scoreBoost}%)
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="font-sans font-bold text-sm sm:text-base text-kmNeutral-tinta leading-relaxed">
-                        {drill.question}
-                      </h3>
-
-                      <div className="space-y-2">
-                        {drill.options.map((optText, oIdx) => {
-                          const isChosen = chosenIdx === oIdx;
-                          return (
-                            <button
-                              key={oIdx}
-                              type="button"
-                              onClick={() =>
-                                setSelectedCertAnswers((prev) => ({
-                                  ...prev,
-                                  [drill.id]: oIdx,
-                                }))
-                              }
-                              className={`w-full text-left p-3 rounded-lg text-xs sm:text-sm border transition-all cursor-pointer flex items-start gap-2.5 ${
-                                isChosen
-                                  ? "bg-[#2D6CDF]/15 border-[#2D6CDF] text-kmNeutral-tinta font-semibold"
-                                  : "bg-kmNeutral-surface border-kmNeutral-garis text-kmNeutral-sekunder hover:border-[#2D6CDF]/50"
-                              }`}
-                            >
-                              <span className="font-mono font-bold text-xs">
-                                {String.fromCharCode(65 + oIdx)}.
-                              </span>
-                              <span>{optText}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                        <button
-                          type="button"
-                          disabled={chosenIdx === undefined}
-                          onClick={() =>
-                            handleCheckCertAnswer(
-                              drill.id,
-                              drill.correctIndex,
-                              drill.scoreBoost,
-                              drill.competencyCode
-                            )
-                          }
-                          className="h-10 px-5 rounded-lg bg-[#FFC93C] hover:bg-[#F5BF2E] disabled:opacity-50 text-[#1B1B2F] font-sans font-bold text-xs transition-all cursor-pointer"
-                        >
-                          Periksa Jawaban Sertifikasi
-                        </button>
-
-                        {isSubmitted && (
-                          <span
-                            className={`text-xs font-mono font-bold ${
-                              isCorrectNow
-                                ? "text-[#1F7A52]"
-                                : "text-[#D7263D]"
-                            }`}
-                          >
-                            {isCorrectNow
-                              ? "Status: Jawaban Tepat (Kompeten)"
-                              : "Status: Belum Tepat, Silakan Pilih Opsi Lain & Periksa Kembali"}
-                          </span>
-                        )}
-                      </div>
-
-                      {isSubmitted && (
-                        <div
-                          className={`p-4 rounded-xl border text-xs sm:text-sm leading-relaxed ${
-                            isCorrectNow
-                              ? "bg-[#2E9E6B]/10 border-[#2E9E6B]/40 text-kmNeutral-tinta"
-                              : "bg-[#D7263D]/10 border-[#D7263D]/40 text-kmNeutral-tinta"
-                          }`}
-                        >
-                          <span className="font-mono font-bold text-[11px] uppercase block mb-1">
-                            PEMBAHASAN AGEN SERTIFIKASI ({drill.competencyCode}):
-                          </span>
-                          <p>{drill.explanation}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* TAB CONTENT 4: RUANG KONSULTASI INTERAKTIF AGEN PEMBIMBING AI */}
-          {activeAgentTab === "konsultasi" && (
-            <div className="bg-kmNeutral-surface border-2 border-kmNeutral-garis rounded-2xl p-6 sm:p-7 space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-kmNeutral-garis">
-                <div>
-                  <span className="text-[11px] font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
-                    PENDAMPINGAN PERSONAL &bull; AGEN PEMBIMBING KERTAMARGA
-                  </span>
-                  <h2 className="font-serif font-bold text-xl text-kmNeutral-tinta mt-0.5">
-                    Diskusi Bimbingan Nilai, Mata Kuliah & Sertifikasi
-                  </h2>
-                </div>
-                <span className="text-xs font-mono px-3 py-1 rounded-full bg-kmNeutral-latar border border-kmNeutral-garis text-kmNeutral-sekunder">
-                  Fokus: {curriculum.fieldName} ({targetCourse.code})
-                </span>
-              </div>
-
-              {/* Quick Question Prompts for the Mentor Agent */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-mono font-bold text-kmNeutral-sekunder block">
-                  Pertanyaan Cepat untuk Agen Pembimbing:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    `Nilai saya masih kecil (${currentReadinessScore}%), apa langkah pertama mengejar matkul ${targetCourse.name}?`,
-                    `Saya berasal dari lintas jurusan/minat, bagaimana cara beradaptasi di ${curriculum.fieldName}?`,
-                    `Jelaskan materi inti mata kuliah ${targetCourse.code} - ${targetCourse.name}`,
-                    `Bagaimana tips lulus sertifikasi ${targetCourse.certificationAlignment || curriculum.mainCertificationTitle}?`,
-                  ].map((qText, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleSendAgentMessage(qText)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-kmNeutral-latar hover:bg-[#FFC93C]/20 border border-kmNeutral-garis hover:border-[#FFC93C] text-kmNeutral-sekunder hover:text-kmNeutral-tinta transition-colors cursor-pointer text-left"
-                    >
-                      &ldquo;{qText}&rdquo;
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Conversation History */}
-              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-1">
-                {chatHistory.map((turn) => (
-                  <div
-                    key={turn.id}
-                    className={`p-4 sm:p-5 rounded-xl border ${
-                      turn.sender === "agent"
-                        ? "bg-kmNeutral-latar border-kmNeutral-garis"
-                        : "bg-[#2D6CDF]/10 border-[#2D6CDF]/30 ml-auto max-w-2xl"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[11px] font-mono font-bold uppercase text-kmNeutral-tinta">
-                        {turn.sender === "agent"
-                          ? `Agen Pembimbing ${curriculum.fieldName}`
-                          : "Pertanyaan Siswa"}
-                      </span>
-                      {turn.diagnosisSummary && (
-                        <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-[#FFC93C]/25 text-[#1B1B2F]">
-                          {turn.diagnosisSummary}
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-xs sm:text-sm text-kmNeutral-tinta leading-relaxed">
-                      {turn.text}
-                    </p>
-
-                    {turn.keyTakeaways && turn.keyTakeaways.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-kmNeutral-garis space-y-1.5">
-                        <span className="text-[10px] font-mono font-bold text-kmNeutral-sekunder uppercase block">
-                          Poin Tindakan Utama:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {turn.keyTakeaways.map((kt, kIdx) => (
-                            <span
-                              key={kIdx}
-                              className="text-xs px-2.5 py-1 rounded bg-kmNeutral-surface border border-kmNeutral-garis font-medium"
-                            >
-                              {kt}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {turn.sender === "agent" && turn.recommendedActionType && (
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveAgentTab(
-                              turn.recommendedActionType === "sertifikasi"
-                                ? "sertifikasi"
-                                : "materi"
-                            )
-                          }
-                          className="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-[#2D6CDF] text-white hover:bg-[#2256B8] transition-colors cursor-pointer"
-                        >
-                          {turn.recommendedActionType === "sertifikasi"
-                            ? "Buka Latihan Sertifikasi Terkait ->"
-                            : "Buka Modul Materi Pembelajaran ->"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {isAgentLoading && (
-                  <div className="p-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis flex items-center gap-3 text-xs font-mono text-kmNeutral-sekunder">
-                    <span className="w-4 h-4 border-2 border-[#2D6CDF] border-t-transparent rounded-full animate-spin" />
-                    <span>Agen Pembimbing sedang menyusun strategi belajar dan latihan...</span>
-                  </div>
+                {activeTab === "rencana" && (
+                  <StudyPlanTab
+                    curriculum={curriculum}
+                    targetCourse={targetCourse}
+                    currentReadinessScore={currentReadinessScore}
+                    onSelectCourse={setTargetCourseId}
+                    onGoToModules={() => setActiveTab("materi")}
+                    onGoToCertification={() => setActiveTab("sertifikasi")}
+                  />
                 )}
-              </div>
 
-              {/* Input Form */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendAgentMessage();
-                }}
-                className="flex flex-col sm:flex-row gap-3 pt-2"
-              >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder={`Tanyakan materi mata kuliah ${targetCourse.name}, cara menaikkan nilai, atau latihan sertifikasi...`}
-                  className="flex-1 h-11 px-4 rounded-xl bg-kmNeutral-latar border border-kmNeutral-garis text-xs sm:text-sm text-kmNeutral-tinta focus:border-[#2D6CDF]"
-                />
-                <button
-                  type="submit"
-                  disabled={isAgentLoading || !chatInput.trim()}
-                  className="h-11 px-6 rounded-xl bg-[#FFC93C] hover:bg-[#F5BF2E] disabled:opacity-50 text-[#1B1B2F] font-sans font-bold text-xs sm:text-sm transition-all cursor-pointer shrink-0"
-                >
-                  Kirim ke Agen Pembimbing &rarr;
-                </button>
-              </form>
-            </div>
+                {activeTab === "materi" && (
+                  <ModulesTab
+                    curriculum={curriculum}
+                    filteredModules={filteredModules}
+                    selectedModuleFilter={selectedModuleFilter}
+                    onChangeFilter={setSelectedModuleFilter}
+                    onSelectCourse={setTargetCourseId}
+                    expandedModuleId={expandedModuleId}
+                    onToggleExpand={setExpandedModuleId}
+                    completedModules={completedModules}
+                    onToggleCompleteModule={handleToggleCompleteModule}
+                    modulePracticeNotes={modulePracticeNotes}
+                    onChangePracticeNote={(modId, note) =>
+                      setModulePracticeNotes((prev) => ({
+                        ...prev,
+                        [modId]: note,
+                      }))
+                    }
+                    inlinePdfModuleId={inlinePdfModuleId}
+                    onToggleInlinePdf={(modId) =>
+                      setInlinePdfModuleId((prev) =>
+                        prev === modId ? "" : modId
+                      )
+                    }
+                    onAskMentorAboutModule={(modTitle, courseName) => {
+                      setIsMentorOpen(true);
+                      handleSendAgentMessage(
+                        `Bantu saya memahami lebih dalam tentang ${modTitle} pada mata kuliah ${courseName}`
+                      );
+                    }}
+                    onGoToPustaka={() => setActiveTab("pustaka")}
+                    onGoToCertification={() => setActiveTab("sertifikasi")}
+                    pustakaCount={pustakaDocs.length}
+                  />
+                )}
+
+                {activeTab === "pustaka" && (
+                  <PustakaPdfTab
+                    curriculum={curriculum}
+                    pustakaDocs={pustakaDocs}
+                    pustakaScope={pustakaScope}
+                    onToggleScope={() =>
+                      setPustakaScope((prev) =>
+                        prev === "FIELD" ? "ALL_FIELDS" : "FIELD"
+                      )
+                    }
+                    onReload={() => setPustakaReloadTick((t) => t + 1)}
+                    isLoading={isPustakaLoading}
+                    error={pustakaError}
+                    activePreviewPdfUrl={activePreviewPdfUrl}
+                    activePreviewPdfTitle={activePreviewPdfTitle}
+                    onSelectPdf={(url, title) => {
+                      setActivePreviewPdfUrl(url);
+                      setActivePreviewPdfTitle(title);
+                    }}
+                  />
+                )}
+
+                {activeTab === "sertifikasi" && (
+                  <CertificationTab
+                    curriculum={curriculum}
+                    targetCourse={targetCourse}
+                    filteredCertDrills={filteredCertDrills}
+                    selectedCertFilter={selectedCertFilter}
+                    onChangeFilter={setSelectedCertFilter}
+                    certTrackOptions={certTrackOptions}
+                    selectedCertAnswers={selectedCertAnswers}
+                    onSelectAnswer={(drillId, optIdx) =>
+                      setSelectedCertAnswers((prev) => ({
+                        ...prev,
+                        [drillId]: optIdx,
+                      }))
+                    }
+                    submittedCertIds={submittedCertIds}
+                    passedCertIds={passedCertIds}
+                    onCheckAnswer={handleCheckCertAnswer}
+                  />
+                )}
+              </motion.div>
+            </>
           )}
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full bg-kmNeutral-surface border-t border-kmNeutral-garis py-8 px-4 sm:px-6 lg:px-8 mt-16 transition-colors">
+      {hasSurveyResult && (
+        <MentorDrawer
+          isOpen={isMentorOpen}
+          onOpen={() => setIsMentorOpen(true)}
+          onClose={() => setIsMentorOpen(false)}
+          curriculum={curriculum}
+          targetCourse={targetCourse}
+          currentReadinessScore={currentReadinessScore}
+          chatHistory={chatHistory}
+          chatInput={chatInput}
+          onChangeInput={setChatInput}
+          onSendMessage={handleSendAgentMessage}
+          isLoading={isAgentLoading}
+          error={agentError}
+          lastFailedPrompt={lastFailedAgentPrompt}
+          onJumpToTab={setActiveTab}
+        />
+      )}
+
+      <footer className="w-full bg-white border-t-2 border-[#141413] py-8 px-4 sm:px-6 lg:px-8 mt-12">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div>
             <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-              <span className="w-5 h-5 rounded bg-[#FFC93C] text-[#1B1B2F] font-mono font-bold text-[10px] flex items-center justify-center">
-                KM
-              </span>
-              <span className="font-serif font-bold text-sm text-kmNeutral-tinta">
+              <KertaMargaLogo variant="compact" className="w-7 h-7 shrink-0" />
+              <span className="font-display font-black text-sm text-[#141413]">
                 KertaMarga Bali
               </span>
             </div>
-            <p className="text-xs text-kmNeutral-sekunder">
-              Inovasi Navigasi Karier & Penjurusan AI untuk Bali DigiFest 2026 (Kategori SMK)
+            <p className="text-xs text-[#52514E] font-medium">
+              Inovasi Navigasi Karier &amp; Penjurusan AI untuk Bali DigiFest 2026 (Kategori SMK)
             </p>
           </div>
-          <div className="text-[11px] font-mono text-kmNeutral-sekunder flex gap-3">
-            <Link href="/" className="hover:underline">
+          <div className="text-xs font-mono font-bold text-[#52514E] flex flex-wrap justify-center gap-4">
+            <Link href="/" className="hover:text-[#141413]">
               Beranda
             </Link>
-            <span>&bull;</span>
-            <Link href="/tes-keminatan" className="hover:underline">
+            <Link href="/tes-keminatan" className="hover:text-[#141413]">
               Survey Keminatan
             </Link>
-            <span>&bull;</span>
-            <Link href="/ai-navigator" className="hover:underline">
+            <Link href="/katalog" className="hover:text-[#141413]">
+              Katalog Bali
+            </Link>
+            <Link href="/ai-navigator" className="hover:text-[#141413]">
               AI Navigator
             </Link>
           </div>
@@ -1636,8 +707,8 @@ export default function HasilAnalisisPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-kmNeutral-latar text-kmNeutral-tinta font-mono text-xs">
-          Memuat Halaman Hasil Analisis & Agen Pembimbing...
+        <div className="min-h-screen flex items-center justify-center neopop-canvas-subtle text-[#141413] font-mono font-bold text-xs">
+          Memuat Halaman Modul &amp; Sertifikasi...
         </div>
       }
     >

@@ -31,7 +31,7 @@ yarn-error.log*
 !.env.example
 
 # local data storage (users fallback)
-data/
+/data/
 *.db
 *.sqlite
 

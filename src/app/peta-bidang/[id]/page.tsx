@@ -1,402 +1,848 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
+import { useGSAP } from "@gsap/react";
 import Navbar from "@/components/Navbar";
-import LoginModal from "@/components/LoginModal";
-import { PROGRAM_FIELDS, ProgramField, InstitutionProgram, estimateDistanceKm, INSTITUTIONS_CATALOG } from "@/data/catalog";
+import InstitutionDirectorySection from "@/components/peta-bidang/InstitutionDirectorySection";
+import {
+  BALI_KABUPATEN_COORDS,
+  PROGRAM_FIELDS,
+  TrackKey,
+  formatOriginLabel,
+  getLevelComparisonSummary,
+} from "@/data/catalog";
+import { getBaliEntitiesForField } from "@/data/bali-institutions";
+import { useBaliLocation } from "@/lib/useBaliLocation";
 
-export default function PetaBidangDetailPage() {
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
+}
+
+const STORAGE_SAVED_KEY = "kertamarga_saved_fields";
+
+function PetaBidangSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413]">
+      <Navbar />
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 animate-pulse">
+        <div className="h-6 w-64 rounded-lg bg-[#F0ECE1] border border-[#141413]/20" />
+        <div className="h-72 rounded-3xl bg-white border-2 border-[#141413]/30 p-8 space-y-4">
+          <div className="h-6 w-40 rounded-lg bg-[#F0ECE1]" />
+          <div className="h-10 w-3/4 rounded-xl bg-[#F0ECE1]" />
+          <div className="h-5 w-2/3 rounded-lg bg-[#F0ECE1]" />
+          <div className="grid grid-cols-3 gap-4 pt-4">
+            <div className="h-20 rounded-2xl bg-[#FAF7F2]" />
+            <div className="h-20 rounded-2xl bg-[#FAF7F2]" />
+            <div className="h-20 rounded-2xl bg-[#FAF7F2]" />
+          </div>
+        </div>
+        <div className="h-64 rounded-3xl bg-white border-2 border-[#141413]/30" />
+      </main>
+    </div>
+  );
+}
+
+function PetaBidangDetailContent() {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const fieldId = (params?.id as string) || "informatika";
-  const kabupatenParam = searchParams.get("kabupaten") || "Kota Denpasar";
+  const rawFieldId = (params?.id as string) || "informatika";
+  const explicitKab = searchParams.get("kabupaten");
+  const initialKab = explicitKab || "Kota Denpasar";
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [currentLevelTab, setCurrentLevelTab] = useState<"smk" | "vokasi" | "akademik">("vokasi");
+  const matchedField = PROGRAM_FIELDS.find((p) => p.id === rawFieldId);
+  const field = matchedField ?? PROGRAM_FIELDS[0];
+  const isUnknownRoute = !matchedField;
+
+  const {
+    origin,
+    isDetecting,
+    isGeocoding,
+    locationNote,
+    setManualKabupaten,
+    setManualAddress,
+    detectLocation,
+  } = useBaliLocation(
+    BALI_KABUPATEN_COORDS[initialKab] ? initialKab : undefined,
+    { skipAutoDetect: Boolean(explicitKab && BALI_KABUPATEN_COORDS[explicitKab]) }
+  );
+  const originLabel = useMemo(() => formatOriginLabel(origin), [origin]);
+  const [activeTrack, setActiveTrack] = useState<TrackKey>("vokasi");
+  const [contextTab, setContextTab] = useState<"masalah" | "karier">("masalah");
+  const [savedIds, setSavedIds] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const field = PROGRAM_FIELDS.find((p) => p.id === fieldId) || PROGRAM_FIELDS[0];
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const heroTitleRef = useRef<HTMLHeadingElement>(null);
+  const heroContourRef = useRef<SVGSVGElement>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+  // Sinkronkan bookmark tersimpan dari localStorage
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_SAVED_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setSavedIds(parsed.filter((item): item is string => typeof item === "string"));
+        }
+      }
+    } catch {
+      // Abaikan jika penyimpanan lokal dibatasi browser
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMessage(null);
+    }, 3200);
   };
 
-  // Matched institutions
-  const matchedInstitutions = React.useMemo(() => {
-    return (INSTITUTIONS_CATALOG as InstitutionProgram[]).filter((inst) => {
-      const progLower = inst.programName.toLowerCase();
-      if (field.id === "informatika" && (progLower.includes("perangkat lunak") || progLower.includes("jaringan") || progLower.includes("komputer"))) return true;
-      if (field.id === "dkv" && (progLower.includes("desain komunikasi visual") || progLower.includes("multimedia"))) return true;
-      if (field.id === "arsitektur" && (progLower.includes("arsitektur") || progLower.includes("pemodelan"))) return true;
-      if (field.id === "kesehatan" && (progLower.includes("keperawatan") || progLower.includes("kesehatan") || progLower.includes("farmasi"))) return true;
-      if (field.id === "pendidikan" && (progLower.includes("pendidikan") || progLower.includes("konseling"))) return true;
-      if (field.id === "budaya" && (progLower.includes("karawitan") || progLower.includes("tari") || progLower.includes("seni"))) return true;
-      if (field.id === "pertanian" && (progLower.includes("tanaman") || progLower.includes("agribisnis") || progLower.includes("subak"))) return true;
-      if (field.id === "lingkungan" && (progLower.includes("maritim") || progLower.includes("kelautan") || progLower.includes("lingkungan"))) return true;
-      if (field.id === "bisnis" && (progLower.includes("bisnis") || progLower.includes("manajemen") || progLower.includes("akuntansi"))) return true;
-      if (field.id === "pariwisata" && (progLower.includes("perhotelan") || progLower.includes("pariwisata") || progLower.includes("wisata"))) return true;
-      return false;
-    }).map((inst) => ({
-      ...inst,
-      estimatedDistanceKm: estimateDistanceKm(kabupatenParam, inst.kabupaten),
-    })).sort((a, b) => a.estimatedDistanceKm - b.estimatedDistanceKm);
-  }, [field.id, kabupatenParam]);
+  const handleKabupatenChange = (nextKabupaten: string) => {
+    setManualKabupaten(nextKabupaten);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("kabupaten", nextKabupaten);
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // Abaikan jika history API tidak tersedia
+    }
+    showToast(`Estimasi jarak diperbarui dari ${nextKabupaten}.`);
+  };
+
+  const handleManualAddressSubmit = async (
+    rawAddress: string,
+    preferredKabupaten?: string
+  ) => {
+    const outcome = await setManualAddress(rawAddress, preferredKabupaten);
+    showToast(outcome.message);
+  };
+
+  const handleDetectLocation = async () => {
+    const outcome = await detectLocation();
+    showToast(outcome.message);
+  };
+
+  const isSaved = savedIds.includes(field.id);
+
+  const handleToggleBookmark = () => {
+    const next = isSaved
+      ? savedIds.filter((id) => id !== field.id)
+      : [...savedIds, field.id];
+    setSavedIds(next);
+    try {
+      window.localStorage.setItem(STORAGE_SAVED_KEY, JSON.stringify(next));
+    } catch {
+      // Tetap perbarui state memori meskipun penyimpanan lokal dibatasi
+    }
+    showToast(
+      isSaved
+        ? `${field.name} dihapus dari bookmark bidang.`
+        : `${field.name} disimpan ke bookmark bidang Anda.`
+    );
+  };
+
+  const baliEntities = useMemo(
+    () => getBaliEntitiesForField(field.id, origin),
+    [field.id, origin]
+  );
+
+  const levelSummaries = useMemo(
+    () => getLevelComparisonSummary(field.id),
+    [field.id]
+  );
+
+  const nearestKm = useMemo(() => {
+    const combined = [
+      ...baliEntities.perguruanTinggi,
+      ...baliEntities.smk,
+    ];
+    if (combined.length === 0) return 0;
+    return Math.min(...combined.map((item) => item.estimatedDistanceKm));
+  }, [baliEntities.perguruanTinggi, baliEntities.smk]);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      let splitInstance: SplitText | null = null;
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        if (progressBarRef.current && containerRef.current) {
+          gsap.fromTo(
+            progressBarRef.current,
+            { scaleX: 0 },
+            {
+              scaleX: 1,
+              ease: "none",
+              scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 0.2,
+              },
+            }
+          );
+        }
+
+        if (heroTitleRef.current) {
+          splitInstance = SplitText.create(heroTitleRef.current, {
+            type: "words",
+          });
+          gsap.from(splitInstance.words, {
+            y: 16,
+            opacity: 0,
+            duration: 0.5,
+            stagger: 0.04,
+            ease: "power3.out",
+            clearProps: "transform,opacity",
+          });
+        }
+
+        if (heroContourRef.current) {
+          gsap.to(heroContourRef.current, {
+            y: 26,
+            ease: "none",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top top",
+              end: "520px top",
+              scrub: 0.6,
+            },
+          });
+        }
+
+        const statEls = gsap.utils.toArray<HTMLElement>(".hero-stat-counter");
+        statEls.forEach((el) => {
+          const target = Number(el.dataset.target || "0");
+          const suffix = el.dataset.suffix || "";
+          const prefix = el.dataset.prefix || "";
+          const holder = { value: 0 };
+          gsap.to(holder, {
+            value: target,
+            duration: 0.75,
+            ease: "power2.out",
+            onUpdate: () => {
+              el.textContent = `${prefix}${Math.round(holder.value)}${suffix}`;
+            },
+            onComplete: () => {
+              el.textContent = `${prefix}${target}${suffix}`;
+            },
+          });
+        });
+
+        const chapters = gsap.utils.toArray<HTMLElement>(".chapter-reveal");
+        chapters.forEach((chapter) => {
+          gsap.from(chapter, {
+            y: 22,
+            opacity: 0,
+            duration: 0.55,
+            ease: "power2.out",
+            immediateRender: false,
+            clearProps: "transform,opacity",
+            scrollTrigger: {
+              trigger: chapter,
+              start: "top 88%",
+              once: true,
+            },
+          });
+        });
+      });
+
+      return () => {
+        if (splitInstance) {
+          splitInstance.revert();
+        }
+        mm.revert();
+      };
+    },
+    { scope: containerRef, dependencies: [field.id] }
+  );
+
+  const activeSummary = levelSummaries[activeTrack];
+  const activeCurriculum = field.whatYouLearn[activeTrack];
 
   return (
-    <div className="min-h-screen flex flex-col justify-between neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
-      {/* Toast */}
+    <div
+      ref={containerRef}
+      className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]"
+    >
+      {/* Top Scroll-Craft Progress Line */}
+      <div
+        aria-hidden="true"
+        className="fixed top-0 left-0 right-0 h-1 z-50 bg-transparent pointer-events-none"
+      >
+        <div
+          ref={progressBarRef}
+          className="h-full w-full bg-[#B8F348] border-b border-[#141413] origin-left"
+          style={{ transform: "scaleX(0)" }}
+        />
+      </div>
+
+      {/* Feedback Toast */}
       {toastMessage && (
-        <div className="fixed top-24 right-4 sm:right-8 z-50 neo-card px-5 py-3 rounded-2xl bg-[#141413] text-white flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md">
-          <div className="w-3 h-3 rounded-full bg-[#B8F348] shrink-0" />
-          <span className="text-xs sm:text-sm font-display font-bold">{toastMessage}</span>
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-4 sm:right-8 z-50 border-2 border-[#141413] shadow-[4px_4px_0px_#B8F348] px-5 py-3.5 rounded-2xl bg-[#141413] text-white flex items-center gap-3 max-w-sm"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-[#B8F348] shrink-0" />
+          <span className="text-sm font-display font-bold text-white">{toastMessage}</span>
         </div>
       )}
 
-      {/* Navbar */}
-      <Navbar
-        onOpenLogin={() => {
-          setAuthMode("login");
-          setIsLoginModalOpen(true);
-        }}
-        onOpenRegister={() => {
-          setAuthMode("register");
-          setIsLoginModalOpen(true);
-        }}
-        onOpenTest={() => {}}
-      />
+      <Navbar />
 
-      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-8">
-        {/* Breadcrumb Navigation */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold text-[#52514E]">
-          <Link href="/" className="hover:text-[#141413] underline">Beranda</Link>
-          <span>/</span>
-          <Link href="/eksplorasi" className="hover:text-[#141413] underline">Eksplorasi</Link>
-          <span>/</span>
-          <span className="px-2 py-0.5 rounded bg-[#B8F348] border border-[#141413] text-[#141413]">
-            Peta Bidang: {field.name}
-          </span>
-        </div>
-
-        {/* Quick Field Selector Strip */}
-        <div className="p-3 rounded-2xl bg-white border-2 border-[#141413] shadow-[3px_3px_0px_#141413] flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs font-mono font-bold text-[#141413] uppercase shrink-0 px-2">
-            PILIH BIDANG LAIN:
-          </span>
-          {PROGRAM_FIELDS.map((f) => {
-            const isCurrent = f.id === field.id;
-            return (
-              <Link
-                key={f.id}
-                href={`/peta-bidang/${f.id}?kabupaten=${encodeURIComponent(kabupatenParam)}`}
-                className={`shrink-0 px-3 py-1.5 rounded-xl font-display font-bold text-xs border-2 border-[#141413] transition-all ${
-                  isCurrent
-                    ? "bg-[#141413] text-[#B8F348] shadow-[2px_2px_0px_#3B66FF]"
-                    : "bg-[#FAF7F2] text-[#52514E] hover:bg-[#F0ECE1] hover:text-[#141413]"
-                }`}
-              >
-                {f.name}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Header Hero Section */}
-        <div className="neo-card-lg rounded-3xl p-6 sm:p-8 bg-white space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="px-3.5 py-1 rounded-xl bg-[#3B66FF] text-white font-mono font-bold text-xs border-2 border-[#141413] shadow-[2px_2px_0px_#141413]">
-              PETA BIDANG EDUKASI &bull; BALI 2026
-            </span>
-            <span className="text-xs font-mono font-bold text-[#52514E]">
-              Klaster: {field.categoryName}
-            </span>
-          </div>
-
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-[#141413] leading-tight">
-            {field.name}
-          </h1>
-
-          <p className="text-sm sm:text-base font-bold text-[#3B66FF]">
-            {field.vibeTagline}
-          </p>
-
-          <p className="text-sm sm:text-base text-[#52514E] leading-relaxed">
-            {field.shortDesc}
-          </p>
-
-          {/* Action Row */}
-          <div className="pt-2 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => triggerToast(`Panduan bidang ${field.name} disimpan ke perangkatmu!`)}
-              className="px-4 py-2 rounded-xl border-2 border-[#141413] bg-[#FAF7F2] hover:bg-[#F0ECE1] font-mono font-bold text-xs text-[#141413] cursor-pointer"
-            >
-              + Simpan Rujukan Ini
-            </button>
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12 sm:space-y-16">
+        {/* Route Not Found Notice (Fallback Banner) */}
+        {isUnknownRoute && (
+          <div
+            role="alert"
+            className="bg-[#FFBE2E]/25 border-2 border-[#141413] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          >
+            <p className="text-sm sm:text-base font-medium text-[#141413]">
+              Bidang dengan kode <strong>{rawFieldId}</strong> tidak ditemukan. Menampilkan panduan standar untuk {field.name}.
+            </p>
             <Link
-              href="/eksplorasi"
-              className="px-4 py-2 rounded-xl border-2 border-[#141413] bg-[#B8F348] hover:bg-[#a8e635] font-mono font-bold text-xs text-[#141413] cursor-pointer"
+              href="/peta-bidang"
+              className="text-sm font-display font-bold underline text-[#141413] shrink-0"
             >
-              Uji Kecocokanmu Lewat Kuesioner &rarr;
-            </Link>
-            <Link
-              href={`/hasil-analisis?field=${field.id}`}
-              className="px-4 py-2 rounded-xl border-2 border-[#141413] bg-[#FFBE2E] hover:bg-[#f2b329] font-mono font-bold text-xs text-[#141413] cursor-pointer"
-            >
-              Modul Masterclass &amp; Sertifikasi &rarr;
+              Lihat semua 11 bidang
             </Link>
           </div>
-        </div>
+        )}
 
-        {/* SECTION 1: APA YANG DIPELAJARI (3 TABS JENJANG) */}
-        <div className="neo-card rounded-3xl p-6 sm:p-8 bg-white space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b-2 border-[#141413]">
-            <div>
-              <span className="text-xs font-mono font-bold text-[#52514E] uppercase block">
-                STRUKTUR PEMBELAJARAN
-              </span>
-              <h2 className="font-display font-black text-2xl text-[#141413]">
-                Apa Saja yang Akan Kamu Pelajari?
-              </h2>
-            </div>
+        {/* Breadcrumb & Compact Switcher */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-white border-2 border-[#141413] rounded-2xl shadow-[3px_3px_0px_#141413] px-4 py-3">
+          <nav
+            aria-label="Navigasi halaman"
+            className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-[#52514E]"
+          >
+            <Link href="/" className="hover:text-[#141413] underline">
+              Beranda
+            </Link>
+            <span aria-hidden="true">/</span>
+            <Link href="/peta-bidang" className="hover:text-[#141413] underline">
+              Peta Bidang
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span className="px-2.5 py-0.5 rounded-lg bg-[#B8F348] border border-[#141413] text-[#141413] font-bold">
+              {field.name}
+            </span>
+          </nav>
 
-            {/* Level Switcher Tabs */}
-            <div className="p-1 rounded-xl bg-[#F0ECE1] border-2 border-[#141413] flex gap-1">
-              <button
-                type="button"
-                onClick={() => setCurrentLevelTab("smk")}
-                className={`px-3 py-1.5 rounded-lg font-display font-bold text-xs transition-all cursor-pointer ${
-                  currentLevelTab === "smk"
-                    ? "bg-[#141413] text-[#B8F348]"
-                    : "text-[#52514E] hover:text-[#141413]"
-                }`}
-              >
-                Vokasi SMK
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentLevelTab("vokasi")}
-                className={`px-3 py-1.5 rounded-lg font-display font-bold text-xs transition-all cursor-pointer ${
-                  currentLevelTab === "vokasi"
-                    ? "bg-[#141413] text-[#B8F348]"
-                    : "text-[#52514E] hover:text-[#141413]"
-                }`}
-              >
-                Politeknik / D4
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentLevelTab("akademik")}
-                className={`px-3 py-1.5 rounded-lg font-display font-bold text-xs transition-all cursor-pointer ${
-                  currentLevelTab === "akademik"
-                    ? "bg-[#141413] text-[#B8F348]"
-                    : "text-[#52514E] hover:text-[#141413]"
-                }`}
-              >
-                Sarjana S1
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {field.whatYouLearn[currentLevelTab].map((topic, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] flex items-start gap-3"
-              >
-                <span className="w-6 h-6 rounded-lg bg-[#FFBE2E] border border-[#141413] font-mono font-bold text-xs flex items-center justify-center shrink-0">
-                  {idx + 1}
-                </span>
-                <span className="font-display font-bold text-xs sm:text-sm text-[#141413] leading-snug">
-                  {topic}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SECTION 2: MASALAH NYATA DI BALI YANG DISELESAIKAN */}
-        <div className="neo-card rounded-3xl p-6 sm:p-8 bg-[#FAF7F2] space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#1AD598] border border-[#141413]" />
-            <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413]">
-              Contoh Masalah Nyata di Bali yang Bisa Kamu Selesaikan
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm text-[#52514E]">
-            Belajar di bidang ini bukan hanya teori, tetapi langsung berdampak untuk masyarakat dan lingkungan pulau Bali:
-          </p>
-
-          <div className="space-y-3 pt-1">
-            {field.realProblemsSolvedInBali.map((prob, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-2xl bg-white border-2 border-[#141413] shadow-[2px_2px_0px_#141413] text-xs sm:text-sm text-[#141413] font-medium leading-relaxed"
-              >
-                <strong>Tantangan #{idx + 1}:</strong> {prob}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SECTION 3: KETERAMPILAN KUNCI & JALUR KARIER */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Keterampilan Kunci */}
-          <div className="neo-card rounded-3xl p-6 bg-white space-y-4">
-            <h3 className="font-display font-black text-lg text-[#141413]">
-              Keahlian Kunci yang Perlu Diasah
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {field.coreCompetencies.map((comp) => (
-                <span
-                  key={comp}
-                  className="px-3 py-1 rounded-xl bg-[#F0ECE1] border border-[#141413] font-mono font-bold text-xs text-[#141413]"
-                >
-                  #{comp}
-                </span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <label
+              htmlFor="quick-switch-field"
+              className="text-xs sm:text-sm font-bold text-[#141413] shrink-0"
+            >
+              Pindah Bidang:
+            </label>
+            <select
+              id="quick-switch-field"
+              value={field.id}
+              onChange={(e) => {
+                router.push(
+                  `/peta-bidang/${e.target.value}?kabupaten=${encodeURIComponent(
+                    origin.kabupaten
+                  )}`
+                );
+              }}
+              className="min-h-[40px] max-w-[230px] sm:max-w-[280px] px-3 py-1.5 rounded-xl border-2 border-[#141413] bg-[#FAF7F2] text-xs sm:text-sm font-display font-bold text-[#141413] focus:outline-none focus:ring-2 focus:ring-[#3B66FF] cursor-pointer"
+            >
+              {PROGRAM_FIELDS.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
               ))}
-            </div>
-            <div className="pt-2 border-t border-[#141413]/10">
-              <span className="text-[11px] font-mono font-bold text-[#52514E] uppercase block mb-1">
-                TIPS MENUTUP KESENJANGAN BELAJAR (READINESS BRIDGE):
-              </span>
-              <ul className="text-xs text-[#52514E] space-y-1 list-disc list-inside">
-                {field.readinessBridgeTips.map((tip, idx) => (
-                  <li key={idx}>{tip}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Jalur Karier & Wirausaha */}
-          <div className="neo-card rounded-3xl p-6 bg-[#FFBE2E] space-y-4">
-            <h3 className="font-display font-black text-lg text-[#141413]">
-              Peluang Karier &amp; Wirausaha Lokal di Bali
-            </h3>
-            <div>
-              <span className="text-[11px] font-mono font-bold text-[#141413] uppercase block mb-1.5">
-                JALUR PROFESI UMUM:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {field.careerPaths.map((career) => (
-                  <span
-                    key={career}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-[#141413] font-display font-bold text-xs text-[#141413]"
-                  >
-                    {career}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-[#141413]/20">
-              <span className="text-[11px] font-mono font-bold text-[#141413] uppercase block mb-1.5">
-                IDE WIRAUSAHA LOKAL DI BALI:
-              </span>
-              <ul className="text-xs text-[#141413] space-y-1.5 font-medium">
-                {field.localEntrepreneurshipIdeas.map((idea, idx) => (
-                  <li key={idx} className="p-2 rounded-xl bg-white/70 border border-[#141413]/30">
-                    {idea}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            </select>
           </div>
         </div>
 
-        {/* SECTION 4: INSTITUSI TERVERIFIKASI DI BALI */}
-        <div className="neo-card rounded-3xl p-6 sm:p-8 bg-white space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b-2 border-[#141413]">
-            <div>
-              <span className="text-xs font-mono font-bold text-[#52514E] uppercase block">
-                KATALOG TERVERIFIKASI
+        {/* Hero Editorial Section */}
+        <section className="relative overflow-hidden bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] p-6 sm:p-10 space-y-6">
+          <svg
+            ref={heroContourRef}
+            aria-hidden="true"
+            viewBox="0 0 420 260"
+            fill="none"
+            className="pointer-events-none select-none absolute -right-10 -top-8 w-72 sm:w-96 opacity-15 text-[#141413]"
+          >
+            <path
+              d="M24 210C92 140 164 176 238 112C304 54 358 76 410 24"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M12 162C88 94 156 134 226 70C292 12 348 34 404 -10"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray="6 6"
+            />
+            <path
+              d="M46 250C114 186 184 218 258 156C322 102 372 120 418 76"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
+
+          <div className="relative z-10 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="px-3.5 py-1 rounded-xl bg-[#3B66FF] text-white text-xs sm:text-sm font-bold border-2 border-[#141413]">
+                {field.categoryName}
               </span>
-              <h2 className="font-display font-black text-2xl text-[#141413]">
-                Institusi Penyelenggara di Bali
+
+              <button
+                type="button"
+                onClick={handleToggleBookmark}
+                aria-pressed={isSaved}
+                className={`px-4 py-2 rounded-xl border-2 border-[#141413] text-xs sm:text-sm font-display font-bold transition-colors cursor-pointer ${
+                  isSaved
+                    ? "bg-[#B8F348] text-[#141413]"
+                    : "bg-[#FAF7F2] text-[#141413] hover:bg-[#F0ECE1]"
+                }`}
+              >
+                {isSaved ? "Tersimpan di Bookmark" : "Simpan Bidang"}
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <h1
+                key={`title-${field.id}`}
+                ref={heroTitleRef}
+                className="text-3xl sm:text-4xl lg:text-[2.75rem] font-display font-black text-[#141413] leading-[1.12] tracking-tight"
+              >
+                {field.name}
+              </h1>
+              <p className="text-base sm:text-lg font-display font-bold text-[#3B66FF]">
+                {field.vibeTagline}
+              </p>
+              <p className="text-base text-[#52514E] leading-[1.65] max-w-[65ch]">
+                {field.shortDesc}
+              </p>
+            </div>
+
+            {/* 3 Hero Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
+                <p
+                  className="hero-stat-counter text-2xl sm:text-3xl font-display font-black text-[#141413]"
+                  data-target={baliEntities.perguruanTinggi.length}
+                >
+                  {baliEntities.perguruanTinggi.length}
+                </p>
+                <p className="text-xs sm:text-sm font-semibold text-[#52514E] mt-0.5">
+                  Perguruan Tinggi di Bali
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
+                <p
+                  className="hero-stat-counter text-2xl sm:text-3xl font-display font-black text-[#141413]"
+                  data-target={baliEntities.smk.length}
+                >
+                  {baliEntities.smk.length}
+                </p>
+                <p className="text-xs sm:text-sm font-semibold text-[#52514E] mt-0.5">
+                  SMK Kejuruan Terkait
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]">
+                <p
+                  className="hero-stat-counter text-2xl sm:text-3xl font-display font-black text-[#141413]"
+                  data-target={nearestKm}
+                  data-prefix="~"
+                  data-suffix=" km"
+                >
+                  ~{nearestKm} km
+                </p>
+                <p className="text-xs sm:text-sm font-semibold text-[#52514E] mt-0.5">
+                  Jarak Terdekat dari {originLabel}
+                </p>
+              </div>
+            </div>
+
+            {/* Hero Action Links */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link
+                href="/eksplorasi"
+                className="neo-btn px-5 py-3 rounded-xl bg-[#B8F348] text-sm sm:text-base font-display font-bold text-[#141413]"
+              >
+                Cek Kecocokan Minat
+              </Link>
+              <Link
+                href={`/hasil-analisis?field=${field.id}&kabupaten=${encodeURIComponent(
+                  origin.kabupaten
+                )}`}
+                className="neo-btn px-5 py-3 rounded-xl bg-white text-sm sm:text-base font-display font-bold text-[#141413]"
+              >
+                Lihat Simulasi Skor
+              </Link>
+              <Link
+                href={`/ai-navigator?field=${encodeURIComponent(field.name)}`}
+                className="neo-btn px-5 py-3 rounded-xl bg-[#FAF7F2] text-sm sm:text-base font-display font-bold text-[#141413]"
+              >
+                Diskusi dengan Mentor AI
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Bab 1: Komparasi & Kurikulum 3 Jalur */}
+        <section
+          aria-labelledby="heading-bab-1"
+          className="chapter-reveal space-y-6"
+        >
+          <div className="space-y-2">
+            <span className="inline-block px-3 py-1 rounded-lg bg-[#B8F348] border-2 border-[#141413] text-xs sm:text-sm font-bold text-[#141413]">
+              Bab 1 - Jalur Pendidikan
+            </span>
+            <h2
+              id="heading-bab-1"
+              className="text-2xl sm:text-[1.75rem] font-display font-extrabold text-[#141413] leading-tight"
+            >
+              Perbandingan SMK, Politeknik D3/D4, dan Sarjana S1
+            </h2>
+            <p className="text-base text-[#52514E] leading-relaxed max-w-[65ch]">
+              Pilih salah satu jenjang di bawah ini untuk membandingkan durasi, porsi praktik, dan topik belajar utama.
+            </p>
+          </div>
+
+          <div className="bg-white border-2 border-[#141413] rounded-3xl shadow-[4px_4px_0px_#141413] p-5 sm:p-8 space-y-6">
+            {/* Level Tabs */}
+            <div
+              role="tablist"
+              aria-label="Pilihan jenjang pendidikan"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-2.5"
+            >
+              {(["smk", "vokasi", "akademik"] as TrackKey[]).map((track) => {
+                const meta = levelSummaries[track];
+                const active = activeTrack === track;
+                return (
+                  <button
+                    key={track}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveTrack(track)}
+                    className={`px-4 py-3 rounded-xl border-2 border-[#141413] font-display font-bold text-sm sm:text-base text-left transition-all cursor-pointer ${
+                      active
+                        ? "bg-[#141413] text-[#B8F348] shadow-[3px_3px_0px_#3B66FF]"
+                        : "bg-[#FAF7F2] text-[#141413] hover:bg-[#F0ECE1]"
+                    }`}
+                  >
+                    {meta.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Comparison Summary Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#141413]/30 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#52514E]">
+                  Durasi Tempuh
+                </p>
+                <p className="text-sm sm:text-base font-bold text-[#141413]">
+                  {activeSummary.duration}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#141413]/30 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#52514E]">
+                  Porsi Praktik &amp; Teori
+                </p>
+                <p className="text-sm sm:text-base font-bold text-[#141413]">
+                  {activeSummary.practiceRatio}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#141413]/30 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#52514E]">
+                  Jalur Masuk Umum
+                </p>
+                <p className="text-sm sm:text-base font-bold text-[#141413]">
+                  {activeSummary.targetEntrance}
+                </p>
+              </div>
+            </div>
+
+            {/* Curriculum & Bridge Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+              <div className="lg:col-span-7 space-y-3">
+                <h3 className="text-lg sm:text-xl font-display font-bold text-[#141413]">
+                  Topik Belajar Utama ({activeSummary.label})
+                </h3>
+                <ul className="space-y-2.5">
+                  {activeCurriculum.map((topic, index) => (
+                    <li
+                      key={topic}
+                      className="flex items-start gap-3 p-3.5 rounded-xl bg-[#FAF7F2] border border-[#141413]/20 text-base text-[#141413] leading-relaxed"
+                    >
+                      <span className="px-2 py-0.5 rounded-md bg-[#B8F348] border border-[#141413] font-mono text-xs font-bold shrink-0 mt-0.5">
+                        0{index + 1}
+                      </span>
+                      <span>{topic}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="lg:col-span-5 space-y-4">
+                <div className="p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] space-y-2">
+                  <h3 className="text-lg font-display font-bold text-[#141413]">
+                    Arah Lulusan
+                  </h3>
+                  <p className="text-base text-[#52514E] leading-relaxed">
+                    {activeSummary.careerOrientation}
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#FFBE2E]/25 border-2 border-[#141413] space-y-2.5">
+                  <h3 className="text-lg font-display font-bold text-[#141413]">
+                    Bekal Persiapan Awal
+                  </h3>
+                  <ul className="space-y-2">
+                    {field.readinessBridgeTips.map((tip) => (
+                      <li
+                        key={tip}
+                        className="text-sm sm:text-base text-[#141413] leading-relaxed flex items-start gap-2"
+                      >
+                        <span className="font-bold text-[#141413] shrink-0">-</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Bab 2: Masalah Nyata Bali vs Peluang Karier */}
+        <section
+          aria-labelledby="heading-bab-2"
+          className="chapter-reveal space-y-6"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <span className="inline-block px-3 py-1 rounded-lg bg-[#FF5E4D] text-white border-2 border-[#141413] text-xs sm:text-sm font-bold">
+                Bab 2 - Konteks Bali &amp; Prospek
+              </span>
+              <h2
+                id="heading-bab-2"
+                className="text-2xl sm:text-[1.75rem] font-display font-extrabold text-[#141413] leading-tight"
+              >
+                Relevansi Daerah dan Masa Depan Karier
               </h2>
             </div>
-            <span className="text-xs font-mono font-bold text-[#141413] bg-[#B8F348] px-3 py-1 rounded-xl border border-[#141413]">
-              {matchedInstitutions.length} Sekolah/Kampus Terdaftar
-            </span>
+
+            <div
+              role="tablist"
+              aria-label="Pilih fokus pembahasan"
+              className="inline-flex bg-white p-1.5 rounded-2xl border-2 border-[#141413] shadow-[3px_3px_0px_#141413] shrink-0"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={contextTab === "masalah"}
+                onClick={() => setContextTab("masalah")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-display font-bold transition-colors cursor-pointer ${
+                  contextTab === "masalah"
+                    ? "bg-[#141413] text-[#B8F348]"
+                    : "text-[#52514E] hover:text-[#141413]"
+                }`}
+              >
+                Masalah Nyata di Bali
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={contextTab === "karier"}
+                onClick={() => setContextTab("karier")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-display font-bold transition-colors cursor-pointer ${
+                  contextTab === "karier"
+                    ? "bg-[#141413] text-[#B8F348]"
+                    : "text-[#52514E] hover:text-[#141413]"
+                }`}
+              >
+                Karier &amp; Wirausaha
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {matchedInstitutions.map((inst) => (
-              <div
-                key={inst.institutionId}
-                className="p-5 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] space-y-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-display font-black text-base text-[#141413]">
-                    {inst.institutionName}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-[#3B66FF] text-white font-mono font-bold text-xs">
-                    {inst.level}
-                  </span>
-                </div>
-
-                <p className="text-xs font-bold text-[#3B66FF]">
-                  {inst.programName}
-                </p>
-
-                <div className="flex items-center justify-between text-xs font-mono text-[#52514E]">
-                  <span>{inst.district}, {inst.kabupaten}</span>
-                  <span className="font-bold text-[#141413]">~{inst.estimatedDistanceKm} km</span>
-                </div>
-
-                <div className="pt-2 border-t border-[#141413]/10 space-y-1 text-xs text-[#52514E]">
-                  <p><strong>Akreditasi:</strong> {inst.accreditation}</p>
-                  <p><strong>Estimasi Biaya:</strong> {inst.tuitionFeeText}</p>
-                  <p><strong>Fasilitas Unggulan:</strong> {inst.facilitiesText}</p>
-                </div>
-
-                <div className="pt-2 flex items-center justify-between text-[11px] font-mono text-[#52514E]">
-                  <span>Sumber: {inst.source.publisher}</span>
-                  <a
-                    href={inst.source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-[#3B66FF] underline hover:text-[#141413]"
-                  >
-                    Cek Situs Resmi &nearr;
-                  </a>
+          <div className="bg-white border-2 border-[#141413] rounded-3xl shadow-[4px_4px_0px_#141413] p-5 sm:p-8 space-y-6">
+            {contextTab === "masalah" ? (
+              <div className="space-y-4">
+                <h3 className="text-lg sm:text-xl font-display font-bold text-[#141413]">
+                  Tantangan Nyata yang Dapat Diselesaikan di Bali
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {field.realProblemsSolvedInBali.map((problem, idx) => (
+                    <div
+                      key={problem}
+                      className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border border-[#141413]/25 space-y-2"
+                    >
+                      <span className="inline-block px-2.5 py-0.5 rounded-md bg-white border border-[#141413] font-mono text-xs font-bold text-[#141413]">
+                        Studi Kasus 0{idx + 1}
+                      </span>
+                      <p className="text-base text-[#141413] leading-[1.6]">
+                        {problem}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-5 rounded-2xl bg-[#FAF7F2] border border-[#141413]/25 space-y-3">
+                  <h3 className="text-lg sm:text-xl font-display font-bold text-[#141413]">
+                    Jalur Profesi Utama
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {field.careerPaths.map((roleName) => (
+                      <li
+                        key={roleName}
+                        className="text-base font-medium text-[#141413] flex items-start gap-2.5"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-[#3B66FF] mt-2 shrink-0" />
+                        <span>{roleName}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-        {/* Transparency Disclaimer Footer */}
-        <div className="p-4 rounded-2xl bg-white border-2 border-[#141413] text-center text-xs font-mono text-[#52514E]">
-          Katalog ini disusun untuk percontohan MVP Bali DigiFest 2026 berdasarkan data resmi BAN-PT dan PDDIKTI per 2 November 2026. Selalu periksa informasi jalur penerimaan terbaru melalui situs resmi masing-masing institusi.
-        </div>
+                <div className="p-5 rounded-2xl bg-[#FAF7F2] border border-[#141413]/25 space-y-3">
+                  <h3 className="text-lg sm:text-xl font-display font-bold text-[#141413]">
+                    Peluang Usaha Mandiri di Bali
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {field.localEntrepreneurshipIdeas.map((idea) => (
+                      <li
+                        key={idea}
+                        className="text-base font-medium text-[#141413] flex items-start gap-2.5"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-[#1AD598] mt-2 shrink-0" />
+                        <span>{idea}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Core Competencies Strip */}
+            <div className="pt-4 border-t border-[#141413]/15 space-y-3">
+              <p className="text-xs sm:text-sm font-bold text-[#52514E] uppercase tracking-wide">
+                Keahlian Kunci yang Dikembangkan
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {field.coreCompetencies.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#141413]/30 text-sm font-semibold text-[#141413]"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Bab 3: Direktori Sekolah & Perguruan Tinggi */}
+        <InstitutionDirectorySection
+          fieldId={field.id}
+          fieldName={field.name}
+          kabupatenOrigin={origin.kabupaten}
+          locationOrigin={origin}
+          isDetectingLocation={isDetecting}
+          isGeocodingLocation={isGeocoding}
+          locationNote={locationNote}
+          onChangeKabupatenOrigin={handleKabupatenChange}
+          onSubmitManualAddress={handleManualAddressSubmit}
+          onDetectLocation={handleDetectLocation}
+        />
+
+        {/* Bab 4: Rujukan Resmi & Transparansi Data */}
+        <section
+          aria-labelledby="heading-bab-4"
+          className="chapter-reveal space-y-4"
+        >
+          <div className="bg-[#FAF7F2] border-2 border-[#141413] rounded-2xl p-5 sm:p-7 space-y-4">
+            <div className="space-y-1">
+              <h2
+                id="heading-bab-4"
+                className="text-lg sm:text-xl font-display font-extrabold text-[#141413]"
+              >
+                Rujukan Kurikulum &amp; Validitas Direktori Bali
+              </h2>
+              <p className="text-sm sm:text-base text-[#52514E] leading-relaxed max-w-[65ch]">
+                Estimasi jarak dihitung menggunakan formula Haversine dari alamat manual, pusat kabupaten, atau koordinat GPS opsional Anda menuju area kampus dan sekolah di Bali. Selalu periksa jadwal penerimaan mahasiswa baru atau PPDB terbaru melalui kanal resmi lembaga masing-masing.
+              </p>
+            </div>
+
+            {field.sourceRecords.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {field.sourceRecords.map((source) => (
+                  <div
+                    key={`${source.publisher}-${source.checkDate}`}
+                    className="p-4 rounded-xl bg-white border border-[#141413]/25 space-y-1.5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-bold text-[#141413]">
+                        {source.publisher}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-[#B8F348] border border-[#141413] text-xs font-bold text-[#141413]">
+                        {source.status}
+                      </span>
+                    </div>
+                    {source.notes && (
+                      <p className="text-xs sm:text-sm text-[#52514E]">
+                        {source.notes}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-[#52514E] pt-1">
+                      <span>Diperiksa: {source.checkDate}</span>
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-[#3B66FF] underline"
+                      >
+                        Kunjungi Sumber
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       </main>
-
-      {/* Footer */}
-      <footer className="w-full bg-[#141413] text-white border-t-2 border-[#141413] py-8 px-4 sm:px-6 lg:px-8 mt-16">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-xs font-mono text-[#F0ECE1]/80">
-          <div>
-            <span className="font-display font-black text-white text-sm block">KertaMarga Bali</span>
-            <span>Platform Eksplorasi Pendidikan Bali</span>
-          </div>
-          <div className="flex gap-4">
-            <Link href="/" className="hover:underline">Beranda</Link>
-            <Link href="/eksplorasi" className="hover:underline">Eksplorasi Minat</Link>
-            <Link href="/katalog" className="hover:underline">Katalog Institusi</Link>
-          </div>
-        </div>
-      </footer>
-
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onProceedToTest={() => setIsLoginModalOpen(false)}
-        initialMode={authMode}
-      />
     </div>
+  );
+}
+
+export default function PetaBidangDetailPage() {
+  return (
+    <Suspense fallback={<PetaBidangSkeleton />}>
+      <PetaBidangDetailContent />
+    </Suspense>
   );
 }

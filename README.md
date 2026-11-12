@@ -44,12 +44,12 @@ KertaMarga Bali adalah platform web inovatif yang dirancang untuk memecahkan pro
 
 ## Tech Stack
 
-* **Frontend Framework**: Next.js 15 (App Router) + React 19 + TypeScript
-* **Styling & Design System**: Tailwind CSS dengan semantic token AetherCraft Protocol (bebas glassmorphism murahan, kontras tinggi WCAG AAA)
-* **Animasi & Interaktivitas**: Framer Motion
-* **Backend & API**: Next.js Serverless Edge/Node Runtime
-* **Database & ORM**: Drizzle ORM + MySQL / MariaDB (dilengkapi in-memory fallback store untuk keandalan demo offline)
-* **Deployment & Hosting**: Vercel Global Edge Network (HTTPS otomatis, 24/7 uptime)
+* **Frontend Framework**: Next.js 15 (App Router) + React 19 + TypeScript 5.7
+* **Styling & Design System**: Tailwind CSS 3.4 dengan semantic token AetherCraft Protocol (tanpa full-screen blur/slop, kontras tinggi)
+* **Animasi & Peta**: Framer Motion + Leaflet
+* **Backend & API**: Next.js App Router API Routes (Node.js Runtime)
+* **Database & ORM**: Drizzle ORM + MySQL / MariaDB (`mysql2`) dengan persistent JSON fallback store (`data/users.json` / `/tmp`) untuk keandalan demo
+* **Deployment & Hosting**: Vercel Production (HTTPS otomatis, 24/7 uptime)
 
 ---
 
@@ -57,9 +57,9 @@ KertaMarga Bali adalah platform web inovatif yang dirancang untuk memecahkan pro
 
 ### Model, Gateway, dan Metode
 Sistem mengimplementasikan arsitektur *Multi-Tier Resilient AI*:
-1. **Tier 1 (Primary Router)**: 9Router AI Gateway yang kompatibel dengan protokol OpenAI `/v1/chat/completions`, memanggil model berkinerja tinggi `ag/gemini-3.8-flash-high`.
-2. **Tier 2 (Direct Fallback)**: Integrasi langsung ke Google Gemini API via official endpoint dengan Structured Output (JSON Schema).
-3. **Tier 3 (Deterministic Verification)**: *Deterministic Rule-Based Mentor Engine* berbasis basis pengetahuan kurikulum resmi. Jika seluruh koneksi jaringan AI eksternal terputus, sistem tetap 100% berfungsi memberikan panduan akurat tanpa pernah mengalami crash.
+1. **Tier 1 (Primary Router)**: 9Router AI Gateway yang kompatibel dengan protokol OpenAI `/v1/chat/completions` (`src/lib/router-client.ts`) lengkap dengan circuit breaker cooldown dan LRU cache.
+2. **Tier 2 (Direct Fallback)**: Integrasi langsung ke Google Gemini REST API (`generativelanguage.googleapis.com`) menggunakan `GEMINI_API_KEY` server-side dengan output JSON terstruktur.
+3. **Tier 3 (Deterministic Verification)**: *Deterministic Rule-Based Mentor Engine* dan `src/lib/scoring.ts` berbasis basis pengetahuan kurikulum BNSP serta data PDDIKTI/BAN-PT. Jika seluruh koneksi jaringan AI eksternal terputus, sistem tetap 100% berfungsi memberikan panduan akurat tanpa pernah mengalami crash. *(Detail model AI final disinkronkan bersama pembaruan tim sebelum tag `v2.0-final`.)*
 
 ### Alur Input dan Output AI
 * **Input**: Pesan kontekstual siswa, identifikasi bidang keahlian, skor kesiapan awal (%), target ambang kelulusan mata kuliah (%), daftar ID modul belajar yang telah diselesaikan, dan riwayat lulus latihan sertifikasi.
@@ -135,11 +135,22 @@ AI difungsikan sebagai fasilitator penalaran personal yang adaptif terhadap ribu
    ```
    Aplikasi dapat diakses melalui browser di `http://localhost:3000`.
 
-5. **Build Versi Produksi**:
+5. **Build & Verifikasi Produksi**:
    ```bash
+   npm run lint
    npm run build
    npm run start
    ```
+6. **Jalankan Automated Smoke Test** (pada terminal baru saat server aktif di `http://127.0.0.1:3000`):
+   ```bash
+   npm run smoke
+   ```
+
+---
+
+## Dokumentasi Tahap 2 (Final Submission)
+
+* [Catatan Improvement Tahap 1 ke Tahap 2 & AI Disclosure Final](docs/TAHAP2_IMPROVEMENTS_AND_DISCLOSURE.md)
 
 ---
 
@@ -156,12 +167,13 @@ Aplikasi dirancang agar juri dapat langsung melakukan pengujian tanpa proses reg
 
 1. **Mode Tamu (Direkomendasikan untuk Juri)**:
    * Buka aplikasi pada URL di atas.
-   * Klik tombol **Masuk sebagai Tamu** pada navigasi atau modal login.
+   * Klik tombol **Coba Mode Tamu Anonim (Langsung Tes)** pada modal eksplorasi atau langsung buka `/eksplorasi`, `/ai-navigator`, dan `/hasil-analisis`.
    * Juri langsung mendapatkan akses penuh ke seluruh fitur asesmen, peta, dan mentor AI tanpa perlu kata sandi.
 
 2. **Mode Akun Terdaftar (Uji Fitur Autentikasi)**:
-   * **Role Siswa**: Buka menu Daftar, daftarkan akun baru, atau gunakan akun uji coba lokal.
-   * Sistem registrasi menyimpan data hash password secara aman menggunakan algoritma bcrypt (cost factor 10).
+   * **Daftar Akun Baru**: Buka menu **Buat Akun** (`/daftar`) untuk membuat akun siswa atau guru BK secara langsung.
+   * **Akun Demo Khusus Juri**: Jika disediakan akun demo terpisah, seed akun dimuat melalui environment variable `DEMO_SEED_USERS_JSON` pada server, dan kredensial dikirimkan melalui kanal resmi panitia (bukan di repositori publik).
+   * Sistem registrasi menyimpan hash password secara aman menggunakan algoritma bcrypt (cost factor 10) dan cookie sesi JWT `httpOnly`.
 
 *(Sesuai aturan keamanan lomba, tidak ada kredensial atau password sensitif yang disimpan pada repositori publik ini).*
 
@@ -200,18 +212,18 @@ Formulir pengungkapan teknologi resmi sesuai ketentuan Bali DigiFest 2026:
 | Komponen | Isi Peserta |
 | :--- | :--- |
 | **Nama Produk** | KertaMarga Bali (AI Career & Educational Navigator) |
-| **Framework / Frontend** | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS |
-| **Backend / Runtime** | Next.js Serverless Edge & Node.js Runtime |
-| **Database / Storage** | Drizzle ORM, MySQL / MariaDB, In-Memory Resilient Cache |
-| **Hosting / Deployment** | Vercel (Produksi Web & API), Cloudflare Infrastructure |
-| **AI Model / API / Method** | 9Router Gateway, Google Gemini 3.8 Flash, Multi-Tier Deterministic Rule Engine |
-| **Peran AI dalam Produk** | Mendiagnosis selisih kesiapan akademik siswa, merekomendasikan urutan modul belajar, serta memandu simulasi sertifikasi BNSP |
-| **Dataset / Data Source** | Data resmi PDDIKTI, data akreditasi BAN-PT, skema sertifikasi BNSP, data geografis 9 kabupaten/kota Bali |
-| **Open-source Libraries** | `next`, `react`, `framer-motion`, `lucide-react`, `drizzle-orm`, `zod`, `jose`, `bcryptjs`, `leaflet`, `clsx`, `tailwind-merge` |
-| **Template / Boilerplate** | Tidak menggunakan template jadi; dibangun dari awal (*scratch*) menggunakan Create Next App dasar |
-| **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring komponen, penulisan tipe data TypeScript, dan perancangan arsitektur fail-safe) |
+| **Framework / Frontend** | Next.js 15 (App Router), React 19, TypeScript 5.7, Tailwind CSS 3.4 |
+| **Backend / Runtime** | Next.js App Router API Routes (Node.js Runtime) |
+| **Database / Storage** | Drizzle ORM, MySQL / MariaDB (`mysql2`), Persistent JSON Fallback (`data/users.json` / `/tmp`), In-Memory Cache |
+| **Hosting / Deployment** | Vercel Production |
+| **AI Model / API / Method** | Multi-tier pipeline: 9Router Gateway (`src/lib/router-client.ts`), Google Gemini REST API (`gemini-3.5-flash-lite` / fallback chain), Skoring Deterministik (`src/lib/scoring.ts`) & Deterministic Rule Engine |
+| **Peran AI dalam Produk** | Mendiagnosis selisih kesiapan akademik siswa dan merekomendasikan urutan modul/sertifikasi BNSP (`/api/mentor-agent`), serta konsultasi interaktif penjurusan Bali (`/api/navigator-chat`) |
+| **Dataset / Data Source** | Data resmi PDDIKTI, data akreditasi BAN-PT & BAN-SM, skema sertifikasi BNSP, data geografis 9 kabupaten/kota Bali |
+| **Open-source Libraries** | `next`, `react`, `react-dom`, `framer-motion`, `lucide-react`, `drizzle-orm`, `mysql2`, `zod`, `jose`, `bcryptjs`, `leaflet`, `clsx`, `tailwind-merge` |
+| **Template / Boilerplate** | Tidak menggunakan template jadi; dibangun dari awal (*scratch*) menggunakan `create-next-app` dasar |
+| **AI Coding Assistant** | Antigravity AI, Claude, Gemini (digunakan untuk refactoring komponen, penulisan tipe data TypeScript, pengujian smoke test, dan perancangan arsitektur fail-safe) |
 | **Pre-existing Components** | Tidak ada (proyek orisinal yang dibangun dari awal khusus untuk kompetisi ini) |
-| **Third-party Assets / Credits** | Google Maps Platform Embed, Icon Lucide, Font Google Outfit dan Inter |
+| **Third-party Assets / Credits** | Peta Leaflet, Icon Lucide, Font Google Outfit dan Inter, modul pustaka belajar pada `public/pustaka-modul/` |
 
 ---
 

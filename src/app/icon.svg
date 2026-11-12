@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" role="img" aria-label="Logo KertaMarga Bali">
+  <circle cx="100.0" cy="100.0" r="92" fill="#FFFFFF" stroke="#111622" stroke-width="7"/>
+  <circle cx="100.0" cy="100.0" r="82" fill="none" stroke="#00AEEC" stroke-width="5.5"/>
+  <circle cx="100.0" cy="100.0" r="53" fill="none" stroke="#00AEEC" stroke-width="5"/>
+  <polygon points="100.00,100.00 111.10,73.21 151.62,48.38" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 151.62,48.38 126.79,88.90" fill="#00AEEC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 126.79,111.10 151.62,151.62" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 151.62,151.62 111.10,126.79" fill="#00AEEC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 88.90,126.79 48.38,151.62" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 48.38,151.62 73.21,111.10" fill="#00AEEC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 73.21,88.90 48.38,48.38" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 48.38,48.38 88.90,73.21" fill="#00AEEC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 88.90,73.21 100.00,13.00" fill="#EBF7FC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 100.00,13.00 111.10,73.21" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 126.79,88.90 187.00,100.00" fill="#EBF7FC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 187.00,100.00 126.79,111.10" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 111.10,126.79 100.00,187.00" fill="#EBF7FC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 100.00,187.00 88.90,126.79" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 73.21,111.10 13.00,100.00" fill="#EBF7FC" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <polygon points="100.00,100.00 13.00,100.00 73.21,88.90" fill="#112257" stroke="#111622" stroke-width="3.8" stroke-linejoin="round"/>
+  <g transform="translate(100.0,100.0) scale(1.1)">
+  <g transform="rotate(-10)">
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 5,-44 12,-33 C 19,-22 10,-9 0,0 Z" fill="#F8F4E6" stroke="#111622" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M 0,0 C -3,-8 -10,-14 -7,-22 C -4,-28 4,-26 7,-19 C 10,-12 5,-5 0,0 Z" fill="#E2A218"/>
+  </g>
+  <g transform="rotate(62)">
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 5,-44 12,-33 C 19,-22 10,-9 0,0 Z" fill="#F8F4E6" stroke="#111622" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M 0,0 C -3,-8 -10,-14 -7,-22 C -4,-28 4,-26 7,-19 C 10,-12 5,-5 0,0 Z" fill="#E2A218"/>
+  </g>
+  <g transform="rotate(134)">
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 5,-44 12,-33 C 19,-22 10,-9 0,0 Z" fill="#F8F4E6" stroke="#111622" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M 0,0 C -3,-8 -10,-14 -7,-22 C -4,-28 4,-26 7,-19 C 10,-12 5,-5 0,0 Z" fill="#E2A218"/>
+  </g>
+  <g transform="rotate(206)">
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 5,-44 12,-33 C 19,-22 10,-9 0,0 Z" fill="#F8F4E6" stroke="#111622" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M 0,0 C -3,-8 -10,-14 -7,-22 C -4,-28 4,-26 7,-19 C 10,-12 5,-5 0,0 Z" fill="#E2A218"/>
+  </g>
+  <g transform="rotate(278)">
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 5,-44 12,-33 C 19,-22 10,-9 0,0 Z" fill="#F8F4E6" stroke="#111622" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M 0,0 C -3,-8 -10,-14 -7,-22 C -4,-28 4,-26 7,-19 C 10,-12 5,-5 0,0 Z" fill="#E2A218"/>
+  </g>
+  <g transform="rotate(-10)">
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 2,-43 6,-37 L 1,-18 Z" fill="#F8F4E6"/>
+    <path d="M 0,0 C -3,-8 -10,-14 -7,-22 C -4,-27 1,-25 4,-22 L 0,-11 Z" fill="#E2A218"/>
+    <path d="M 0,0 C -5,-12 -19,-22 -14,-35 C -9,-45 2,-43 8,-37" fill="none" stroke="#111622" stroke-width="3.4" stroke-linecap="round"/>
+  </g>
+  <path d="M 0,0 C -3,-9 -10,-16 -13,-23" transform="rotate(-10)" fill="none" stroke="#111622" stroke-width="2.448" stroke-linecap="round"/>
+  <path d="M 0,0 C -3,-9 -10,-16 -13,-23" transform="rotate(62)" fill="none" stroke="#111622" stroke-width="2.448" stroke-linecap="round"/>
+  <path d="M 0,0 C -3,-9 -10,-16 -13,-23" transform="rotate(134)" fill="none" stroke="#111622" stroke-width="2.448" stroke-linecap="round"/>
+  <path d="M 0,0 C -3,-9 -10,-16 -13,-23" transform="rotate(206)" fill="none" stroke="#111622" stroke-width="2.448" stroke-linecap="round"/>
+  <path d="M 0,0 C -3,-9 -10,-16 -13,-23" transform="rotate(278)" fill="none" stroke="#111622" stroke-width="2.448" stroke-linecap="round"/>
+  </g>
+</svg>

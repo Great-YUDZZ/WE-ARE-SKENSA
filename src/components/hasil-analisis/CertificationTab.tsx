@@ -1,0 +1,227 @@
+"use client";
+
+import React from "react";
+import type {
+  CertificationQuestion,
+  FieldCurriculum,
+  TargetCourse,
+} from "@/data/mentorCurriculum";
+
+interface CertificationTabProps {
+  curriculum: FieldCurriculum;
+  targetCourse: TargetCourse;
+  filteredCertDrills: CertificationQuestion[];
+  selectedCertFilter: string;
+  onChangeFilter: (filterId: string) => void;
+  certTrackOptions: string[];
+  selectedCertAnswers: Record<string, number>;
+  onSelectAnswer: (drillId: string, optionIdx: number) => void;
+  submittedCertIds: string[];
+  passedCertIds: string[];
+  onCheckAnswer: (
+    drillId: string,
+    correctIndex: number,
+    boost: number,
+    code: string
+  ) => void;
+}
+
+export default function CertificationTab({
+  curriculum,
+  targetCourse,
+  filteredCertDrills,
+  selectedCertFilter,
+  onChangeFilter,
+  certTrackOptions,
+  selectedCertAnswers,
+  onSelectAnswer,
+  submittedCertIds,
+  passedCertIds,
+  onCheckAnswer,
+}: CertificationTabProps) {
+  return (
+    <div className="neo-card rounded-2xl bg-white p-5 sm:p-7 border-2 border-[#141413] shadow-[4px_4px_0px_#141413] space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b-2 border-[#141413]">
+        <div>
+          <span className="text-xs font-mono font-bold text-[#1F7A52] uppercase tracking-wider">
+            Simulasi Uji Kompetensi &bull; {curriculum.certificationBody}
+          </span>
+          <h2 className="font-display font-black text-xl sm:text-2xl text-[#141413] mt-0.5">
+            {curriculum.mainCertificationTitle}
+          </h2>
+          <p className="text-xs sm:text-sm text-[#52514E] mt-1 font-medium">
+            Uji kesiapan Anda per unit kompetensi untuk memperoleh tambahan skor kesiapan jurusan.
+          </p>
+        </div>
+
+        <div className="px-4 py-2.5 rounded-xl bg-[#B8F348] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] text-xs sm:text-sm font-mono shrink-0">
+          Lulus:{" "}
+          <strong className="text-[#141413]">
+            {passedCertIds.length} / {curriculum.certificationDrills.length} Unit
+          </strong>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-mono font-bold text-[#52514E] mr-1">
+          Filter Skema:
+        </span>
+        <button
+          type="button"
+          onClick={() => onChangeFilter("ALL")}
+          className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+            selectedCertFilter === "ALL"
+              ? "bg-[#141413] text-[#B8F348] shadow-[2px_2px_0px_#3B66FF]"
+              : "bg-[#FAF7F2] text-[#52514E] hover:bg-[#F0ECE1] hover:text-[#141413]"
+          }`}
+        >
+          Semua ({curriculum.certificationDrills.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => onChangeFilter("TARGET_COURSE")}
+          className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+            selectedCertFilter === "TARGET_COURSE"
+              ? "bg-[#141413] text-[#B8F348] shadow-[2px_2px_0px_#3B66FF]"
+              : "bg-[#FAF7F2] text-[#52514E] hover:bg-[#F0ECE1] hover:text-[#141413]"
+          }`}
+        >
+          Matkul [{targetCourse.code}]
+        </button>
+        {certTrackOptions.map((trackName) => (
+          <button
+            key={trackName}
+            type="button"
+            onClick={() => onChangeFilter(trackName)}
+            className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border-2 border-[#141413] transition-all cursor-pointer ${
+              selectedCertFilter === trackName
+                ? "bg-[#141413] text-[#B8F348] shadow-[2px_2px_0px_#3B66FF]"
+                : "bg-[#FAF7F2] text-[#52514E] hover:bg-[#F0ECE1] hover:text-[#141413]"
+            }`}
+          >
+            {trackName}
+          </button>
+        ))}
+      </div>
+
+      {/* Drills List */}
+      <div className="space-y-4">
+        {filteredCertDrills.map((drill, dIdx) => {
+          const chosenIdx = selectedCertAnswers[drill.id];
+          const isSubmitted = submittedCertIds.includes(drill.id);
+          const isPassed = passedCertIds.includes(drill.id);
+          const isCorrectNow = chosenIdx === drill.correctIndex;
+
+          return (
+            <div
+              key={drill.id}
+              className={`p-5 rounded-2xl border-2 border-[#141413] space-y-4 shadow-[3px_3px_0px_#141413] ${
+                isPassed ? "bg-[#B8F348]/15" : "bg-[#FAF7F2]"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                  <span className="font-bold px-2.5 py-1 rounded-lg bg-[#B8F348] text-[#141413] border border-[#141413]">
+                    {drill.competencyCode}
+                  </span>
+                  {drill.certTrack && (
+                    <span className="font-bold px-2.5 py-1 rounded-lg bg-[#3B66FF] text-white border border-[#141413]">
+                      {drill.certTrack}
+                    </span>
+                  )}
+                  <span className="font-bold text-[#52514E]">{drill.certName}</span>
+                </div>
+
+                <span
+                  className={`text-xs font-mono font-bold px-2.5 py-1 rounded-lg ${
+                    isPassed
+                      ? "bg-[#B8F348] text-[#141413] border border-[#141413]"
+                      : "text-[#52514E]"
+                  }`}
+                >
+                  {isPassed
+                    ? `Kompeten (+${drill.scoreBoost}%)`
+                    : `Soal #${dIdx + 1} (+${drill.scoreBoost}%)`}
+                </span>
+              </div>
+
+              <h3 className="font-display font-bold text-sm sm:text-base text-[#141413] leading-relaxed">
+                {drill.question}
+              </h3>
+
+              <div className="space-y-2">
+                {drill.options.map((optText, oIdx) => {
+                  const isChosen = chosenIdx === oIdx;
+                  return (
+                    <button
+                      key={oIdx}
+                      type="button"
+                      onClick={() => onSelectAnswer(drill.id, oIdx)}
+                      className={`w-full min-h-[44px] text-left p-3.5 rounded-xl text-xs sm:text-sm border-2 border-[#141413] transition-all cursor-pointer flex items-start gap-2.5 ${
+                        isChosen
+                          ? "bg-[#3B66FF] text-white font-bold shadow-[3px_3px_0px_#141413]"
+                          : "bg-white text-[#52514E] hover:bg-[#F0ECE1] hover:text-[#141413]"
+                      }`}
+                    >
+                      <span className="font-mono font-bold text-xs shrink-0 mt-0.5">
+                        {String.fromCharCode(65 + oIdx)}.
+                      </span>
+                      <span>{optText}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <button
+                  type="button"
+                  disabled={chosenIdx === undefined}
+                  onClick={() =>
+                    onCheckAnswer(
+                      drill.id,
+                      drill.correctIndex,
+                      drill.scoreBoost,
+                      drill.competencyCode
+                    )
+                  }
+                  className="neo-btn min-h-[44px] px-5 rounded-xl bg-[#FFBE2E] hover:bg-[#f2b329] disabled:opacity-50 text-[#141413] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] font-display font-bold text-xs sm:text-sm cursor-pointer"
+                >
+                  Periksa Jawaban
+                </button>
+
+                {isSubmitted && (
+                  <span
+                    className={`text-xs sm:text-sm font-mono font-bold ${
+                      isCorrectNow ? "text-[#1F7A52]" : "text-[#FF5E4D]"
+                    }`}
+                  >
+                    {isCorrectNow
+                      ? "Jawaban Tepat (Kompeten)"
+                      : "Belum tepat, silakan pilih opsi lain dan periksa kembali."}
+                  </span>
+                )}
+              </div>
+
+              {isSubmitted && (
+                <div
+                  className={`p-4 rounded-2xl border-2 border-[#141413] text-xs sm:text-sm leading-relaxed ${
+                    isCorrectNow
+                      ? "bg-[#B8F348]/25 text-[#141413]"
+                      : "bg-[#FFE5E0] text-[#141413]"
+                  }`}
+                >
+                  <span className="font-mono font-bold text-xs uppercase block mb-1">
+                    Pembahasan ({drill.competencyCode})
+                  </span>
+                  <p>{drill.explanation}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

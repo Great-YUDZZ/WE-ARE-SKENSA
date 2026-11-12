@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
-import { BALI_KABUPATEN_COORDS } from "@/data/catalog";
+import LocationOriginControl from "@/components/LocationOriginControl";
+import { formatOriginLabel } from "@/data/catalog";
 import { BASE_QUESTIONS, ADAPTIVE_BRANCH_QUESTIONS, AssessmentQuestion } from "@/data/questions";
-import { AssessmentAnalysisResult, analyzeAssessment } from "@/lib/scoring";
+import { type AssessmentAnalysisResult } from "@/lib/scoring";
+import { useBaliLocation } from "@/lib/useBaliLocation";
 
 export default function EksplorasiPage() {
   const router = useRouter();
@@ -19,7 +21,15 @@ export default function EksplorasiPage() {
 
   // Profile data
   const [educationLevel, setEducationLevel] = useState<"SMP" | "SMA" | "SMK" | "Lainnya">("SMP");
-  const [selectedKabupaten, setSelectedKabupaten] = useState<string>("Kota Denpasar");
+  const {
+    origin,
+    isDetecting,
+    isGeocoding,
+    locationNote,
+    setManualKabupaten,
+    setManualAddress,
+    detectLocation,
+  } = useBaliLocation();
 
   // Questionnaire state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -34,6 +44,7 @@ export default function EksplorasiPage() {
 
   // Results & UI State
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AssessmentAnalysisResult | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -50,61 +61,74 @@ export default function EksplorasiPage() {
         const parsed = JSON.parse(saved);
         if (parsed.answers) setAnswers(parsed.answers);
         if (parsed.educationLevel) setEducationLevel(parsed.educationLevel);
-        if (parsed.selectedKabupaten) setSelectedKabupaten(parsed.selectedKabupaten);
+        const hasLocationStorage = sessionStorage.getItem("kertamarga_user_location");
+        if (!hasLocationStorage && parsed.selectedKabupaten) {
+          setManualKabupaten(parsed.selectedKabupaten);
+        }
       }
     } catch {
       // Ignore session storage errors
     }
-  }, []);
+  }, [setManualKabupaten]);
 
   // Save state to sessionStorage
   useEffect(() => {
     try {
       sessionStorage.setItem(
         "km_assessment_state",
-        JSON.stringify({ answers, educationLevel, selectedKabupaten })
+        JSON.stringify({ answers, educationLevel, selectedKabupaten: origin.kabupaten })
       );
     } catch {
       // Ignore
     }
-  }, [answers, educationLevel, selectedKabupaten]);
+  }, [answers, educationLevel, origin.kabupaten]);
 
-  // Handle Demo Synthetic Profile
-  const handleApplyDemoProfile = () => {
-    setEducationLevel("SMP");
-    setSelectedKabupaten("Badung");
-    setAnswers({
-      q1_activity: "q1_opt_tech",
-      q2_project_type: "q2_opt_app",
-      q3_current_readiness: "q3_opt_math",
-      q4_learning_mode: "q4_opt_hands_on",
-      q5_mobility_cost: "q5_opt_home",
-      q_branch_tech: "q_tech_software",
-    });
-    setOpenEndedText("Saya suka coding website dan ingin mendalami rekayasa perangkat lunak di Bali.");
-    triggerToast("Profil demo sintetis (Minat Teknologi & Vokasi) berhasil dimuat!");
+  const handleDetectLocation = async () => {
+    const outcome = await detectLocation();
+    triggerToast(outcome.message);
   };
 
-  // Run calculation (Deterministic)
-  const runAssessmentCalculation = () => {
+  // Run calculation via backend API (/api/assessment/analyze)
+  const runAssessmentCalculation = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      const res = analyzeAssessment({
-        currentEducation: educationLevel,
-        homeKabupaten: selectedKabupaten,
-        selectedAnswers: answers,
-        openEndedReflection: openEndedText,
-        weights: {
-          matchWeight,
-          distanceWeight,
-          costWeight,
-        },
+    setAssessmentError(null);
+    setCurrentStep(3);
+
+    try {
+      const res = await fetch("/api/assessment/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentEducation: educationLevel,
+          homeKabupaten: origin.kabupaten,
+          homeCoords: origin.coords,
+          selectedAnswers: answers,
+          openEndedReflection: openEndedText,
+          weights: {
+            matchWeight,
+            distanceWeight,
+            costWeight,
+          },
+        }),
       });
-      setAnalysisResult(res);
-      setIsLoading(false);
-      setCurrentStep(3);
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !Array.isArray(data.topRecommendations)) {
+        throw new Error(data?.error || "Gagal menghitung rekomendasi dari server.");
+      }
+
+      setAnalysisResult(data as AssessmentAnalysisResult);
       triggerToast("Hasil rekomendasi objektif berhasil dihitung!");
-    }, 450);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Koneksi ke layanan analisis terputus. Silakan coba hitung ulang.";
+      setAssessmentError(message);
+      triggerToast("Terjadi kendala saat menghitung rekomendasi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Current active question
@@ -161,7 +185,7 @@ export default function EksplorasiPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
+    <div className="min-h-screen flex flex-col neopop-canvas-subtle text-[#141413] relative selection:bg-[#B8F348] selection:text-[#141413]">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-24 right-4 sm:right-8 z-50 neo-card px-5 py-3 rounded-2xl bg-[#141413] text-white flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md">
@@ -260,22 +284,25 @@ export default function EksplorasiPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold text-[#141413] uppercase mb-2">
-                    Kabupaten / Kota Tempat Tinggal di Bali:
-                  </label>
-                  <select
-                    value={selectedKabupaten}
-                    onChange={(e) => setSelectedKabupaten(e.target.value)}
-                    className="w-full h-11 px-3.5 rounded-xl bg-white border-2 border-[#141413] font-display font-bold text-xs sm:text-sm text-[#141413] focus:outline-none cursor-pointer"
-                  >
-                    {Object.keys(BALI_KABUPATEN_COORDS).map((kab) => (
-                      <option key={kab} value={kab}>
-                        {kab}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-[11px] text-[#52514E] mt-1 block">
-                    Digunakan untuk mengestimasi jarak kampus terdekat di Bali.
+                  <LocationOriginControl
+                    id="eksplorasi-kabupaten-asal"
+                    label="Alamat / Kabupaten Tinggal di Bali"
+                    origin={origin}
+                    isDetecting={isDetecting}
+                    isGeocoding={isGeocoding}
+                    locationNote={locationNote}
+                    onChangeManualKabupaten={(kab) => {
+                      setManualKabupaten(kab);
+                      triggerToast(`Lokasi asal diperbarui ke ${kab}.`);
+                    }}
+                    onSubmitManualAddress={async (addr, kab) => {
+                      const outcome = await setManualAddress(addr, kab);
+                      triggerToast(outcome.message);
+                    }}
+                    onDetectLocation={handleDetectLocation}
+                  />
+                  <span className="text-xs text-[#52514E] mt-1.5 block">
+                    Ketik kelurahan/jalan atau pilih kabupaten untuk mengestimasi jarak kampus terdekat (tombol GPS hanya opsional).
                   </span>
                 </div>
               </div>
@@ -428,14 +455,73 @@ export default function EksplorasiPage() {
           <div className="space-y-8">
             {/* Loading Skeleton */}
             {isLoading && (
-              <div className="space-y-4 animate-pulse">
+              <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Memuat hasil analisis">
                 <div className="h-10 w-64 bg-white rounded-xl border-2 border-[#141413]" />
                 <div className="h-48 bg-white rounded-3xl border-2 border-[#141413]" />
                 <div className="h-48 bg-white rounded-3xl border-2 border-[#141413]" />
               </div>
             )}
 
-            {!isLoading && analysisResult && (
+            {/* Error Boundary */}
+            {!isLoading && assessmentError && (
+              <div
+                role="alert"
+                className="neo-card-lg rounded-3xl p-6 sm:p-8 bg-[#FFE5E0] border-2 border-[#141413] space-y-4 text-[#141413]"
+              >
+                <span className="inline-block px-3 py-1 rounded-lg bg-[#FF5E4D] text-white font-mono font-bold text-xs border-2 border-[#141413]">
+                  KENDALA PEMROSESAN
+                </span>
+                <h2 className="font-display font-black text-2xl">
+                  Analisis Rekomendasi Belum Berhasil Dimuat
+                </h2>
+                <p className="text-sm text-[#52514E] leading-relaxed">
+                  {assessmentError}
+                </p>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={runAssessmentCalculation}
+                    className="px-5 py-2.5 rounded-xl bg-[#141413] text-[#B8F348] font-display font-bold text-xs border-2 border-[#141413] cursor-pointer"
+                  >
+                    Coba Hitung Ulang
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssessmentError(null);
+                      setCurrentStep(2);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-white text-[#141413] font-display font-bold text-xs border-2 border-[#141413] cursor-pointer"
+                  >
+                    Kembali ke Kuesioner
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !assessmentError && analysisResult && analysisResult.topRecommendations.length === 0 && (
+              <div className="neo-card-lg rounded-3xl p-6 sm:p-8 bg-white text-center space-y-4">
+                <h2 className="font-display font-black text-2xl text-[#141413]">
+                  Belum Ada Rekomendasi yang Cocok
+                </h2>
+                <p className="text-sm text-[#52514E] max-w-lg mx-auto">
+                  Silakan lengkapi beberapa pertanyaan minat atau tulis catatan refleksi singkat agar sistem bisa menghitung bidang yang selaras.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentStep(2);
+                    setCurrentQuestionIndex(0);
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-[#B8F348] text-[#141413] font-display font-bold text-xs border-2 border-[#141413] cursor-pointer"
+                >
+                  Lengkapi Kuesioner
+                </button>
+              </div>
+            )}
+
+            {!isLoading && !assessmentError && analysisResult && analysisResult.topRecommendations.length > 0 && (
               <>
                 {/* Header Summary Card */}
                 <div className="neo-card-lg rounded-3xl p-6 sm:p-8 bg-white space-y-4">
@@ -444,7 +530,7 @@ export default function EksplorasiPage() {
                       HASIL ANALISIS OBJEKTIF &bull; KERTAMARGA BALI
                     </span>
                     <span className="text-xs font-mono font-bold text-[#52514E]">
-                      Kabupaten Acuan: {selectedKabupaten}
+                      Lokasi Acuan: {formatOriginLabel(origin)}
                     </span>
                   </div>
 
@@ -668,7 +754,17 @@ export default function EksplorasiPage() {
 
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <Link
-                            href={`/hasil-analisis?field=${rec.field.id}`}
+                            href={`/hasil-analisis?field=${rec.field.id}&score=${Math.max(
+                              35,
+                              Math.min(95, Math.round(rec.breakdown.readinessScore))
+                            )}&dominant=${
+                              analysisResult.topRecommendations[0]?.field.group || rec.field.group
+                            }&mismatch=${
+                              rec.field.group !==
+                              (analysisResult.topRecommendations[0]?.field.group || rec.field.group)
+                                ? "1"
+                                : "0"
+                            }`}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#F0ECE1] text-[#141413] border-2 border-[#141413] shadow-[0_3px_0_#141413] font-display font-bold text-xs"
                           >
                             <span>Bimbingan Nilai &amp; Modul</span>
@@ -676,7 +772,7 @@ export default function EksplorasiPage() {
                           </Link>
 
                           <Link
-                            href={`/peta-bidang/${rec.field.id}?kabupaten=${encodeURIComponent(selectedKabupaten)}`}
+                            href={`/peta-bidang/${rec.field.id}?kabupaten=${encodeURIComponent(origin.kabupaten)}`}
                             className="group w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3 pl-5 pr-2 py-2 rounded-xl bg-[#FF5E4D] hover:bg-[#ff4936] text-white border-2 border-[#141413] shadow-[0_4px_0_#141413] hover:translate-y-[1px] hover:shadow-[0_3px_0_#141413] active:translate-y-[4px] active:shadow-none transition-all cursor-pointer font-display font-extrabold text-xs sm:text-sm"
                           >
                             <span>Konfirmasi Pilihan &amp; Baca Peta Bidang</span>

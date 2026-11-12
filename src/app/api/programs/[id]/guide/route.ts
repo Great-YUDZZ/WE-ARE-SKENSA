@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PROGRAM_FIELDS, INSTITUTIONS_CATALOG, estimateDistanceKm } from "@/data/catalog";
+import {
+  PROGRAM_FIELDS,
+  getLevelComparisonSummary,
+  getMatchedInstitutionsForField,
+} from "@/data/catalog";
+import {
+  getBaliDirectoryStats,
+  getBaliEntitiesForField,
+} from "@/data/bali-institutions";
 
 interface Context {
   params: Promise<{ id: string }>;
@@ -19,28 +27,19 @@ export async function GET(request: NextRequest, context: Context) {
     );
   }
 
-  // Cari institusi terkait
-  const matchedInstitutions = INSTITUTIONS_CATALOG.filter((inst) => {
-    const progLower = inst.programName.toLowerCase();
-    if (field.id === "informatika" && (progLower.includes("perangkat lunak") || progLower.includes("jaringan") || progLower.includes("komputer"))) return true;
-    if (field.id === "dkv" && (progLower.includes("desain komunikasi visual") || progLower.includes("multimedia"))) return true;
-    if (field.id === "arsitektur" && (progLower.includes("arsitektur") || progLower.includes("pemodelan"))) return true;
-    if (field.id === "kesehatan" && (progLower.includes("keperawatan") || progLower.includes("kesehatan") || progLower.includes("farmasi"))) return true;
-    if (field.id === "pendidikan" && (progLower.includes("pendidikan") || progLower.includes("konseling"))) return true;
-    if (field.id === "budaya" && (progLower.includes("karawitan") || progLower.includes("tari") || progLower.includes("seni"))) return true;
-    if (field.id === "pertanian" && (progLower.includes("tanaman") || progLower.includes("agribisnis") || progLower.includes("subak"))) return true;
-    if (field.id === "lingkungan" && (progLower.includes("maritim") || progLower.includes("kelautan") || progLower.includes("lingkungan"))) return true;
-    if (field.id === "bisnis" && (progLower.includes("bisnis") || progLower.includes("manajemen") || progLower.includes("akuntansi"))) return true;
-    if (field.id === "pariwisata" && (progLower.includes("perhotelan") || progLower.includes("pariwisata") || progLower.includes("wisata"))) return true;
-    return false;
-  }).map((inst) => ({
-    ...inst,
-    estimatedDistanceKm: estimateDistanceKm(kabupaten, inst.kabupaten),
-  })).sort((a, b) => a.estimatedDistanceKm - b.estimatedDistanceKm);
+  const matchedInstitutions = getMatchedInstitutionsForField(field.id, kabupaten);
+  const baliDirectory = getBaliEntitiesForField(field.id, kabupaten);
 
   return NextResponse.json({
     field,
     institutions: matchedInstitutions,
+    levelSummary: getLevelComparisonSummary(field.id),
+    baliDirectory: {
+      perguruanTinggi: baliDirectory.perguruanTinggi,
+      smk: baliDirectory.smk,
+      smaCount: baliDirectory.sma.length,
+    },
+    directoryStats: getBaliDirectoryStats(),
     availableFields: PROGRAM_FIELDS.map((f) => ({ id: f.id, name: f.name, group: f.group })),
   });
 }

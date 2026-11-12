@@ -1,10 +1,5 @@
-import AuthShell from "@/components/auth/AuthShell";
-import AuthForm from "@/components/auth/AuthForm";
+import { redirect } from "next/navigation";
 
 export default function DaftarPage() {
-  return (
-    <AuthShell>
-      <AuthForm mode="register" />
-    </AuthShell>
-  );
+  redirect("/login?mode=daftar");
 }

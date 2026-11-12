@@ -44,34 +44,38 @@ function getHandle(): DbHandle {
 // Di Vercel Serverless, file system root bersifat read-only sehingga dialihkan ke /tmp.
 // ============================================================================
 
-// Hash password default untuk akun demo ('password123')
-const DEMO_PASSWORD_HASH = "$2b$10$yrGFsC8dWe24Z.2PAzDEjOmvOo5Ua2Ot5iE3D4PfoRnEesLj8WzHu";
-
-// Akun demo resmi yang siap pakai untuk juri dan penguji lomba
-const SEED_USERS: UserRow[] = [
-  {
-    id: 1001,
-    name: "I Putu Raditya",
-    identifier: "0071234567",
-    email: "demo@skensa.sch.id",
-    passwordHash: DEMO_PASSWORD_HASH,
-    role: "siswa",
-    interests: ["Rekayasa Perangkat Lunak", "Teknik Jaringan (TKJ/CCNA/MTCNA)"],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 1002,
-    name: "I Wayan Sudarma, S.Pd.",
-    identifier: "198501012010011001",
-    email: "gurubk@skensa.sch.id",
-    passwordHash: DEMO_PASSWORD_HASH,
-    role: "guru",
-    interests: ["Pendidikan dan Konseling", "Rekayasa Perangkat Lunak"],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+// Akun demo opsional dimuat dari environment variable (tidak ditanam di public repo)
+function getEnvSeedUsers(): UserRow[] {
+  const raw = process.env.DEMO_SEED_USERS_JSON;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const now = new Date();
+    return parsed
+      .filter(
+        (item) =>
+          item &&
+          typeof item.identifier === "string" &&
+          typeof item.email === "string" &&
+          typeof item.passwordHash === "string"
+      )
+      .map((item, idx) => ({
+        id: Number(item.id) || 1001 + idx,
+        name: String(item.name || "Pengguna Demo"),
+        identifier: String(item.identifier).trim(),
+        email: String(item.email).trim().toLowerCase(),
+        passwordHash: String(item.passwordHash),
+        role: item.role === "guru" ? "guru" : "siswa",
+        interests: Array.isArray(item.interests) ? item.interests.map(String) : [],
+        createdAt: now,
+        updatedAt: now,
+      }));
+  } catch {
+    console.warn("Format DEMO_SEED_USERS_JSON tidak valid, melewati seed demo.");
+    return [];
+  }
+}
 
 const DATA_DIR = process.env.VERCEL
   ? path.join("/tmp", "kertamarga-data")
@@ -119,8 +123,8 @@ function initFileStore(): Map<string, UserRow> {
     console.error("Gagal membaca file data/users.json:", err);
   }
 
-  // Masukkan akun demo jika belum ada
-  for (const demo of SEED_USERS) {
+  // Masukkan akun demo opsional dari environment jika belum ada
+  for (const demo of getEnvSeedUsers()) {
     if (!map.has(demo.identifier.toLowerCase())) {
       map.set(demo.identifier.toLowerCase(), demo);
     }
@@ -222,13 +226,15 @@ type CreateUserInput = {
 };
 
 export async function createUser(input: CreateUserInput): Promise<UserRow> {
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const normalizedIdentifier = input.identifier.trim();
   try {
     const [result] = await getHandle()
       .insert(users)
       .values({
-        name: input.name,
-        identifier: input.identifier,
-        email: input.email,
+        name: input.name.trim(),
+        identifier: normalizedIdentifier,
+        email: normalizedEmail,
         passwordHash: input.passwordHash,
         role: input.role,
         interests: input.interests,
@@ -246,7 +252,7 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
 
   // Fallback persistent store saat MySQL belum siap
   const map = initFileStore();
-  if (findInStore(input.identifier) || findInStore(input.email)) {
+  if (findInStore(normalizedIdentifier) || findInStore(normalizedEmail)) {
     throw Object.assign(new Error("IDENTIFIER_EXISTS"), { code: "ER_DUP_ENTRY" });
   }
 
@@ -256,9 +262,9 @@ export async function createUser(input: CreateUserInput): Promise<UserRow> {
 
   const row: UserRow = {
     id: nextId,
-    name: input.name,
-    identifier: input.identifier,
-    email: input.email,
+    name: input.name.trim(),
+    identifier: normalizedIdentifier,
+    email: normalizedEmail,
     passwordHash: input.passwordHash,
     role: input.role,
     interests: input.interests,

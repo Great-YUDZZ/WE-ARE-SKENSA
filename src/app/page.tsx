@@ -4,12 +4,15 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import KertaMargaLogo from "@/components/KertaMargaLogo";
 import BaliInteractiveMap from "@/components/BaliInteractiveMap";
 import ClosingCtaBand from "@/components/ClosingCtaBand";
 import LoginModal from "@/components/LoginModal";
+import { getBaliDirectoryStats } from "@/data/bali-institutions";
 
 export default function Home() {
   const router = useRouter();
+  const directoryStats = getBaliDirectoryStats();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -22,13 +25,11 @@ export default function Home() {
   };
 
   const handleOpenLogin = () => {
-    setAuthMode("login");
-    setIsLoginModalOpen(true);
+    router.push("/login");
   };
 
   const handleOpenRegister = () => {
-    setAuthMode("register");
-    setIsLoginModalOpen(true);
+    router.push("/login?mode=daftar");
   };
 
   const handleOpenTest = (_fieldId?: string) => {
@@ -99,7 +100,7 @@ export default function Home() {
 
             {/* Sub-Headline */}
             <p className="text-base sm:text-xl text-[#52514E] font-medium max-w-2xl leading-relaxed mx-auto">
-              Gak perlu pusing nebak-nebak prodi atau takut salah pilih. Atur prioritas minat, jarak tempuh, dan biaya, lalu temukan rekomendasi terbaik dari 15 SMK dan kampus se-Bali berbasis data resmi.
+              Gak perlu pusing nebak-nebak prodi atau takut salah pilih. Atur prioritas minat, jarak tempuh, dan biaya, lalu temukan rekomendasi terbaik dari {directoryStats.total} SMK, SMA, dan perguruan tinggi se-Bali.
             </p>
 
             {/* Tactile Keycap Action Buttons */}
@@ -159,10 +160,10 @@ export default function Home() {
                 </span>
                 <div className="text-left">
                   <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#52514E]">
-                    GOOGLE MAPS BALI
+                    DIREKTORI BALI
                   </span>
                   <span className="block font-display font-black text-base sm:text-lg leading-tight text-[#141413]">
-                    Eksplor 15 Kampus
+                    Eksplor {directoryStats.total} Sekolah &amp; PT
                   </span>
                 </div>
               </a>
@@ -215,7 +216,9 @@ export default function Home() {
                 <span className="w-5 h-5 rounded-full bg-[#FFBE2E] border-2 border-[#141413] text-[#141413] flex items-center justify-center text-xs font-black">
                   ✓
                 </span>
-                <span>15 Kampus &amp; SMK di 9 Kabupaten/Kota</span>
+                <span>
+                  {directoryStats.perguruanTinggi} PT, {directoryStats.smk} SMK &amp; {directoryStats.sma} SMA di 9 Kabupaten/Kota
+                </span>
               </div>
             </div>
           </div>
@@ -224,20 +227,28 @@ export default function Home() {
         {/* SECTION 2: GOOGLE MAPS BALI CONSOLE FRAME */}
         <section
           id="peta-kampus"
-          className="py-16 sm:py-24 border-t-2 border-[#141413] bg-white scroll-mt-20"
+          className="py-12 sm:py-16 border-t-2 border-[#141413] bg-white scroll-mt-24"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mb-10 sm:mb-12">
-              <h2 className="font-display font-black text-3xl sm:text-5xl text-[#141413] tracking-tight leading-[1.1]">
-                Radar{" "}
-                <span className="inline-block px-3 py-0.5 rounded-xl bg-[#1AD598] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1">
-                  Google Maps
-                </span>{" "}
-                Kampus &amp; SMK se-Bali
-              </h2>
-              <p className="mt-3 text-sm sm:text-base text-[#52514E] font-medium leading-relaxed">
-                Langsung cek lokasi asli 15 perguruan tinggi dan SMK unggulan di 9 kabupaten/kota Bali, lengkap dengan status akreditasi dan jurusannya.
-              </p>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6 sm:mb-8">
+              <div className="max-w-3xl">
+                <h2 className="font-display font-black text-3xl sm:text-5xl text-[#141413] tracking-tight leading-[1.1]">
+                  Radar{" "}
+                  <span className="inline-block px-3 py-0.5 rounded-xl bg-[#1AD598] border-2 border-[#141413] shadow-[3px_3px_0px_#141413] -rotate-1">
+                    Google Maps
+                  </span>{" "}
+                  Kampus, SMK &amp; SMA se-Bali
+                </h2>
+                <p className="mt-3 text-sm sm:text-base text-[#52514E] font-medium leading-relaxed">
+                  Tersinkron langsung dengan {directoryStats.perguruanTinggi} perguruan tinggi, {directoryStats.smk} SMK, dan {directoryStats.sma} SMA di 9 kabupaten/kota Bali. Cari nama lembaga untuk melihat titik lokasinya langsung di peta.
+                </p>
+              </div>
+              <Link
+                href="/katalog"
+                className="neo-btn px-5 py-3 rounded-2xl bg-[#B8F348] text-sm sm:text-base font-display font-bold text-[#141413] shrink-0 self-start lg:self-auto"
+              >
+                Buka Katalog Lengkap -&gt;
+              </Link>
             </div>
 
             <BaliInteractiveMap onOpenTest={handleOpenTest} />
@@ -256,9 +267,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div>
             <div className="flex items-center justify-center md:justify-start gap-2.5 mb-1.5">
-              <span className="w-6 h-6 rounded-lg bg-[#B8F348] text-[#141413] font-display font-black text-xs flex items-center justify-center">
-                KM
-              </span>
+              <KertaMargaLogo variant="compact" className="w-8 h-8 shrink-0" />
               <span className="font-display font-extrabold text-base text-white">
                 KertaMarga Bali
               </span>

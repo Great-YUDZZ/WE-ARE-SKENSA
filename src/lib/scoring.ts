@@ -1,15 +1,16 @@
 import {
+  GeoPoint,
   PROGRAM_FIELDS,
-  INSTITUTIONS_CATALOG,
   ProgramField,
   InstitutionProgram,
-  estimateDistanceKm,
+  getMatchedInstitutionsForField,
 } from "@/data/catalog";
 import { BASE_QUESTIONS, ADAPTIVE_BRANCH_QUESTIONS } from "@/data/questions";
 
 export interface UserAssessmentInput {
   currentEducation: "SMP" | "SMA" | "SMK" | "Lainnya";
   homeKabupaten?: string;
+  homeCoords?: GeoPoint;
   selectedAnswers: Record<string, string>; // questionId -> optionId
   openEndedReflection?: string;
   weights?: {
@@ -79,10 +80,13 @@ const KEYWORD_FIELD_MAP: Record<string, { fieldId: string; tag: string }> = {
 export function analyzeAssessment(input: UserAssessmentInput): AssessmentAnalysisResult {
   const {
     homeKabupaten = "Kota Denpasar",
+    homeCoords,
     selectedAnswers = {},
     openEndedReflection = "",
     weights = {},
   } = input;
+
+  const distanceOrigin = homeCoords ?? homeKabupaten;
 
   const matchWeight = weights.matchWeight ?? 70;
   const distanceWeight = weights.distanceWeight ?? 50;
@@ -164,27 +168,7 @@ export function analyzeAssessment(input: UserAssessmentInput): AssessmentAnalysi
     const coreMatch = Math.round(iScore * 0.55 + rScore * 0.25 + pScore * 0.2);
 
     // Kaitan institusi di katalog yang relevan dengan bidang ini
-    const matchedInstitutions = INSTITUTIONS_CATALOG.filter((inst) => {
-      // Pemetaan sederhana berdasarkan programName
-      const progLower = inst.programName.toLowerCase();
-      if (field.id === "informatika" && (progLower.includes("perangkat lunak") || progLower.includes("jaringan") || progLower.includes("komputer"))) return true;
-      if (field.id === "dkv" && (progLower.includes("desain komunikasi visual") || progLower.includes("multimedia"))) return true;
-      if (field.id === "arsitektur" && (progLower.includes("arsitektur") || progLower.includes("pemodelan"))) return true;
-      if (field.id === "kesehatan" && (progLower.includes("keperawatan") || progLower.includes("kesehatan") || progLower.includes("farmasi"))) return true;
-      if (field.id === "pendidikan" && (progLower.includes("pendidikan") || progLower.includes("konseling"))) return true;
-      if (field.id === "budaya" && (progLower.includes("karawitan") || progLower.includes("tari") || progLower.includes("seni"))) return true;
-      if (field.id === "pertanian" && (progLower.includes("tanaman") || progLower.includes("agribisnis") || progLower.includes("subak"))) return true;
-      if (field.id === "lingkungan" && (progLower.includes("maritim") || progLower.includes("kelautan") || progLower.includes("lingkungan"))) return true;
-      if (field.id === "bisnis" && (progLower.includes("bisnis") || progLower.includes("manajemen") || progLower.includes("akuntansi"))) return true;
-      if (field.id === "pariwisata" && (progLower.includes("perhotelan") || progLower.includes("pariwisata") || progLower.includes("wisata"))) return true;
-      return false;
-    }).map((inst) => {
-      const dist = estimateDistanceKm(homeKabupaten, inst.kabupaten);
-      return {
-        ...inst,
-        estimatedDistanceKm: dist,
-      };
-    }).sort((a, b) => a.estimatedDistanceKm - b.estimatedDistanceKm);
+    const matchedInstitutions = getMatchedInstitutionsForField(field.id, distanceOrigin);
 
     // Hitung jarak terdekat institusi yang ada
     const nearestKm = matchedInstitutions.length > 0 ? matchedInstitutions[0].estimatedDistanceKm : 30;

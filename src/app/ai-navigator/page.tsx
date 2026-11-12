@@ -47,11 +47,26 @@ export default function AiNavigatorPage() {
   const [streamId, setStreamId] = useState<string | null>(null);
   const [sourceMode, setSourceMode] = useState<"9router-live" | "gemini-live" | "deterministic-qa">("9router-live");
   const [activeResults, setActiveResults] = useState<NavigatorResult[]>([]);
+  const [lastMatchedQuery, setLastMatchedQuery] = useState<string | null>(null);
   const [userKabupaten, setUserKabupaten] = useState("Kota Denpasar");
   const [targetLevel, setTargetLevel] = useState<TargetLevel>("semua");
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [lastFailedPrompt, setLastFailedPrompt] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3200);
+  };
+
+  useEffect(() => {
+    if (lastMatchedQuery) {
+      setActiveResults(matchNavigator(lastMatchedQuery, userKabupaten, targetLevel));
+    }
+  }, [lastMatchedQuery, userKabupaten, targetLevel]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -67,6 +82,8 @@ export default function AiNavigatorPage() {
     setMessages(nextMessages);
     setInput("");
     setSelectedPreset(clean);
+    setChatError(null);
+    setLastFailedPrompt(null);
     setIsTyping(true);
 
     try {
@@ -80,31 +97,27 @@ export default function AiNavigatorPage() {
         }),
       });
 
-      let replyText = "";
-      let matchedField: string | null = null;
-
-      if (res.ok) {
-        const data = (await res.json()) as NavigatorChatResponse;
-        replyText = data.reply || "";
-        matchedField = data.matchedFieldId;
-        if (data.sourceMode) {
-          setSourceMode(data.sourceMode);
-        }
-      } else {
-        replyText = "Maaf, sistem konsultasi sedang memproses antrean. Silakan tanyakan kembali.";
+      if (!res.ok) {
+        throw new Error(`Layanan konsultasi merespons status ${res.status}.`);
       }
 
-      // Perbarui kartu institusi terkait di panel samping
-      if (matchedField) {
-        const results = matchNavigator(matchedField, userKabupaten, targetLevel);
-        if (results.length > 0) {
-          setActiveResults(results);
-        }
-      } else if (activeResults.length === 0) {
-        const results = matchNavigator(clean, userKabupaten, targetLevel);
-        if (results.length > 0) {
-          setActiveResults(results);
-        }
+      const data = (await res.json()) as NavigatorChatResponse;
+      const replyText = data.reply || "";
+      const matchedField = data.matchedFieldId;
+      if (data.sourceMode) {
+        setSourceMode(data.sourceMode);
+      }
+
+      if (!replyText.trim()) {
+        throw new Error("Respons konsultasi kosong, silakan coba kirim ulang.");
+      }
+
+      // Perbarui kartu institusi terkait di panel samping mengikuti topik terbaru
+      const queryForResults = matchedField || clean;
+      const results = matchNavigator(queryForResults, userKabupaten, targetLevel);
+      if (results.length > 0) {
+        setLastMatchedQuery(queryForResults);
+        setActiveResults(results);
       }
 
       const assistantId = `a-${Date.now()}`;
@@ -126,14 +139,15 @@ export default function AiNavigatorPage() {
           setStreamId(null);
         }
       }, 25);
-    } catch {
+    } catch (err) {
       setIsTyping(false);
-      const fallbackMsg: Message = {
-        id: `a-${Date.now()}`,
-        role: "assistant",
-        content: "Koneksi terputus sejenak. Silakan ulangi pertanyaanmu.",
-      };
-      setMessages((prev) => [...prev, fallbackMsg]);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "Koneksi ke layanan Navigator terputus sejenak.";
+      setChatError(errMsg);
+      setLastFailedPrompt(clean);
+      triggerToast("Gagal memuat jawaban, klik Kirim Ulang untuk mencoba kembali.");
     }
   };
 
@@ -164,6 +178,15 @@ export default function AiNavigatorPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#141413] flex flex-col selection:bg-[#B8F348] selection:text-[#141413]">
+      {toastMessage && (
+        <div
+          role="status"
+          className="fixed top-24 right-4 sm:right-8 z-50 px-4 py-2.5 rounded-2xl bg-[#141413] text-white border-2 border-[#141413] shadow-[4px_4px_0px_#B8F348] flex items-center gap-2.5 max-w-sm"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-[#B8F348] shrink-0" />
+          <span className="text-xs font-display font-bold">{toastMessage}</span>
+        </div>
+      )}
       <Navbar onOpenLogin={() => {}} onOpenRegister={() => {}} onOpenTest={() => {}} />
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-36">
@@ -185,10 +208,7 @@ export default function AiNavigatorPage() {
         </div>
 
         <div className="grid lg:grid-cols-[1fr_360px] gap-5 items-start">
-          <div
-            className="bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] overflow-hidden flex flex-col"
-            style={{ height: "620px" }}
-          >
+          <div className="bg-white border-2 border-[#141413] rounded-3xl shadow-[6px_6px_0px_#141413] overflow-hidden flex flex-col h-[500px] sm:h-[620px]">
             <div className="px-4 sm:px-5 py-3 border-b-2 border-[#141413] bg-[#FAF7F2] flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-8 h-8 shrink-0 rounded-xl bg-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-display font-black text-xs">
@@ -234,6 +254,25 @@ export default function AiNavigatorPage() {
                 <ChatBubble key={m.id} role={m.role} content={m.content} streaming={streamId === m.id} />
               ))}
               {isTyping && <TypingIndicator />}
+              {chatError && (
+                <div
+                  role="alert"
+                  className="p-3.5 rounded-2xl bg-[#FFE5E0] border-2 border-[#141413] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div className="text-xs text-[#7A1A12] font-bold">
+                    {chatError}
+                  </div>
+                  {lastFailedPrompt && (
+                    <button
+                      type="button"
+                      onClick={() => sendMessage(lastFailedPrompt)}
+                      className="shrink-0 px-3 py-1.5 rounded-xl bg-[#141413] text-[#B8F348] font-mono font-bold text-xs border border-[#141413] cursor-pointer"
+                    >
+                      Kirim Ulang
+                    </button>
+                  )}
+                </div>
+              )}
               {messages.length === 1 && (
                 <div className="pt-2 space-y-2">
                   <p className="text-xs font-mono font-black uppercase text-[#141413]/60">
@@ -332,7 +371,12 @@ export default function AiNavigatorPage() {
                   Otomatis
                 </span>
               </p>
-              {activeResults.length === 0 ? (
+              {isTyping && activeResults.length === 0 ? (
+                <div className="space-y-3 animate-pulse py-2" aria-busy="true">
+                  <div className="h-24 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]/20" />
+                  <div className="h-24 rounded-2xl bg-[#FAF7F2] border-2 border-[#141413]/20" />
+                </div>
+              ) : activeResults.length === 0 ? (
                 <div className="text-center py-6">
                   <div className="w-10 h-10 mx-auto rounded-xl bg-[#FFBE2E] border-2 border-[#141413] flex items-center justify-center font-mono font-black mb-2 shadow-[2px_2px_0_#141413]">
                     ?

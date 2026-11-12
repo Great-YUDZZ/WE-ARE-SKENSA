@@ -6,15 +6,15 @@ import { hashPassword, signSession, setSessionCookie, isRateLimited } from "@/li
 // Validasi register di server agar aman dari input berbahaya
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Nama minimal 2 karakter").max(120),
-  identifier: z.string().trim().min(4, "Identifier minimal 4 karakter").max(80),
+  identifier: z.string().trim().max(80).optional().default(""),
   email: z.string().trim().email("Format email tidak valid").max(160),
-  password: z.string().min(8, "Password minimal 8 karakter").max(128),
-  passwordConfirm: z.string().min(8, "Konfirmasi password minimal 8 karakter").max(128),
+  password: z.string().min(8, "Kata sandi minimal 8 karakter").max(128),
+  passwordConfirm: z.string().min(8, "Konfirmasi kata sandi minimal 8 karakter").max(128),
   role: z.enum(["siswa", "guru"]).default("siswa"),
   interests: z.array(z.string().trim().min(1).max(80)).max(12).default([]),
   agreed: z.boolean().refine((v) => v === true, "Wajib menyetujui kebijakan privasi minim data"),
 }).refine((v) => v.password === v.passwordConfirm, {
-  message: "Konfirmasi password tidak sama",
+  message: "Konfirmasi kata sandi tidak sama",
   path: ["passwordConfirm"],
 });
 
@@ -41,15 +41,18 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
   const email = data.email.toLowerCase();
+  const resolvedIdentifier = data.identifier.length >= 4 ? data.identifier : email;
 
-  // Cek duplikat identifier atau email lebih awal untuk pesan yang jelas
-  const existingByIdentifier = await findUserByLogin(data.identifier);
-  if (existingByIdentifier) {
-    return NextResponse.json({ error: "Identifier sudah dipakai, coba NISN atau email lain" }, { status: 409 });
-  }
+  // Cek duplikat email atau identifier lebih awal untuk pesan yang jelas
   const existingByEmail = await findUserByLogin(email);
   if (existingByEmail) {
     return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
+  }
+  if (resolvedIdentifier !== email) {
+    const existingByIdentifier = await findUserByLogin(resolvedIdentifier);
+    if (existingByIdentifier) {
+      return NextResponse.json({ error: "Identifier sudah dipakai, coba email lain" }, { status: 409 });
+    }
   }
 
   const passwordHash = await hashPassword(data.password);
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await createUser({
       name: data.name,
-      identifier: data.identifier,
+      identifier: resolvedIdentifier,
       email,
       passwordHash,
       role: data.role,

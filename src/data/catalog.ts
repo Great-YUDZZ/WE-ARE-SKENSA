@@ -28,6 +28,28 @@ export interface BaliKabupatenCoord {
   lng: number;
 }
 
+export interface GeoPoint {
+  lat: number;
+  lng: number;
+}
+
+export type LocationSourceMode = "manual" | "address" | "gps" | "ip";
+
+export interface UserLocationOrigin {
+  kabupaten: string;
+  coords?: GeoPoint;
+  source: LocationSourceMode;
+  areaLabel?: string;
+  addressQuery?: string;
+  isOutsideBali?: boolean;
+}
+
+export interface BaliAreaSuggestion {
+  label: string;
+  kabupaten: string;
+  coords: GeoPoint;
+}
+
 export interface ProgramField {
   id: string;
   name: string;
@@ -50,7 +72,7 @@ export interface ProgramField {
 
 // Koordinat perkiraan pusat tiap kabupaten/kota di Bali untuk estimasi jarak garis lurus
 export const BALI_KABUPATEN_COORDS: Record<string, BaliKabupatenCoord> = {
-  "Kota Denpasar": { name: "Kota Denpasar", lat: -8.6705, lng: 115.2126 },
+  "Kota Denpasar": { name: "Kota Denpasar", lat: -8.6563, lng: 115.2165 },
   "Badung": { name: "Badung", lat: -8.5833, lng: 115.1833 },
   "Gianyar": { name: "Gianyar", lat: -8.5444, lng: 115.3289 },
   "Tabanan": { name: "Tabanan", lat: -8.5411, lng: 115.1252 },
@@ -61,13 +83,114 @@ export const BALI_KABUPATEN_COORDS: Record<string, BaliKabupatenCoord> = {
   "Jembrana": { name: "Jembrana", lat: -8.3585, lng: 114.6289 },
 };
 
-export function estimateDistanceKm(fromKabupaten: string, toKabupaten: string): number {
-  const from = BALI_KABUPATEN_COORDS[fromKabupaten];
-  const to = BALI_KABUPATEN_COORDS[toKabupaten];
-  if (!from || !to) return 25; // default estimasi moderat jika tidak spesifik
-  if (from.name === to.name) return 6; // dalam kabupaten yang sama
+function normalizeKabupatenKey(raw: string): string {
+  const trimmed = raw.trim();
+  if (BALI_KABUPATEN_COORDS[trimmed]) return trimmed;
+  return trimmed.replace(/^(Kabupaten|Kab\.?)\s+/i, "").trim();
+}
 
-  // Haversine formula sederhana
+const BALI_AREA_COORDS: { kabupaten?: string; keywords: string[]; coords: GeoPoint }[] = [
+  // Kota Denpasar (urutan kelurahan/jalan spesifik lebih dulu sebelum kecamatan umum)
+  { kabupaten: "Kota Denpasar", keywords: ["dauh puri klod", "pb sudirman", "p.b. sudirman", "jenderal sudirman"], coords: { lat: -8.6725, lng: 115.2162 } },
+  { kabupaten: "Kota Denpasar", keywords: ["dauh puri kauh", "batanta", "pulau flores"], coords: { lat: -8.6789, lng: 115.2038 } },
+  { kabupaten: "Kota Denpasar", keywords: ["monang maning", "merpati", "gunung rinjani"], coords: { lat: -8.6673, lng: 115.1972 } },
+  { kabupaten: "Kota Denpasar", keywords: ["pemecutan klod", "pura demak", "gunung krakatau", "imam bonjol"], coords: { lat: -8.6741, lng: 115.1889 } },
+  { kabupaten: "Kota Denpasar", keywords: ["padangsambian", "tangkuban perahu", "kebo iwa", "swabhuana"], coords: { lat: -8.6612, lng: 115.1748 } },
+  { kabupaten: "Kota Denpasar", keywords: ["dangin puri kangin", "kamboja", "cempaka"], coords: { lat: -8.6548, lng: 115.2216 } },
+  { kabupaten: "Kota Denpasar", keywords: ["sumerta kauh", "nusa indah", "ratna", "tatasan"], coords: { lat: -8.6531, lng: 115.2314 } },
+  { kabupaten: "Kota Denpasar", keywords: ["sumerta kelod", "drupadi"], coords: { lat: -8.6681, lng: 115.2312 } },
+  { kabupaten: "Kota Denpasar", keywords: ["dangin puri klod", "puputan renon"], coords: { lat: -8.6725, lng: 115.2361 } },
+  { kabupaten: "Kota Denpasar", keywords: ["tanjung bungkak", "hayam wuruk", "terompong", "pandu"], coords: { lat: -8.6644, lng: 115.2371 } },
+  { kabupaten: "Kota Denpasar", keywords: ["panjer", "tukad batanghari", "tukad pakerisan", "tukad yeh aya", "tukad barito", "tukad citarum", "tukad gerinding", "cut nyak dien"], coords: { lat: -8.6869, lng: 115.2279 } },
+  { kabupaten: "Kota Denpasar", keywords: ["renon", "tukad badung", "tukad balian", "tukad yeh ho"], coords: { lat: -8.6936, lng: 115.2368 } },
+  { kabupaten: "Kota Denpasar", keywords: ["sesetan", "pegok", "piranha"], coords: { lat: -8.7042, lng: 115.2179 } },
+  { kabupaten: "Kota Denpasar", keywords: ["sidakarya", "bedugul", "sanitasi", "jl. pendidikan"], coords: { lat: -8.7048, lng: 115.2373 } },
+  { kabupaten: "Kota Denpasar", keywords: ["sanur", "tirtanadi", "tukad nyali"], coords: { lat: -8.6989, lng: 115.2564 } },
+  { kabupaten: "Kota Denpasar", keywords: ["kesiman", "wr supratman", "pucuk bang", "tohpati"], coords: { lat: -8.6365, lng: 115.2528 } },
+  { kabupaten: "Kota Denpasar", keywords: ["penatih", "tembau", "sangalangit", "padma"], coords: { lat: -8.6184, lng: 115.2422 } },
+  { kabupaten: "Kota Denpasar", keywords: ["tonja", "gatot subroto", "kecak", "seroja"], coords: { lat: -8.6285, lng: 115.2266 } },
+  { kabupaten: "Kota Denpasar", keywords: ["peguyangan", "ken arok", "dam peraupan", "sidan", "ahmad yani"], coords: { lat: -8.6095, lng: 115.2145 } },
+  { kabupaten: "Kota Denpasar", keywords: ["pemecutan kaja", "hos cokroaminoto", "ubung"], coords: { lat: -8.6327, lng: 115.2061 } },
+  { kabupaten: "Kota Denpasar", keywords: ["denpasar selatan"], coords: { lat: -8.6989, lng: 115.2286 } },
+  { kabupaten: "Kota Denpasar", keywords: ["denpasar timur", "surapati", "dangin puri"], coords: { lat: -8.6524, lng: 115.2376 } },
+  { kabupaten: "Kota Denpasar", keywords: ["denpasar barat", "teuku umar", "mahendradatta", "dauh puri"], coords: { lat: -8.6684, lng: 115.1973 } },
+  { kabupaten: "Kota Denpasar", keywords: ["denpasar utara"], coords: { lat: -8.6305, lng: 115.2116 } },
+
+  // Badung
+  { kabupaten: "Badung", keywords: ["ungasan", "pecatu", "uluwatu", "pura pengulapan"], coords: { lat: -8.8178, lng: 115.1576 } },
+  { kabupaten: "Badung", keywords: ["nusa dua", "benoa", "dharmawangsa", "mumbul"], coords: { lat: -8.7988, lng: 115.2134 } },
+  { kabupaten: "Badung", keywords: ["jimbaran", "bukit", "kampus unud", "kuta selatan"], coords: { lat: -8.7965, lng: 115.1711 } },
+  { kabupaten: "Badung", keywords: ["seminyak", "legian", "sunset road"], coords: { lat: -8.6914, lng: 115.1682 } },
+  { kabupaten: "Badung", keywords: ["tuban", "kedonganan", "bypass ngurah rai", "kuta,"], coords: { lat: -8.7389, lng: 115.1764 } },
+  { kabupaten: "Badung", keywords: ["kerobokan", "tibubeneng", "canggu"], coords: { lat: -8.6598, lng: 115.1586 } },
+  { kabupaten: "Badung", keywords: ["dalung", "tegaljaya", "padang luwih", "kubu gunung", "kuta utara"], coords: { lat: -8.6258, lng: 115.1636 } },
+  { kabupaten: "Badung", keywords: ["mengwi", "mengwitani", "kapal", "abianbase", "lukluk", "sembung"], coords: { lat: -8.5453, lng: 115.1714 } },
+  { kabupaten: "Badung", keywords: ["abiansemal", "blahkiuh", "mambal", "sangeh", "sibang"], coords: { lat: -8.5236, lng: 115.2121 } },
+  { kabupaten: "Badung", keywords: ["petang", "pelaga", "palaga", "sulangai", "plaga"], coords: { lat: -8.3522, lng: 115.2202 } },
+
+  // Gianyar
+  { kabupaten: "Gianyar", keywords: ["batubulan", "batuyang", "singapadu"], coords: { lat: -8.6203, lng: 115.2571 } },
+  { kabupaten: "Gianyar", keywords: ["celuk", "sukawati", "lettu ngurah duaji"], coords: { lat: -8.5964, lng: 115.2804 } },
+  { kabupaten: "Gianyar", keywords: ["mas, ubud", "raya mas", "ubud", "sayan", "peliatan", "kedewatan"], coords: { lat: -8.5069, lng: 115.2625 } },
+  { kabupaten: "Gianyar", keywords: ["tegallalang"], coords: { lat: -8.4317, lng: 115.2794 } },
+  { kabupaten: "Gianyar", keywords: ["tampaksiring", "manukaya"], coords: { lat: -8.4426, lng: 115.3106 } },
+  { kabupaten: "Gianyar", keywords: ["payangan", "kerta"], coords: { lat: -8.3976, lng: 115.2471 } },
+  { kabupaten: "Gianyar", keywords: ["blahbatuh", "keramas", "saba"], coords: { lat: -8.5736, lng: 115.3016 } },
+  { kabupaten: "Gianyar", keywords: ["samplangan", "ciung wanara", "astina", "tegal tugu"], coords: { lat: -8.5416, lng: 115.3312 } },
+
+  // Tabanan
+  { kabupaten: "Tabanan", keywords: ["beraban", "pantai nyanyi"], coords: { lat: -8.6134, lng: 115.0938 } },
+  { kabupaten: "Tabanan", keywords: ["kediri", "nyitdah", "wagimin"], coords: { lat: -8.5495, lng: 115.1376 } },
+  { kabupaten: "Tabanan", keywords: ["belayu", "marga"], coords: { lat: -8.4819, lng: 115.1665 } },
+  { kabupaten: "Tabanan", keywords: ["penebel", "pitra"], coords: { lat: -8.4384, lng: 115.1342 } },
+  { kabupaten: "Tabanan", keywords: ["baturiti", "perean", "bedugul", "candikuning"], coords: { lat: -8.3627, lng: 115.1764 } },
+  { kabupaten: "Tabanan", keywords: ["kerambitan", "kukuh", "meliling"], coords: { lat: -8.5542, lng: 115.0938 } },
+  { kabupaten: "Tabanan", keywords: ["bantas", "selemadeg", "bajera"], coords: { lat: -8.5015, lng: 115.0218 } },
+  { kabupaten: "Tabanan", keywords: ["pupuan"], coords: { lat: -8.3522, lng: 115.0185 } },
+  { kabupaten: "Tabanan", keywords: ["delod peken", "dajan peken", "dangin puri kauh"], coords: { lat: -8.5405, lng: 115.1255 } },
+
+  // Buleleng
+  { kabupaten: "Buleleng", keywords: ["kaliasem", "kalibukbuk", "lovina", "tukadmungga"], coords: { lat: -8.1636, lng: 115.0258 } },
+  { kabupaten: "Buleleng", keywords: ["baktiseraga", "banyuasri"], coords: { lat: -8.1244, lng: 115.0681 } },
+  { kabupaten: "Buleleng", keywords: ["banyuning", "jinengdalem", "penarukan"], coords: { lat: -8.1112, lng: 115.1095 } },
+  { kabupaten: "Buleleng", keywords: ["sukasada", "panji", "jelantik gingsir"], coords: { lat: -8.1445, lng: 115.1011 } },
+  { kabupaten: "Buleleng", keywords: ["singaraja", "udayana", "banjar tegal", "banjar asri", "ahmad yani", "pramuka"], coords: { lat: -8.1173, lng: 115.0882 } },
+  { kabupaten: "Buleleng", keywords: ["bungkulan", "sangsit", "menyali", "sawan", "air sanih"], coords: { lat: -8.0975, lng: 115.1674 } },
+  { kabupaten: "Buleleng", keywords: ["kubutambahan", "tejakula"], coords: { lat: -8.0964, lng: 115.2286 } },
+  { kabupaten: "Buleleng", keywords: ["lokapaksa", "seririt", "banjar,"], coords: { lat: -8.1912, lng: 114.9416 } },
+  { kabupaten: "Buleleng", keywords: ["busungbiu", "subuk"], coords: { lat: -8.2586, lng: 114.9612 } },
+  { kabupaten: "Buleleng", keywords: ["gerokgak", "banyupoh", "celukan bawang", "pemuteran"], coords: { lat: -8.1981, lng: 114.7916 } },
+
+  // Klungkung
+  { kabupaten: "Klungkung", keywords: ["lembongan"], coords: { lat: -8.6812, lng: 115.4486 } },
+  { kabupaten: "Klungkung", keywords: ["tanglad", "klumpu", "batununggul", "desa ped", "nusa penida"], coords: { lat: -8.7186, lng: 115.5542 } },
+  { kabupaten: "Klungkung", keywords: ["dawan", "gunaksa", "kusamba"], coords: { lat: -8.5458, lng: 115.4322 } },
+  { kabupaten: "Klungkung", keywords: ["banjarangkan", "tusan"], coords: { lat: -8.5326, lng: 115.3748 } },
+  { kabupaten: "Klungkung", keywords: ["semarapura"], coords: { lat: -8.5378, lng: 115.4036 } },
+
+  // Bangli
+  { kabupaten: "Bangli", keywords: ["songan", "kintamani", "bayunggede", "batur", "kedisan", "penelokan"], coords: { lat: -8.2435, lng: 115.3496 } },
+  { kabupaten: "Bangli", keywords: ["tembuku", "undisan"], coords: { lat: -8.4312, lng: 115.3944 } },
+  { kabupaten: "Bangli", keywords: ["susut", "kayuambua", "sulahan"], coords: { lat: -8.4268, lng: 115.3318 } },
+  { kabupaten: "Bangli", keywords: ["kubu", "tamanbali"], coords: { lat: -8.4589, lng: 115.3578 } },
+
+  // Karangasem
+  { kabupaten: "Karangasem", keywords: ["kubu", "tianyar"], coords: { lat: -8.2591, lng: 115.5416 } },
+  { kabupaten: "Karangasem", keywords: ["abang", "culik", "amed", "tirta gangga"], coords: { lat: -8.3826, lng: 115.6378 } },
+  { kabupaten: "Karangasem", keywords: ["manggis", "ulakan", "candidasa", "padangbai", "antiga"], coords: { lat: -8.4975, lng: 115.5342 } },
+  { kabupaten: "Karangasem", keywords: ["rendang", "besakih"], coords: { lat: -8.3489, lng: 115.4368 } },
+  { kabupaten: "Karangasem", keywords: ["selat", "duda", "bebandem"], coords: { lat: -8.4165, lng: 115.4986 } },
+  { kabupaten: "Karangasem", keywords: ["subagan", "padangkerta", "amlapura"], coords: { lat: -8.4508, lng: 115.6114 } },
+
+  // Jembrana
+  { kabupaten: "Jembrana", keywords: ["melaya", "gilimanuk", "cekik"], coords: { lat: -8.2442, lng: 114.5138 } },
+  { kabupaten: "Jembrana", keywords: ["pekutatan", "medewi"], coords: { lat: -8.4235, lng: 114.8442 } },
+  { kabupaten: "Jembrana", keywords: ["mendoyo", "pergung", "yehembang"], coords: { lat: -8.3742, lng: 114.7024 } },
+  { kabupaten: "Jembrana", keywords: ["pengambengan", "banyubiru"], coords: { lat: -8.3932, lng: 114.5964 } },
+  { kabupaten: "Jembrana", keywords: ["negara", "loloan", "dauhwaru", "pendem", "dangintukadaya", "banjar tengah"], coords: { lat: -8.3569, lng: 114.6331 } },
+];
+
+export function haversineKm(from: GeoPoint, to: GeoPoint): number {
   const rad = Math.PI / 180;
   const dLat = (to.lat - from.lat) * rad;
   const dLng = (to.lng - from.lng) * rad;
@@ -76,10 +199,316 @@ export function estimateDistanceKm(fromKabupaten: string, toKabupaten: string): 
     Math.cos(from.lat * rad) * Math.cos(to.lat * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const km = 6371 * c;
-  return Math.round(km * 10) / 10;
+  return Math.max(0.2, Math.round(km * 10) / 10);
+}
+
+export function resolveInstitutionCoords(kabupaten: string, address?: string): GeoPoint {
+  const kabKey = normalizeKabupatenKey(kabupaten);
+  const addrLower = (address || "").toLowerCase();
+
+  if (addrLower) {
+    for (const area of BALI_AREA_COORDS) {
+      if (area.kabupaten && area.kabupaten !== kabKey) continue;
+      if (area.keywords.some((kw) => addrLower.includes(kw))) {
+        return area.coords;
+      }
+    }
+  }
+
+  const kabCenter = BALI_KABUPATEN_COORDS[kabKey];
+  if (kabCenter) {
+    return { lat: kabCenter.lat, lng: kabCenter.lng };
+  }
+  return { lat: BALI_KABUPATEN_COORDS["Kota Denpasar"].lat, lng: BALI_KABUPATEN_COORDS["Kota Denpasar"].lng };
+}
+
+export function findNearestBaliKabupaten(lat: number, lng: number): {
+  kabupaten: string;
+  distanceToCenterKm: number;
+  isOutsideBali: boolean;
+} {
+  let nearestName = "Kota Denpasar";
+  let minKm = Number.POSITIVE_INFINITY;
+
+  for (const area of BALI_AREA_COORDS) {
+    if (!area.kabupaten) continue;
+    const d = haversineKm({ lat, lng }, area.coords);
+    if (d < minKm) {
+      minKm = d;
+      nearestName = area.kabupaten;
+    }
+  }
+
+  for (const kab of Object.values(BALI_KABUPATEN_COORDS)) {
+    const d = haversineKm({ lat, lng }, { lat: kab.lat, lng: kab.lng });
+    if (d < minKm) {
+      minKm = d;
+      nearestName = kab.name;
+    }
+  }
+
+  return {
+    kabupaten: nearestName,
+    distanceToCenterKm: minKm,
+    isOutsideBali: minKm > 95,
+  };
+}
+
+export function estimateDistanceFromOrigin(
+  from: string | GeoPoint | UserLocationOrigin,
+  toKabupaten: string,
+  toAddress?: string
+): number {
+  const toPoint = resolveInstitutionCoords(toKabupaten, toAddress);
+
+  if (typeof from === "string") {
+    return estimateDistanceKm(from, toKabupaten, toAddress);
+  }
+
+  if ("lat" in from && "lng" in from) {
+    return haversineKm(from, toPoint);
+  }
+
+  if (from.coords) {
+    return haversineKm(from.coords, toPoint);
+  }
+
+  return estimateDistanceKm(from.kabupaten, toKabupaten, toAddress);
+}
+
+function formatAreaDisplayName(keyword: string): string {
+  return keyword
+    .replace(/,/g, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => {
+      if (part === "pb" || part === "p.b.") return "P.B.";
+      if (part === "wr") return "W.R.";
+      if (part === "hos") return "H.O.S.";
+      if (part === "unud") return "Unud";
+      if (part === "jl.") return "Jl.";
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(" ");
+}
+
+export function searchLocalBaliAreas(
+  query: string,
+  kabupatenFilter?: string
+): BaliAreaSuggestion[] {
+  const q = query.trim().toLowerCase();
+  const kabKey = kabupatenFilter ? normalizeKabupatenKey(kabupatenFilter) : undefined;
+  const results: BaliAreaSuggestion[] = [];
+  const seen = new Set<string>();
+
+  for (const area of BALI_AREA_COORDS) {
+    if (!area.kabupaten) continue;
+    if (kabKey && BALI_KABUPATEN_COORDS[kabKey] && area.kabupaten !== kabKey) {
+      continue;
+    }
+
+    const matchedKeyword = q
+      ? area.keywords.find((kw) => kw.includes(q) || q.includes(kw))
+      : area.keywords[0];
+
+    if (!matchedKeyword) continue;
+
+    const label = `${formatAreaDisplayName(matchedKeyword)}, ${area.kabupaten}`;
+    if (seen.has(label)) continue;
+    seen.add(label);
+
+    results.push({
+      label,
+      kabupaten: area.kabupaten,
+      coords: area.coords,
+    });
+
+    if (results.length >= 10) break;
+  }
+
+  return results;
+}
+
+export function resolveLocalAddressPoint(
+  addressQuery: string,
+  fallbackKabupaten?: string
+): {
+  matched: boolean;
+  kabupaten: string;
+  coords: GeoPoint;
+  matchedKeyword?: string;
+} {
+  const clean = addressQuery.trim().toLowerCase();
+  const normalizedFallback = normalizeKabupatenKey(fallbackKabupaten || "Kota Denpasar");
+  const fallbackCenter =
+    BALI_KABUPATEN_COORDS[normalizedFallback] || BALI_KABUPATEN_COORDS["Kota Denpasar"];
+
+  if (!clean) {
+    return {
+      matched: false,
+      kabupaten: fallbackCenter.name,
+      coords: { lat: fallbackCenter.lat, lng: fallbackCenter.lng },
+    };
+  }
+
+  let bestScore = -1;
+  let bestArea: (typeof BALI_AREA_COORDS)[number] | null = null;
+  let bestKeyword = "";
+
+  for (const area of BALI_AREA_COORDS) {
+    for (const kw of area.keywords) {
+      const normalizedKw = kw.replace(/,/g, "").trim();
+      if (!normalizedKw || !clean.includes(normalizedKw)) continue;
+      let score = normalizedKw.length;
+      if (area.kabupaten && area.kabupaten === fallbackCenter.name) {
+        score += 10;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestArea = area;
+        bestKeyword = normalizedKw;
+      }
+    }
+  }
+
+  if (bestArea) {
+    return {
+      matched: true,
+      kabupaten: bestArea.kabupaten || fallbackCenter.name,
+      coords: bestArea.coords,
+      matchedKeyword: formatAreaDisplayName(bestKeyword),
+    };
+  }
+
+  for (const kab of Object.values(BALI_KABUPATEN_COORDS)) {
+    const shortName = kab.name.replace(/^Kota\s+/i, "").toLowerCase();
+    if (clean.includes(shortName)) {
+      return {
+        matched: false,
+        kabupaten: kab.name,
+        coords: { lat: kab.lat, lng: kab.lng },
+      };
+    }
+  }
+
+  return {
+    matched: false,
+    kabupaten: fallbackCenter.name,
+    coords: { lat: fallbackCenter.lat, lng: fallbackCenter.lng },
+  };
+}
+
+export function formatOriginLabel(origin: string | UserLocationOrigin): string {
+  if (typeof origin === "string") return origin;
+  if (origin.source === "address") {
+    const label = (origin.areaLabel || origin.addressQuery || "").trim();
+    if (label) {
+      return label.length > 48 ? `${label.slice(0, 45)}...` : label;
+    }
+    return origin.kabupaten;
+  }
+  if (origin.source === "gps") {
+    return origin.isOutsideBali
+      ? "posisi GPS Anda (di luar Bali)"
+      : `posisi GPS Anda (dekat ${origin.kabupaten})`;
+  }
+  if (origin.source === "ip") {
+    return origin.isOutsideBali
+      ? "perkiraan IP (di luar Bali)"
+      : `perkiraan IP (dekat ${origin.kabupaten})`;
+  }
+  return origin.kabupaten;
+}
+
+export function buildGoogleMapsDirectionsUrl(
+  origin: UserLocationOrigin | string,
+  institution: { name: string; address?: string; kabupaten?: string; mapsUrl?: string }
+): string {
+  const destinationText = [institution.name, institution.address, institution.kabupaten || "Bali"]
+    .filter(Boolean)
+    .join(", ")
+    .slice(0, 180);
+
+  if (typeof origin === "string") {
+    return (
+      institution.mapsUrl ||
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationText)}`
+    );
+  }
+
+  let originParam = "";
+  if (origin.source === "gps" && origin.coords) {
+    originParam = `${origin.coords.lat.toFixed(6)},${origin.coords.lng.toFixed(6)}`;
+  } else if (origin.source === "address") {
+    const addr = (origin.addressQuery || origin.areaLabel || "").trim();
+    if (addr) {
+      originParam = `${addr}, ${origin.kabupaten}, Bali`.slice(0, 160);
+    } else if (origin.coords) {
+      originParam = `${origin.coords.lat.toFixed(6)},${origin.coords.lng.toFixed(6)}`;
+    }
+  }
+
+  if (!originParam) {
+    return (
+      institution.mapsUrl ||
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationText)}`
+    );
+  }
+
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
+    originParam
+  )}&destination=${encodeURIComponent(destinationText)}`;
+}
+
+export function estimateDistanceKm(
+  fromKabupaten: string,
+  toKabupaten: string,
+  toAddress?: string
+): number {
+  const fromKey = normalizeKabupatenKey(fromKabupaten);
+  const toKey = normalizeKabupatenKey(toKabupaten);
+  const from = BALI_KABUPATEN_COORDS[fromKey];
+  const to = BALI_KABUPATEN_COORDS[toKey];
+  if (!from || !to) return 25; // default estimasi moderat jika tidak spesifik
+  if (from.name === to.name && !toAddress) return 6; // dalam kabupaten yang sama
+
+  const targetPoint = toAddress ? resolveInstitutionCoords(toKabupaten, toAddress) : to;
+  return haversineKm({ lat: from.lat, lng: from.lng }, targetPoint);
 }
 
 export const PROGRAM_FIELDS: ProgramField[] = [
+  {
+    id: "tkj",
+    name: "Teknik Jaringan Komputer, Telekomunikasi & Cloud (TKJ / TJKT)",
+    group: "teknologi",
+    categoryName: "Teknologi & Rancang Visual",
+    shortDesc: "Arsitektur jaringan LAN/WAN, routing switching Cisco/MikroTik, administrasi Linux server, fiber optik FTTH, dan infrastruktur cloud.",
+    vibeTagline: "Cocok untuk pelajar yang gemar merakit server, troubleshooting jaringan, konfigurasi router, dan menjaga konektivitas sistem.",
+    whatYouLearn: {
+      smk: ["Subnetting IPv4/IPv6 & VLAN 802.1Q", "Konfigurasi RouterOS MikroTik (MTCNA)", "Splicing Kabel Fiber Optik FTTH", "Administrasi Dasar Debian Linux Server"],
+      vokasi: ["Routing Enterprise OSPF/BGP & Cisco CCNA", "Keamanan Firewall, WireGuard VPN & QoS", "Containerization Docker & Cloud Infrastructure", "Monitoring Jaringan & Incident Response"],
+      akademik: ["Arsitektur Jaringan Komputer Terdistribusi", "Kriptografi & Keamanan Jaringan", "Protokol Telekomunikasi & Wireless Mesh", "Sistem Operasi & Virtualisasi Kernel"],
+    },
+    realProblemsSolvedInBali: [
+      "Membangun konektivitas Wi-Fi terkelola dan infrastruktur fiber optik stabil di desa wisata serta sekolah wilayah Bali Utara dan Timur.",
+      "Mengamankan jaringan POS kasir, sistem reservasi hotel, dan layanan publik desa adat dari gangguan latency maupun serangan siber.",
+      "Mengelola server lokal hemat bandwidth dan backup otomatis untuk klinik, koperasi, dan UMKM Bali.",
+    ],
+    coreCompetencies: ["Cisco CCNA & MikroTik MTCNA", "Linux Debian SysAdmin", "Subnetting & VLAN", "Firewall & VPN", "Fiber Optik FTTH"],
+    readinessBridgeTips: [
+      "Latih simulasi topologi VLAN dan routing dasar menggunakan Cisco Packet Tracer atau GNS3 secara mandiri.",
+      "Biasakan membaca dokumentasi CLI Linux dan praktikkan konfigurasi DNS serta firewall sederhana di mesin virtual.",
+    ],
+    careerPaths: ["Network Engineer (CCNA/MTCNA)", "Linux System Administrator", "Cloud Infrastructure Technician", "NOC Support Specialist"],
+    localEntrepreneurshipIdeas: [
+      "Jasa instalasi RT/RW Net legal, Wi-Fi hotspot terkelola, dan maintenance jaringan untuk villa serta kafe lokal Bali.",
+      "Konsultan keamanan jaringan dan backup server otomatis bagi koperasi, sekolah, dan LPD desa adat.",
+    ],
+    sourceRecords: [
+      { publisher: "Kemendikbudristek Kurikulum TJKT", url: "https://kurikulum.kemdikbud.go.id", checkDate: "2026-11-02", status: "Terverifikasi" },
+      { publisher: "BNSP Klaster TIK Jaringan", url: "https://bnsp.go.id", checkDate: "2026-11-02", status: "Terverifikasi" },
+    ],
+  },
   {
     id: "informatika",
     name: "Informatika & Rekayasa Perangkat Lunak",
@@ -599,3 +1028,118 @@ export const INSTITUTIONS_CATALOG: InstitutionProgram[] = [
     source: { publisher: "BAN-SM", url: "https://disdikpora.baliprov.go.id", checkDate: "2026-11-02", status: "Terverifikasi" },
   },
 ];
+
+const FIELD_PROGRAM_KEYWORDS: Record<string, string[]> = {
+  tkj: ["tjkt", "jaringan", "tkj", "komputer"],
+  informatika: ["perangkat lunak", "jaringan", "komputer"],
+  dkv: ["desain komunikasi visual", "multimedia"],
+  arsitektur: ["arsitektur", "pemodelan"],
+  kesehatan: ["keperawatan", "kesehatan", "farmasi"],
+  pendidikan: ["pendidikan", "konseling"],
+  budaya: ["karawitan", "tari", "seni"],
+  pertanian: ["tanaman", "agribisnis", "subak"],
+  lingkungan: ["maritim", "kelautan", "lingkungan"],
+  bisnis: ["bisnis", "manajemen", "akuntansi"],
+  pariwisata: ["perhotelan", "pariwisata", "wisata"],
+};
+
+export interface MatchedInstitutionProgram extends InstitutionProgram {
+  estimatedDistanceKm: number;
+}
+
+/** Filters catalog programs matching a field ID and sorts them by distance from user origin. */
+export function getMatchedInstitutionsForField(
+  fieldId: string,
+  origin: string | GeoPoint | UserLocationOrigin = "Kota Denpasar"
+): MatchedInstitutionProgram[] {
+  const keywords = FIELD_PROGRAM_KEYWORDS[fieldId] ?? [];
+  if (keywords.length === 0) return [];
+
+  return INSTITUTIONS_CATALOG.filter((inst) => {
+    const progLower = inst.programName.toLowerCase();
+    return keywords.some((kw) => progLower.includes(kw));
+  })
+    .map((inst) => ({
+      ...inst,
+      estimatedDistanceKm: estimateDistanceFromOrigin(origin, inst.kabupaten, inst.district),
+    }))
+    .sort((a, b) => a.estimatedDistanceKm - b.estimatedDistanceKm);
+}
+
+export type TrackKey = "smk" | "vokasi" | "akademik";
+
+export interface FieldLevelSummary {
+  key: TrackKey;
+  label: string;
+  shortLabel: string;
+  duration: string;
+  practiceRatio: string;
+  targetEntrance: string;
+  careerOrientation: string;
+}
+
+const DEFAULT_LEVEL_SUMMARIES: Record<TrackKey, FieldLevelSummary> = {
+  smk: {
+    key: "smk",
+    label: "SMK (Sekolah Menengah Kejuruan)",
+    shortLabel: "SMK Kejuruan",
+    duration: "3 Tahun (Kelas X - XII)",
+    practiceRatio: "70% Praktik Bengkel / Lab, 30% Teori",
+    targetEntrance: "Lulusan SMP / MTs melalui PPDB Bali",
+    careerOrientation: "Siap kerja teknisi junior, magang industri (PKL), atau lanjut vokasi/sarjana.",
+  },
+  vokasi: {
+    key: "vokasi",
+    label: "Vokasi Politeknik (D3 / D4)",
+    shortLabel: "Politeknik D3/D4",
+    duration: "3 Tahun (D3) atau 4 Tahun (D4 / Sarjana Terapan)",
+    practiceRatio: "60% - 70% Praktik Terapan, 30% - 40% Teori",
+    targetEntrance: "Lulusan SMA / SMK melalui SNBP, SNBT, atau Seleksi Mandiri",
+    careerOrientation: "Spesialis operasional terapan, sertifikasi BNSP, dan proyek industri langsung.",
+  },
+  akademik: {
+    key: "akademik",
+    label: "Sarjana Akademik (S1)",
+    shortLabel: "Sarjana S1",
+    duration: "4 Tahun (8 Semester)",
+    practiceRatio: "60% Konsep & Riset Ilmiah, 40% Praktikum / Proyek",
+    targetEntrance: "Lulusan SMA / SMK melalui SNBP, SNBT, atau Ujian Mandiri PTN/PTS",
+    careerOrientation: "Perancang sistem, analis, pengajar, peneliti, hingga studi lanjut pascasarjana.",
+  },
+};
+
+const FIELD_ORIENTATION_NOTES: Partial<Record<string, Partial<Record<TrackKey, string>>>> = {
+  tkj: {
+    smk: "Teknisi jaringan sekolah/ISP lokal, instalasi fiber optik, dan dukungan infrastruktur IT.",
+    vokasi: "Network engineer operasional, administrasi server Linux/cloud, dan keamanan jaringan terapan.",
+    akademik: "Arsitek infrastruktur cloud, perancang sistem terdistribusi, dan rekayasa keamanan siber.",
+  },
+  informatika: {
+    smk: "Pemrogram web junior, pengembang modul aplikasi UMKM, dan QA tester dasar.",
+    vokasi: "Pengembang perangkat lunak full-stack terapan, integrator API, dan rekayasa sistem bisnis.",
+    akademik: "Software engineer sistem kompleks, spesialis AI/data, hingga riset komputasi.",
+  },
+  pariwisata: {
+    smk: "Kru operasional hotel, tata boga/patiseri, housekeeping, dan layanan tamu front-office.",
+    vokasi: "Supervisor divisi hotel, manajemen event MICE, dan pengelolaan destinasi berkelanjutan.",
+    akademik: "Manajer strategis perhotelan, analis pariwisata daerah, dan pengembang ekowisata.",
+  },
+};
+
+export function getLevelComparisonSummary(fieldId?: string): Record<TrackKey, FieldLevelSummary> {
+  const custom = fieldId ? FIELD_ORIENTATION_NOTES[fieldId] : undefined;
+  return {
+    smk: {
+      ...DEFAULT_LEVEL_SUMMARIES.smk,
+      careerOrientation: custom?.smk ?? DEFAULT_LEVEL_SUMMARIES.smk.careerOrientation,
+    },
+    vokasi: {
+      ...DEFAULT_LEVEL_SUMMARIES.vokasi,
+      careerOrientation: custom?.vokasi ?? DEFAULT_LEVEL_SUMMARIES.vokasi.careerOrientation,
+    },
+    akademik: {
+      ...DEFAULT_LEVEL_SUMMARIES.akademik,
+      careerOrientation: custom?.akademik ?? DEFAULT_LEVEL_SUMMARIES.akademik.careerOrientation,
+    },
+  };
+}

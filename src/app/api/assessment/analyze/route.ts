@@ -8,6 +8,20 @@ export async function POST(request: NextRequest) {
     // Input sanitization & validation
     const currentEducation = body.currentEducation || "SMP";
     const homeKabupaten = body.homeKabupaten || "Kota Denpasar";
+    const rawCoords = body.homeCoords;
+    const homeCoords =
+      rawCoords &&
+      typeof rawCoords === "object" &&
+      typeof rawCoords.lat === "number" &&
+      typeof rawCoords.lng === "number" &&
+      Number.isFinite(rawCoords.lat) &&
+      Number.isFinite(rawCoords.lng) &&
+      rawCoords.lat >= -90 &&
+      rawCoords.lat <= 90 &&
+      rawCoords.lng >= -180 &&
+      rawCoords.lng <= 180
+        ? { lat: rawCoords.lat, lng: rawCoords.lng }
+        : undefined;
     const selectedAnswers = typeof body.selectedAnswers === "object" ? body.selectedAnswers : {};
     const openEndedReflection = typeof body.openEndedReflection === "string" ? body.openEndedReflection.slice(0, 500) : "";
     const weights = typeof body.weights === "object" ? body.weights : {};
@@ -15,6 +29,7 @@ export async function POST(request: NextRequest) {
     const assessmentInput: UserAssessmentInput = {
       currentEducation,
       homeKabupaten,
+      homeCoords,
       selectedAnswers,
       openEndedReflection,
       weights,

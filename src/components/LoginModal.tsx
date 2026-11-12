@@ -85,12 +85,18 @@ export default function LoginModal({
     setLoading(true);
     try {
       if (mode === "login") {
+        const cleanIdentifier = identifier.trim();
+        if (cleanIdentifier.length < 3) {
+          setError("Masukkan NISN, NIP, atau email minimal 3 karakter");
+          setLoading(false);
+          return;
+        }
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            login: identifier.trim() || "0071234567",
-            password: password || "password123",
+            login: cleanIdentifier,
+            password,
             role,
           }),
         });
