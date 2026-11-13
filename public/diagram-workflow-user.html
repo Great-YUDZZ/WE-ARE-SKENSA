@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagram Alur Pengguna (User Workflow) - KertaMarga Bali</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F8F5EE;
+      color: #141413;
+      margin: 0;
+      padding: 24px;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .neo-box {
+      background: #FFFFFF;
+      border: 2px solid #141413;
+      box-shadow: 4px 4px 0px #141413;
+      border-radius: 16px;
+    }
+    .neo-step {
+      background: #FAF7F2;
+      border: 2px solid #141413;
+      border-radius: 14px;
+    }
+    .neo-tag {
+      border: 1.5px solid #141413;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+
+  <div class="w-full max-w-6xl mx-auto space-y-6">
+
+    <!-- Header Slide -->
+    <header class="neo-box p-6 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="neo-tag px-2.5 py-0.5 bg-[#B8F348] text-xs uppercase tracking-wider">User Workflow &bull; Alur Pengguna</span>
+          <span class="neo-tag px-2.5 py-0.5 bg-[#FAF7F2] text-xs">Bali DigiFest 2026</span>
+          <span class="neo-tag px-2.5 py-0.5 bg-[#3B66FF] text-white text-xs">Clean-Start Journey</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Alur Pengguna KertaMarga Bali</h1>
+        <p class="text-sm text-[#52514E] mt-0.5 font-medium">Dari Eksplorasi Minat, Rekomendasi Sekolah Bali, Bimbingan AI, hingga Unduh Laporan Resmi</p>
+      </div>
+      <div class="shrink-0 flex items-center gap-2">
+        <div class="px-3.5 py-2 rounded-xl bg-[#FAF7F2] border-2 border-[#141413] text-right">
+          <p class="text-[11px] font-bold text-[#52514E]">PRODUK INOVASI</p>
+          <p class="text-sm font-extrabold">KertaMarga Bali</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Visual Step-by-Step Flow Grid -->
+    <main class="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+      <!-- STEP 1: ENTRY & ONBOARDING -->
+      <section class="md:col-span-4 neo-box p-5 bg-white flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="w-7 h-7 rounded-lg bg-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">1</span>
+            <span class="neo-tag px-2 py-0.5 bg-[#FAF7F2] text-[10px] font-mono">/ (Beranda)</span>
+          </div>
+          <h2 class="text-base font-extrabold">Akses Masuk &amp; Mode Tamu</h2>
+          <p class="text-xs text-[#52514E] mt-1 leading-relaxed">
+            Siswa membuka website dalam <strong>Mode Tamu Anonim</strong> (tanpa dipaksa login). Langsung melihat gambaran persebaran sekolah di 9 kabupaten/kota Bali serta simulator prioritas bobot.
+          </p>
+        </div>
+        <div class="p-3 neo-step text-xs space-y-1.5">
+          <p class="font-bold text-[#141413]">Pilihan Akses Siswa:</p>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#1AD598]"></span>
+            <span><strong>Mode Tamu</strong>: Langsung eksplorasi zero-PII</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#3B66FF]"></span>
+            <span><strong>Login / Daftar</strong>: Simpan progres &amp; profil</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2: ASESMEN & FILTER JENJANG -->
+      <section class="md:col-span-4 neo-box p-5 bg-white flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="w-7 h-7 rounded-lg bg-[#FFBE2E] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">2</span>
+            <span class="neo-tag px-2 py-0.5 bg-[#FAF7F2] text-[10px] font-mono">/eksplorasi</span>
+          </div>
+          <h2 class="text-base font-extrabold">Asesmen 3 Tahap &amp; Alamat</h2>
+          <p class="text-xs text-[#52514E] mt-1 leading-relaxed">
+            Siswa menentukan jenjang studi dan titik asal, lalu menjawab kuesioner adaptif minat, kesiapan, dan preferensi biaya.
+          </p>
+        </div>
+        <div class="p-3 neo-step text-xs space-y-1.5">
+          <div class="p-1.5 rounded bg-white border border-[#141413]/20">
+            <p class="font-bold text-[11px] text-[#3B66FF]">Jenjang SMP:</p>
+            <p class="text-[11px] text-[#52514E]">Diarahkan ke SMK kejuruan &amp; SMA Bali</p>
+          </div>
+          <div class="p-1.5 rounded bg-white border border-[#141413]/20">
+            <p class="font-bold text-[11px] text-[#141413]">Jenjang SMA / SMK:</p>
+            <p class="text-[11px] text-[#52514E]">Diarahkan ke Perguruan Tinggi Bali</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3: SKORING & KATALOG BALI -->
+      <section class="md:col-span-4 neo-box p-5 bg-white flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="w-7 h-7 rounded-lg bg-[#3B66FF] text-white border-2 border-[#141413] flex items-center justify-center font-bold text-xs">3</span>
+            <span class="neo-tag px-2 py-0.5 bg-[#FAF7F2] text-[10px] font-mono">/katalog</span>
+          </div>
+          <h2 class="text-base font-extrabold">Katalog 285 Lembaga &amp; Rute Maps</h2>
+          <p class="text-xs text-[#52514E] mt-1 leading-relaxed">
+            Menampilkan sekolah/kampus terdekat dengan estimasi jarak rute jalan riil (faktor 1.28x) dan filter hasil tes otomatis.
+          </p>
+        </div>
+        <div class="p-3 neo-step text-xs space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[11px]">Filter Hasil Tes:</span>
+            <span class="neo-tag px-1.5 py-0.5 bg-[#B8F348] text-[10px]">Aktif</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[11px]">Audit Biaya/UKT:</span>
+            <span class="neo-tag px-1.5 py-0.5 bg-[#3B66FF] text-white text-[10px]">14 Entitas</span>
+          </div>
+          <div class="p-1.5 rounded bg-white border border-[#141413]/20">
+            <p class="font-bold text-[11px] text-[#141413]">Tombol Rute Maps:</p>
+            <p class="text-[10px] text-[#52514E]">Langsung buka rute jalan Google Maps dari rumah</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4: WORKSPACE & BIMBINGAN AI -->
+      <section class="md:col-span-6 neo-box p-5 bg-white space-y-3">
+        <div class="flex items-center justify-between border-b-2 border-[#141413]/10 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-[#141413] text-[#B8F348] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">4</span>
+            <div>
+              <h2 class="text-base font-extrabold">Pendalaman Materi, Quiz Dinamis &amp; Verifikasi AI</h2>
+              <p class="text-[11px] font-mono text-[#52514E]">/hasil-analisis &bull; Workspace 11 Bidang Keilmuan</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">1. Modul &amp; PDF</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Belajar mandiri silabus resmi &amp; catat tugas praktik.</p>
+          </div>
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">2. Quiz Dinamis</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Soal studi kasus Bali selalu berganti tiap percobaan.</p>
+          </div>
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#3B66FF]">3. Verifikasi AI</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Uji pemahaman lintas modul &amp; raih lencana skor.</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/20 flex items-center justify-between gap-3 text-xs">
+          <div>
+            <p class="font-bold text-[#141413]">Konsultasi Agen Pembimbing AI:</p>
+            <p class="text-[11px] text-[#52514E]">Diagnosis gap nilai akademik dan langkah prioritas belajar.</p>
+          </div>
+          <span class="neo-tag px-2 py-1 bg-white text-[11px]">POST /api/mentor-agent</span>
+        </div>
+      </section>
+
+      <!-- STEP 5: AI NAVIGATOR & KONSULTASI INTERAKTIF -->
+      <section class="md:col-span-6 neo-box p-5 bg-white space-y-3">
+        <div class="flex items-center justify-between border-b-2 border-[#141413]/10 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-[#FF5E4D] text-white border-2 border-[#141413] flex items-center justify-center font-bold text-xs">5</span>
+            <div>
+              <h2 class="text-base font-extrabold">Konsultasi Bebas &amp; Prediksi Jurusan AI</h2>
+              <p class="text-[11px] font-mono text-[#52514E]">/ai-navigator &bull; Topic-Scoped Dialogue</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">Tanya Jawab Bebas</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Diskusi prospek karier dan prodi di 9 kabupaten Bali.</p>
+          </div>
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">Kuesioner Dinamis</p>
+            <p class="text-[11px] text-[#52514E] mt-1">AI memprediksi jurusan melalui dialog interaktif langsung.</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[#FAF7F2] border border-[#141413]/20 flex items-center justify-between gap-3 text-xs">
+          <div>
+            <p class="font-bold text-[#141413]">Diproteksi AI Scope Guard 2-Lapis:</p>
+            <p class="text-[11px] text-[#52514E]">Anti-jailbreak &amp; menolak otomatis pertanyaan non-edukasi.</p>
+          </div>
+          <span class="neo-tag px-2 py-1 bg-[#B8F348] text-[11px]">Safe AI</span>
+        </div>
+      </section>
+
+      <!-- STEP 6: OUTPUT & ACTION -->
+      <section class="md:col-span-12 neo-box p-5 bg-white">
+        <div class="flex items-center justify-between border-b-2 border-[#141413]/10 pb-3 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-[#1AD598] text-[#141413] border-2 border-[#141413] flex items-center justify-center font-bold text-xs">6</span>
+            <h2 class="text-base font-extrabold">Hasil Akhir: Laporan Cetak PDF A4 Resmi &amp; Portofolio Siswa (/profil)</h2>
+          </div>
+          <span class="text-xs font-mono text-[#52514E] font-bold">Standard A4 Layout &bull; Rekomendasi Terfilter &bull; Jurnal Belajar</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">Gate Akses Laporan PDF</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Memastikan user telah mengerjakan tes sebelum unduh, serta memberi opsi login untuk menyimpan riwayat.</p>
+          </div>
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">Laporan Cetak A4 Presisi</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Format cetak A4 14mm/16mm dengan header logo resmi, skor asesmen, dan sekolah/kampus pilihan.</p>
+          </div>
+          <div class="p-3 neo-step">
+            <p class="font-bold text-[#141413]">Sinkronisasi Profil Siswa</p>
+            <p class="text-[11px] text-[#52514E] mt-1">Catatan jurnal mandiri, catatan tugas praktik modul, dan bookmark tersimpan aman di server atau lokal.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Note -->
+    <footer class="text-center text-xs font-mono text-[#52514E] pt-2">
+      KertaMarga Bali &bull; User Journey &bull; Build with AI, Solve for Bali &bull; Bali DigiFest 2026
+    </footer>
+
+  </div>
+
+</body>
+</html>
