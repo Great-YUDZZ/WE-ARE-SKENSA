@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Flow & Decision Tree - KertaMarga Bali</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F8F9FA;
+      color: #1F2937;
+      margin: 0;
+      padding: 32px 20px;
+    }
+    .flow-container {
+      background: #FFFFFF;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05);
+    }
+    .flow-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4B5563;
+      letter-spacing: 0.02em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .flow-title span {
+      background: #E5E7EB;
+      color: #1F2937;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Flowchart nodes */
+    .node-pill {
+      background: #2563EB;
+      color: #FFFFFF;
+      border-radius: 9999px;
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }
+    .node-diamond {
+      width: 130px;
+      height: 130px;
+      background: #FFFFFF;
+      border: 2px solid #2563EB;
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin: 20px auto;
+    }
+    .node-diamond-content {
+      transform: rotate(-45deg);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1E3A8A;
+      line-height: 1.3;
+      padding: 6px;
+    }
+    .node-action {
+      background: #1E40AF;
+      color: #FFFFFF;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+    }
+    .node-branch-root {
+      background: #3B82F6;
+      color: #FFFFFF;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+    .node-category {
+      background: #60A5FA;
+      color: #FFFFFF;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(96, 165, 250, 0.25);
+    }
+    .node-leaf {
+      background: #EFF6FF;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .node-subleaf {
+      background: #F8FAFC;
+      color: #475569;
+      border: 1px dashed #CBD5E1;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 10.5px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <div class="max-w-[1400px] mx-auto space-y-6">
+
+    <!-- Header bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-200 gap-2">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold font-mono">FLOW DIAGRAM</span>
+          <span class="text-xs text-gray-500 font-semibold">Bali DigiFest 2026 &bull; Tim WE ARE SKENSA</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">Diagram Alur Pengguna (User Flow) KertaMarga Bali</h1>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-gray-400 font-mono">Clean-Start User Flow</p>
+        <p class="text-sm font-bold text-gray-700">Tahap 2: Build with AI, Solve for Bali</p>
+      </div>
+    </div>
+
+    <!-- Main Workflow Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- CONTAINER 1: LOGIN / SIGN-UP / GUEST ENTRY -->
+      <div class="lg:col-span-4 flow-container space-y-5">
+        <div class="flow-title">
+          1. Akses Pengguna <span>Login, Daftar, atau Tamu</span>
+        </div>
+
+        <div class="flex flex-col items-center space-y-4 relative">
+          <!-- Start Pill -->
+          <div class="node-pill w-48">
+            Buka KertaMarga Bali
+          </div>
+
+          <div class="w-0.5 h-6 bg-gray-300"></div>
+
+          <!-- Diamond: Mau simpan akun? -->
+          <div class="node-diamond">
+            <div class="node-diamond-content">
+              Sudah punya akun?
+            </div>
+          </div>
+
+          <!-- Branching logic in flex -->
+          <div class="w-full grid grid-cols-2 gap-3 pt-2">
+            <!-- Left: Sudah punya akun -->
+            <div class="flex flex-col items-center space-y-3">
+              <span class="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">SUDAH</span>
+              <div class="node-action w-full">
+                Masuk (/login)
+              </div>
+              <div class="w-0.5 h-3 bg-gray-300"></div>
+              <div class="node-leaf w-full text-center">
+                Masukkan Email &amp; Password (Ikon Mata)
+              </div>
+              <div class="w-0.5 h-3 bg-gray-300"></div>
+              <div class="node-action w-full bg-emerald-600">
+                Sesi JWT httpOnly
+              </div>
+            </div>
+
+            <!-- Right: Belum punya akun -->
+            <div class="flex flex-col items-center space-y-3">
+              <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">BELUM</span>
+              <div class="node-action w-full bg-indigo-700">
+                Daftar Akun Baru
+              </div>
+              <div class="w-0.5 h-3 bg-gray-300"></div>
+              <div class="node-leaf w-full text-center">
+                Pilih Peran: Siswa / Guru (NIP)
+              </div>
+              <div class="w-0.5 h-3 bg-gray-300"></div>
+              <div class="node-leaf w-full text-center">
+                Ketik Email &amp; Password Kuat
+              </div>
+            </div>
+          </div>
+
+          <div class="w-full pt-4 border-t border-gray-100 flex flex-col items-center">
+            <span class="text-[11px] font-bold text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full mb-2">OPSI UTAMA TANPA LOGIN</span>
+            <div class="node-action w-full bg-gray-800 text-white flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Mode Tamu Anonim (Zero-PII)</span>
+            </div>
+            <p class="text-[10px] text-gray-400 text-center mt-1.5 leading-relaxed">
+              Siswa bisa langsung eksplorasi dan tes tanpa registrasi.
+            </p>
+          </div>
+
+          <!-- Output arrow indicator -->
+          <div class="w-full pt-3 flex items-center justify-center text-xs font-bold text-blue-600 gap-1.5">
+            <span>Masuk ke Fitur Utama</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CONTAINER 2: CORE WORKFLOW & BRANCHING TREE -->
+      <div class="lg:col-span-8 flow-container space-y-6">
+        <div class="flow-title">
+          2. Alur Penggunaan Fitur Utama <span>User Journey &amp; Decision Tree</span>
+        </div>
+
+        <div class="space-y-6">
+
+          <!-- Core Root Node -->
+          <div class="flex items-center justify-center">
+            <div class="node-branch-root w-full sm:w-auto px-8 py-3.5 flex items-center justify-center gap-3">
+              <svg class="w-5 h-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>Beranda &amp; Portal Eksplorasi KertaMarga Bali</span>
+            </div>
+          </div>
+
+          <!-- Tree Branches -->
+          <div class="space-y-4">
+
+            <!-- BRANCH 1: ASESMEN MINAT -->
+            <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-md bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center">A</div>
+                  <h3 class="font-extrabold text-sm text-gray-900">Asesmen Minat &amp; Penjurusan (/eksplorasi)</h3>
+                </div>
+                <span class="text-[11px] font-mono text-gray-500">POST /api/assessment/analyze</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div class="node-leaf space-y-1">
+                  <p class="font-bold text-gray-800">1. Filter Jenjang</p>
+                  <p class="node-subleaf">SMP: Kejuruan SMK &amp; SMA Bali</p>
+                  <p class="node-subleaf">SMA/SMK: Perguruan Tinggi Bali</p>
+                </div>
+                <div class="node-leaf space-y-1">
+                  <p class="font-bold text-gray-800">2. Titik Asal User</p>
+                  <p class="node-subleaf">Ketik Alamat Rumah (Geocode)</p>
+                  <p class="node-subleaf">GPS Browser / Fallback IP 9 Kab</p>
+                </div>
+                <div class="node-leaf space-y-1">
+                  <p class="font-bold text-gray-800">3. Hasil 3 Dimensi</p>
+                  <p class="node-subleaf">Minat, Kesiapan, Preferensi</p>
+                  <p class="node-subleaf">Slider Bobot Dinamis Real-Time</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- BRANCH 2: KATALOG SEKOLAH & RUTE MAPS -->
+            <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-md bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center">B</div>
+                  <h3 class="font-extrabold text-sm text-gray-900">Katalog 285 Lembaga Pendidikan Bali (/katalog)</h3>
+                </div>
+                <span class="text-[11px] font-mono text-gray-500">61 PT &bull; 109 SMK &bull; 115 SMA</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                <div class="node-leaf">
+                  <p class="font-bold text-gray-800 mb-1">Filter Sesuai Hasil Tes</p>
+                  <p class="text-[10.5px] text-gray-600">Otomatis cocokkan jurusan &amp; jenjang hasil kuesioner.</p>
+                </div>
+                <div class="node-leaf">
+                  <p class="font-bold text-gray-800 mb-1">Audit Biaya Lengkap</p>
+                  <p class="text-[10.5px] text-gray-600">14 kampus/SMK dengan data akreditasi &amp; UKT/SPP.</p>
+                </div>
+                <div class="node-leaf bg-emerald-50 border-emerald-200 text-emerald-800">
+                  <p class="font-bold text-emerald-900 mb-1">Tombol Rute Maps</p>
+                  <p class="text-[10.5px] text-emerald-700">Buka rute Google Maps Directions dari rumah (Gratis).</p>
+                </div>
+                <div class="node-leaf">
+                  <p class="font-bold text-gray-800 mb-1">Bandingkan Institusi</p>
+                  <p class="text-[10.5px] text-gray-600">Floating dock komparasi 2-3 sekolah berdampingan.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- BRANCH 3: WORKSPACE MODUL & VERIFIKASI AI -->
+            <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-md bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center">C</div>
+                  <h3 class="font-extrabold text-sm text-gray-900">Hasil Analisis &amp; Workspace Belajar (/hasil-analisis)</h3>
+                </div>
+                <span class="text-[11px] font-mono text-gray-500">11 Bidang Keilmuan Strategis</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div class="node-leaf">
+                  <p class="font-bold text-gray-800 mb-1">Materi &amp; Pustaka PDF</p>
+                  <p class="text-[10.5px] text-gray-600">Pelajari silabus resmi &amp; simpan catatan tugas praktik.</p>
+                </div>
+                <div class="node-leaf">
+                  <p class="font-bold text-gray-800 mb-1">Quiz Dinamis (BNSP)</p>
+                  <p class="text-[10.5px] text-gray-600">Soal studi kasus Bali selalu berganti tiap percobaan.</p>
+                </div>
+                <div class="node-leaf bg-purple-50 border-purple-200 text-purple-900">
+                  <p class="font-bold text-purple-900 mb-1">Verifikasi Kemampuan AI</p>
+                  <p class="text-[10.5px] text-purple-700">Uji komprehensif lintas modul setelah semua quiz selesai.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- BRANCH 4: AI NAVIGATOR & LAPORAN AKHIR -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- AI Navigator -->
+              <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-md bg-amber-600 text-white font-extrabold text-xs flex items-center justify-center">D</div>
+                  <h3 class="font-extrabold text-sm text-gray-900">AI Navigator (/ai-navigator)</h3>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="node-leaf">
+                    <strong>Tanya Jawab Bebas</strong> seputar prodi &amp; karier Bali
+                  </div>
+                  <div class="node-leaf">
+                    <strong>Kuesioner Percakapan</strong> prediksi jurusan otomatis
+                  </div>
+                  <div class="node-subleaf text-[10px] bg-red-50 text-red-700 border-red-200">
+                    Diproteksi AI Scope Guard (Tolak non-edukasi &amp; anti-jailbreak)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Laporan PDF & Profil -->
+              <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-md bg-rose-600 text-white font-extrabold text-xs flex items-center justify-center">E</div>
+                  <h3 class="font-extrabold text-sm text-gray-900">Laporan PDF A4 &amp; Profil (/profil)</h3>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <div class="node-leaf bg-rose-50 border-rose-200 text-rose-900">
+                    <strong>Unduh Laporan PDF A4</strong> (Gate Tes &amp; Opsi Login)
+                  </div>
+                  <div class="node-leaf">
+                    <strong>Kelola Catatan Belajar</strong> &amp; Tugas Praktik Mandiri
+                  </div>
+                  <div class="node-subleaf text-[10px] text-gray-600">
+                    Bookmark bidang &amp; sinkronisasi profil multi-device
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Note -->
+    <div class="pt-4 border-t border-gray-200 text-center text-xs text-gray-400 font-mono">
+      KertaMarga Bali &bull; Diagram Alur Pengguna (User Flow) &bull; Bali DigiFest 2026
+    </div>
+
+  </div>
+
+</body>
+</html>
